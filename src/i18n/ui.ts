@@ -1,0 +1,48 @@
+export const locales = ['en', 'pt'] as const;
+export type Locale = (typeof locales)[number];
+export const defaultLocale: Locale = 'en';
+
+/** BCP 47 tags used for <html lang>, hreflang, Open Graph and Intl formatting. */
+export const localeTags = {
+	en: 'en-US',
+	pt: 'pt-BR',
+} as const satisfies Record<Locale, string>;
+
+/** Label shown on the language switch, in the language itself. */
+export const localeNames = {
+	en: 'English',
+	pt: 'Português',
+} as const satisfies Record<Locale, string>;
+
+// English defines the shape; Portuguese must match it or `astro check` fails the build.
+const en = {
+	'site.title': 'João Abreu — Back-end Developer',
+	'site.description':
+		'Portfolio of João Abreu, back-end developer (Java, Spring Boot) and Computer Science student in Rio de Janeiro.',
+	'nav.language': 'Language',
+	'home.status': 'SIGNAL ACQUIRED · BUILDING',
+	'home.heading': 'João Abreu',
+	'home.body': 'This portfolio is under construction. Check back soon.',
+};
+
+const pt: Record<keyof typeof en, string> = {
+	'site.title': 'João Abreu — Desenvolvedor Back-end',
+	'site.description':
+		'Portfólio de João Abreu, desenvolvedor back-end (Java, Spring Boot) e estudante de Ciência da Computação no Rio de Janeiro.',
+	'nav.language': 'Idioma',
+	'home.status': 'SINAL CAPTADO · EM CONSTRUÇÃO',
+	'home.heading': 'João Abreu',
+	'home.body': 'Este portfólio está em construção. Volte em breve.',
+};
+
+export const ui = { en, pt } as const satisfies Record<Locale, Record<keyof typeof en, string>>;
+
+export type UiKey = keyof typeof en;
+
+export function useTranslations(locale: Locale) {
+	return (key: UiKey) => ui[locale][key];
+}
+
+export function isLocale(value: string | undefined): value is Locale {
+	return locales.includes(value as Locale);
+}
