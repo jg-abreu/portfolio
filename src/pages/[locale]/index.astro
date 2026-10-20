@@ -1,0 +1,41 @@
+---
+import Base from '../../layouts/Base.astro';
+import { locales, useTranslations, type Locale } from '../../i18n/ui';
+
+export function getStaticPaths() {
+	return locales.map((locale) => ({ params: { locale } }));
+}
+
+const t = useTranslations(Astro.params.locale as Locale);
+---
+
+<Base>
+	<main>
+		<p class="status">{t('home.status')}</p>
+		<h1>{t('home.heading')}</h1>
+		<p>{t('home.body')}</p>
+	</main>
+</Base>
+
+<style>
+	main {
+		display: grid;
+		place-content: center;
+		min-height: 70vh;
+		padding: 0 1rem;
+		text-align: center;
+	}
+
+	.status {
+		margin: 0;
+		color: var(--accent);
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+		letter-spacing: 0.15em;
+	}
+
+	h1 {
+		margin: 0.5rem 0;
+		font-size: clamp(2rem, 8vw, 3.5rem);
+	}
+</style>

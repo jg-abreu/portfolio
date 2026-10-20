@@ -1,0 +1,8 @@
+---
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import { defaultLocale } from '../i18n/ui';
+
+// Static fallback: the build emits a redirect page from / to /en/.
+// Language detection by Accept-Language will happen in nginx (stage 2).
+return Astro.redirect(getRelativeLocaleUrl(defaultLocale));
+---
