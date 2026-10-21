@@ -32,7 +32,8 @@ src/
   content/contacts.yaml     contact channels (https links only)
   lib/content.ts            merges and cross-checks content; fails the build if locales diverge
   i18n/ui.ts                UI strings per locale; English defines the shape
-  layouts/Base.astro        <html lang>, hreflang, Open Graph, language switch
+  components/RadarPanel.astro  left-column radar scope (static until stage 6)
+  layouts/Base.astro        <html lang>, hreflang, Open Graph, palette tokens, fonts, two-column shell, header nav
   pages/index.astro         redirects / to /en/ (static fallback)
   pages/[locale]/           pages, generated for every locale
 public/                     static files copied as-is
