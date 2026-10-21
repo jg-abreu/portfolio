@@ -33,6 +33,7 @@ src/
   lib/content.ts            merges and cross-checks content; fails the build if locales diverge
   i18n/ui.ts                UI strings per locale; English defines the shape
   components/RadarPanel.astro  left-column radar scope (static until stage 6)
+  scripts/scroll-fx.ts      progress bar, active nav link, reveal on scroll ([data-reveal], [data-split])
   layouts/Base.astro        <html lang>, hreflang, Open Graph, palette tokens, fonts, two-column shell, header nav
   pages/index.astro         redirects / to /en/ (static fallback)
   pages/[locale]/           pages, generated for every locale
