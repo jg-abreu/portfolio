@@ -1,0 +1,92 @@
+---
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import Base from '../layouts/Base.astro';
+import RadarScope from '../components/RadarScope.astro';
+import { defaultLocale, localeTags, locales, useTranslations } from '../i18n/ui';
+
+// One 404 for every URL, so it speaks both languages: English first, Portuguese below.
+const blocks = locales.map((locale) => ({ locale, t: useTranslations(locale) }));
+const t = useTranslations(defaultLocale);
+---
+
+<Base title={t('notFound.title')} description={t('notFound.body')} standalone>
+	<main id="main">
+		<section class="lost">
+			<div class="scope">
+				<RadarScope />
+			</div>
+			<div class="texts">
+				{
+					blocks.map(({ locale, t }, i) => (
+						<div class="block" lang={localeTags[locale]}>
+							<p class="label">{t('notFound.label')}</p>
+							{i === 0 ? <h1>{t('notFound.heading')}</h1> : <h2>{t('notFound.heading')}</h2>}
+							<p class="muted">{t('notFound.body')}</p>
+							<a class:list={['btn', { 'btn-primary': i === 0 }]} href={getRelativeLocaleUrl(locale)}>
+								{t('notFound.home')} →
+							</a>
+						</div>
+					))
+				}
+			</div>
+		</section>
+	</main>
+</Base>
+
+<style>
+	main {
+		max-width: var(--page-width);
+		margin: 0 auto;
+		padding: 3rem var(--gutter) 6rem;
+	}
+
+	.lost {
+		display: grid;
+		align-items: center;
+		gap: 3rem;
+		min-height: calc(100vh - var(--header-height) - 9rem);
+	}
+
+	.scope {
+		width: min(100%, 20rem);
+		justify-self: center;
+		opacity: 0.8;
+	}
+
+	.texts {
+		display: grid;
+		gap: 2.5rem;
+	}
+
+	.block + .block {
+		padding-top: 2.5rem;
+		border-top: 1px solid var(--line);
+	}
+
+	.label {
+		margin: 0 0 1rem;
+		color: var(--accent);
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+		letter-spacing: 0.15em;
+	}
+
+	h1,
+	h2 {
+		margin: 0;
+		font-size: clamp(1.75rem, 5vw, 2.75rem);
+		letter-spacing: -0.02em;
+		line-height: 1.15;
+	}
+
+	.muted {
+		margin: 0.75rem 0 1.5rem;
+		color: var(--fg-muted);
+	}
+
+	@media (min-width: 60rem) {
+		.lost {
+			grid-template-columns: 2fr 3fr;
+		}
+	}
+</style>

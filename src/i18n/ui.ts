@@ -101,6 +101,12 @@ const en = {
 	'caseStudy.label': 'CASE STUDY',
 	'caseStudy.read': 'Read the case study',
 	'caseStudy.back': 'Back to projects',
+	'og.alt': 'João Abreu, back-end developer (Java and Spring Boot), next to a radar scope',
+	'notFound.title': 'Signal lost — João Abreu',
+	'notFound.label': 'SIGNAL LOST · 404',
+	'notFound.heading': 'Nothing on this bearing',
+	'notFound.body': "The page you're looking for doesn't exist or has moved.",
+	'notFound.home': 'Back to the home page',
 };
 
 const pt: Record<keyof typeof en, string> = {
@@ -189,6 +195,12 @@ const pt: Record<keyof typeof en, string> = {
 	'caseStudy.label': 'ESTUDO DE CASO',
 	'caseStudy.read': 'Ler o estudo de caso',
 	'caseStudy.back': 'Voltar aos projetos',
+	'og.alt': 'João Abreu, desenvolvedor back-end (Java e Spring Boot), ao lado de um radar',
+	'notFound.title': 'Sinal perdido — João Abreu',
+	'notFound.label': 'SINAL PERDIDO · 404',
+	'notFound.heading': 'Nada neste rumo',
+	'notFound.body': 'A página que você procura não existe ou mudou de lugar.',
+	'notFound.home': 'Voltar para a página inicial',
 };
 
 export const ui = { en, pt } as const satisfies Record<Locale, Record<keyof typeof en, string>>;
