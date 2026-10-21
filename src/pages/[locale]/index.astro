@@ -3,8 +3,10 @@ import Base from '../../layouts/Base.astro';
 import RadarScope from '../../components/RadarScope.astro';
 import SonarDisplay from '../../components/SonarDisplay.astro';
 import SonarIcon from '../../components/SonarIcon.astro';
-import { locales, useTranslations, type Locale } from '../../i18n/ui';
+import { localeTags, locales, useTranslations, type Locale } from '../../i18n/ui';
 import { getContacts, getProjects, getResumePath, obfuscatedMailto } from '../../lib/content';
+import { getGitHubSnapshot } from '../../lib/github';
+import { LEETCODE_USER } from '../../lib/github-data';
 import { toRadarContacts } from '../../lib/radar';
 
 export function getStaticPaths() {
@@ -25,8 +27,17 @@ const otherContacts = contacts.filter((c) => !c.primary);
 const resumePath = getResumePath(locale);
 const channelCount = contacts.length + (resumePath ? 1 : 0);
 
+// Build snapshot of GitHub and LeetCode data; the browser refreshes the GitHub parts live.
+const snapshot = getGitHubSnapshot();
+const numberFormat = new Intl.NumberFormat(localeTags[locale]);
+const dateFormat = new Intl.DateTimeFormat(localeTags[locale], { dateStyle: 'medium', timeZone: 'UTC' });
+const contributionsTotal = snapshot?.contributions?.total ?? null;
+const publicRepos = snapshot?.profile?.publicRepos ?? null;
+const leetcode = snapshot?.leetcode ?? null;
+
 const SECTION_COUNT = 3;
 const count = (key: Parameters<typeof t>[0], n: number) => t(key).replace('{n}', String(n));
+const dayCount = (n: number) => (n === 1 ? t('leetcode.day') : count('leetcode.days', n));
 const age = (days: number | null) =>
 	days === null ? t('radar.noData') : days === 0 ? t('radar.today') : days === 1 ? t('radar.day') : count('radar.days', days);
 ---
@@ -37,8 +48,23 @@ const age = (days: number | null) =>
 			<div class="hero-text">
 				<p class="label" data-reveal>{t('home.status')}</p>
 				<h1 data-split>{t('home.heading')}</h1>
-				<p class="role" data-reveal style="--d: 250ms">{t('home.role')}</p>
-				<p class="muted" data-reveal style="--d: 400ms">{t('home.body')}</p>
+				<!-- Role and intro are visible from the first paint: the intro is the page's LCP element. -->
+				<p class="role">{t('home.role')}</p>
+				<p class="muted">{t('home.body')}</p>
+				<ul class="stats" data-reveal style="--d: 300ms">
+					<li data-live-block hidden={contributionsTotal === null}>
+						<strong data-live="contributions" data-value={contributionsTotal ?? 0}>
+							{contributionsTotal === null ? '' : numberFormat.format(contributionsTotal)}
+						</strong>
+						<span>{t('stats.contributions')}</span>
+					</li>
+					<li data-live-block hidden={publicRepos === null}>
+						<strong data-live="repos" data-value={publicRepos ?? 0}>
+							{publicRepos === null ? '' : numberFormat.format(publicRepos)}
+						</strong>
+						<span>{t('stats.repos')}</span>
+					</li>
+				</ul>
 			</div>
 			<div class="hero-scope" data-reveal style="--d: 200ms">
 				<RadarScope />
@@ -60,10 +86,16 @@ const age = (days: number | null) =>
 				>
 					<RadarScope contacts={radarContacts} />
 					<Fragment slot="readout">
-						<ol class="contacts" aria-hidden="true">
+						<ol
+							class="contacts"
+							aria-hidden="true"
+							data-age-today={t('radar.today')}
+							data-age-day={t('radar.day')}
+							data-age-days={t('radar.days')}
+						>
 							{
 								radarContacts.map((c) => (
-									<li data-contact={c.id}>
+									<li data-contact={c.id} data-repo={c.repo}>
 										<span class="title">
 											<span class="num">{c.number}</span> {c.title}
 										</span>
@@ -131,6 +163,52 @@ const age = (days: number | null) =>
 							<li class="card" data-reveal style={`--d: ${i * 120}ms`}>
 								<a href={s.repoUrl}>{s.title} ↗</a>
 								<p class="muted">{s.tagline}</p>
+								{s.id === 'leetcode' && leetcode && (
+									<>
+										<dl class="readings">
+											<div>
+												<dt>{t('leetcode.solved')}</dt>
+												<dd>
+													<strong>{numberFormat.format(leetcode.solved)}</strong>
+													<span>
+														{t('leetcode.breakdown')
+															.replace('{e}', numberFormat.format(leetcode.easy))
+															.replace('{m}', numberFormat.format(leetcode.medium))
+															.replace('{h}', numberFormat.format(leetcode.hard))}
+													</span>
+												</dd>
+											</div>
+											<div>
+												<dt>{t('leetcode.activeDays')}</dt>
+												<dd>
+													<strong>{numberFormat.format(leetcode.activeDays)}</strong>
+												</dd>
+											</div>
+											<div>
+												<dt>{t('leetcode.maxStreak')}</dt>
+												<dd>
+													<strong>{dayCount(leetcode.maxStreak)}</strong>
+												</dd>
+											</div>
+											{leetcode.lastSubmission && (
+												<div>
+													<dt>{t('leetcode.last')}</dt>
+													<dd>
+														<strong>
+															<time datetime={leetcode.lastSubmission}>
+																{dateFormat.format(new Date(`${leetcode.lastSubmission}T00:00:00Z`))}
+															</time>
+														</strong>
+													</dd>
+												</div>
+											)}
+										</dl>
+										<p class="note">
+											<a href={`https://leetcode.com/u/${LEETCODE_USER}/`}>{t('leetcode.profile')} ↗</a>
+											<span>{t('leetcode.updated')}</span>
+										</p>
+									</>
+								)}
 							</li>
 						))
 					}
@@ -180,6 +258,10 @@ const age = (days: number | null) =>
 		</section>
 	</main>
 </Base>
+
+<script>
+	import '../../scripts/github-live';
+</script>
 
 <style>
 	main {
@@ -327,6 +409,80 @@ const age = (days: number | null) =>
 
 	.signals .muted {
 		margin: 0.25rem 0 0;
+	}
+
+	/* Hero counters: real numbers from the snapshot, refreshed live. */
+	.stats {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 1rem 2.5rem;
+		margin: 2rem 0 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.stats li {
+		display: grid;
+	}
+
+	.stats li[hidden] {
+		display: none;
+	}
+
+	.stats strong {
+		color: var(--fg);
+		font-size: clamp(1.75rem, 4vw, 2.25rem);
+		font-variant-numeric: tabular-nums;
+		line-height: 1.1;
+	}
+
+	.stats span {
+		color: var(--fg-muted);
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+		letter-spacing: 0.08em;
+	}
+
+	/* LeetCode readings inside the consistency card. */
+	.readings {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
+		gap: 1rem;
+		margin: 1.25rem 0 0;
+	}
+
+	.readings dt {
+		color: var(--fg-muted);
+		font-family: var(--font-mono);
+		font-size: 0.7rem;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+	}
+
+	.readings dd {
+		display: grid;
+		margin: 0.2rem 0 0;
+	}
+
+	.readings strong {
+		font-size: 1.25rem;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.readings span,
+	.note span {
+		color: var(--fg-muted);
+		font-size: 0.85rem;
+	}
+
+	.note {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		gap: 0.5rem 1rem;
+		margin: 1.25rem 0 0;
+		font-family: var(--font-mono);
+		font-size: 0.8rem;
 	}
 
 	.contact-list {

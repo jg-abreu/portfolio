@@ -31,8 +31,10 @@ src/
   content/projects/<locale>/<id>.md  project text per locale; body reserved for case studies
   content/contacts.yaml     contact channels (https links only)
   lib/content.ts            merges and cross-checks content; fails the build if locales diverge
-  lib/github.ts             reads and validates the GitHub snapshot (null when missing, never invented)
-  data/github-snapshot.json written by scripts/github-snapshot.mjs on every build (git-ignored)
+  lib/github-data.ts        endpoints, types and validators for GitHub/LeetCode data (shared by build and browser)
+  lib/github.ts             reads and revalidates the snapshot at build time (null parts = no data, never invented)
+  lib/radar-geometry.ts     contact position from days since push (shared by build and browser)
+  data/github-snapshot.json written by scripts/github-snapshot.ts on every build (git-ignored)
   i18n/ui.ts                UI strings per locale; English defines the shape
   lib/radar.ts              projects → radar contacts (bearing spread evenly, distance = days since last push)
   lib/sonar-icons.ts        section icons as dot predicates on a 25 × 25 grid, with scatter offsets
@@ -41,10 +43,12 @@ src/
   components/SonarIcon.astro    dot-matrix icon that assembles when its display is on
   scripts/sonar.ts          displays on/off by visibility, scopes pause off-screen, ping on click, card ↔ contact highlight
   scripts/scroll-fx.ts      progress bar, active nav link, reveal on scroll ([data-reveal], [data-split])
+  scripts/github-live.ts    live GitHub data in the browser (30-min localStorage cache); updates counters and radar
   layouts/Base.astro        <html lang>, hreflang, Open Graph, palette tokens, fonts, full-width header nav
   pages/index.astro         redirects / to /en/ (static fallback)
   pages/[locale]/           pages, generated for every locale
-scripts/github-snapshot.mjs build-time fetch of public repo data; keeps the old snapshot if GitHub fails
+scripts/github-snapshot.ts  build-time fetch of profile, repos, contributions and LeetCode; each source keeps
+                            its previous value if it fails (run by `npm run build`; uses GITHUB_TOKEN if set)
 public/                     static files copied as-is
   cv/joao-abreu-cv-<locale>.pdf  résumé; the link appears only when the file exists
 ```
