@@ -2,6 +2,8 @@
 dist/
 # generated types
 .astro/
+# GitHub snapshot, regenerated on every build (scripts/github-snapshot.mjs)
+src/data/github-snapshot.json
 
 # dependencies
 node_modules/
