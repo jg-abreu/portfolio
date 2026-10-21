@@ -12,7 +12,6 @@ const links = [...document.querySelectorAll<HTMLAnchorElement>('.sections a')];
 const targets = links.map((a) => document.getElementById(a.hash.slice(1)));
 
 let ticking = false;
-let currentId: string | undefined;
 function update() {
 	ticking = false;
 	const max = root.scrollHeight - innerHeight;
@@ -27,15 +26,6 @@ function update() {
 		if (i === current) a.setAttribute('aria-current', 'true');
 		else a.removeAttribute('aria-current');
 	});
-
-	// Publish the section for other islands (the radar): on <html> for late readers, plus an event.
-	const id = targets[current]?.id;
-	if (id !== currentId) {
-		currentId = id;
-		if (id) root.dataset.section = id;
-		else delete root.dataset.section;
-		document.dispatchEvent(new CustomEvent('fx:section', { detail: { id } }));
-	}
 }
 function requestUpdate() {
 	if (!ticking) {
