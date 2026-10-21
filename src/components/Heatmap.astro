@@ -31,7 +31,7 @@ const label = (c: HeatCell) =>
 ---
 
 <figure class="heatmap" data-heatmap data-label-one={labelOne} data-label-many={labelMany}>
-	<div class="scroller">
+	<div>
 		<svg viewBox={`0 0 ${weeks * STEP} ${TOP + 7 * STEP}`} role="img" aria-label={summary}>
 			{
 				months.map((m) => (
@@ -67,16 +67,10 @@ const label = (c: HeatCell) =>
 		margin: 0;
 	}
 
-	/* Phones scroll the year sideways inside the card instead of shrinking the cells to dots. */
-	.scroller {
-		overflow-x: auto;
-		padding-bottom: 0.25rem;
-	}
-
+	/* The whole year always fits the card: the drawing scales with its width, no sideways scroll. */
 	svg {
 		display: block;
 		width: 100%;
-		min-width: 38rem;
 		height: auto;
 	}
 
