@@ -7,16 +7,29 @@ interface Props {
 
 const dots = sonarIconDots(Astro.props.name);
 const patternId = `sonar-grid-${Astro.props.name}`;
+
+// A sonar ping crosses the icon every PERIOD: each dot flares when the wave reaches it,
+// so its delay grows with the distance from the center (the wave takes WAVE_MS to the edge).
+const PERIOD = 4.2;
+const WAVE_MS = 1100;
+const waveDelay = (x: number, y: number) => Math.round((Math.hypot(x - 200, y - 200) / 200) * WAVE_MS);
 ---
 
-<svg class="icon" viewBox="0 0 400 400" aria-hidden="true">
+<svg class="icon" viewBox="0 0 400 400" aria-hidden="true" style={`--period: ${PERIOD}s`}>
 	<defs>
 		<pattern id={patternId} x="0" y="0" width="16" height="16" patternUnits="userSpaceOnUse">
 			<circle cx="8" cy="8" r="1.6" />
 		</pattern>
 	</defs>
 	<rect class="grid" width="400" height="400" fill={`url(#${patternId})`} />
-	{dots.map((d) => <circle class="dot" cx={d.x} cy={d.y} r="3.4" style={`--dx: ${d.dx}px; --dy: ${d.dy}px; --d: ${d.delay}ms`} />)}
+	<circle class="wave" cx="200" cy="200" r="200" />
+	{
+		dots.map((d) => (
+			<g class="dot" style={`--dx: ${d.dx}px; --dy: ${d.dy}px; --d: ${d.delay}ms`}>
+				<circle class="pip" cx={d.x} cy={d.y} r="3.4" style={`--w: ${waveDelay(d.x, d.y)}ms`} />
+			</g>
+		))
+	}
 </svg>
 
 <style>
@@ -31,13 +44,26 @@ const patternId = `sonar-grid-${Astro.props.name}`;
 		opacity: 0.55;
 	}
 
-	.dot {
+	.pip {
 		fill: var(--accent);
+		transform-box: fill-box;
+		transform-origin: center;
+	}
+
+	.wave {
+		fill: none;
+		stroke: var(--accent);
+		stroke-width: 2;
+		opacity: 0;
+		transform-box: fill-box;
+		transform-origin: center;
+		pointer-events: none;
 	}
 
 	/*
 	 * With motion allowed (html.fx), dots wait scattered and invisible until their display is
 	 * switched on by sonar.ts, then fly into place; switching off sends them back out.
+	 * The group carries this assembly; the circle inside carries the ping, so the two never clash.
 	 */
 	:global(.fx) .dot {
 		opacity: 0;
@@ -51,5 +77,50 @@ const patternId = `sonar-grid-${Astro.props.name}`;
 	:global(.fx [data-display].is-on) .dot {
 		opacity: 1;
 		transform: none;
+	}
+
+	/* Once assembled, a ping crosses the icon on a loop. Only while the display is on screen. */
+	@media (prefers-reduced-motion: no-preference) {
+		:global(.fx [data-display].is-on) .wave {
+			animation: wave var(--period) linear infinite;
+			animation-delay: 1.4s;
+		}
+
+		:global(.fx [data-display].is-on) .pip {
+			animation: echo var(--period) ease-out infinite;
+			animation-delay: calc(1.4s + var(--w));
+		}
+	}
+
+	@keyframes wave {
+		0% {
+			opacity: 0.55;
+			transform: scale(0);
+		}
+		30% {
+			opacity: 0;
+			transform: scale(1);
+		}
+		100% {
+			opacity: 0;
+			transform: scale(1);
+		}
+	}
+
+	/* Resting a little dim, each dot flares and swells as the wave passes, then settles. */
+	@keyframes echo {
+		0% {
+			opacity: 0.7;
+			transform: scale(1);
+		}
+		5% {
+			opacity: 1;
+			transform: scale(1.6);
+		}
+		22%,
+		100% {
+			opacity: 0.7;
+			transform: scale(1);
+		}
 	}
 </style>
