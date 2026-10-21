@@ -58,6 +58,18 @@ const fontFaces = `
 
 		<link rel="preload" href={interLatin} as="font" type="font/woff2" crossorigin />
 		<style is:inline set:html={fontFaces} />
+		<script is:inline>
+			// Hide reveal targets before first paint, unless the visitor prefers reduced motion.
+			// If scroll-fx never starts (blocked or failed), show everything after 2.5 s.
+			(function () {
+				var d = document.documentElement;
+				if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+				d.classList.add('fx');
+				setTimeout(function () {
+					if (!d.hasAttribute('data-fx-ready')) d.classList.remove('fx');
+				}, 2500);
+			})();
+		</script>
 
 		<link rel="canonical" href={canonical} />
 		{locales.map((l) => <link rel="alternate" hreflang={localeTags[l]} href={getAbsoluteLocaleUrl(l, pathInLocale)} />)}
@@ -75,6 +87,7 @@ const fontFaces = `
 		}
 	</head>
 	<body>
+		<div class="progress" aria-hidden="true"></div>
 		<a class="skip-link" href="#main">{t('nav.skip')}</a>
 		<div class="shell">
 			<aside class="side">
@@ -117,6 +130,9 @@ const fontFaces = `
 				<slot />
 			</div>
 		</div>
+		<script>
+			import '../scripts/scroll-fx';
+		</script>
 	</body>
 </html>
 
@@ -133,6 +149,7 @@ const fontFaces = `
 		--font-sans: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 		--font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
 		--header-height: 3.5rem;
+		--ease: cubic-bezier(0.2, 0.7, 0.2, 1);
 	}
 
 	*,
@@ -175,6 +192,52 @@ const fontFaces = `
 	::selection {
 		background: var(--line);
 		color: var(--fg);
+	}
+
+	/* Reading progress, driven by scroll-fx with transform only. */
+	.progress {
+		position: fixed;
+		inset: 0 0 auto;
+		z-index: 20;
+		height: 2px;
+		background: var(--accent);
+		transform: scaleX(0);
+		transform-origin: 0 50%;
+	}
+
+	/* Reveal on scroll; .fx is only set when motion is allowed (see the head script). */
+	.fx [data-reveal] {
+		opacity: 0;
+		transform: translateY(1.5rem);
+	}
+
+	.fx [data-reveal].in {
+		opacity: 1;
+		transform: none;
+		transition:
+			opacity 0.7s var(--ease),
+			transform 0.8s var(--ease);
+		transition-delay: var(--d, 0ms);
+	}
+
+	/* Each word rises from behind its own mask; the padding keeps accents and descenders unclipped. */
+	.fx [data-split] .w {
+		display: inline-block;
+		overflow: hidden;
+		padding-block: 0.12em;
+		margin-block: -0.12em;
+		vertical-align: top;
+	}
+
+	.fx [data-split] .w > span {
+		display: inline-block;
+		transform: translateY(115%);
+	}
+
+	.fx [data-split].in .w > span {
+		transform: none;
+		transition: transform 0.9s var(--ease);
+		transition-delay: calc(var(--i) * 70ms + var(--d, 0ms));
 	}
 
 	.visually-hidden {
@@ -249,12 +312,35 @@ const fontFaces = `
 	}
 
 	.sections a {
+		position: relative;
 		color: var(--fg-muted);
 		text-decoration: none;
 	}
 
-	.sections a:hover {
+	.sections a:hover,
+	.sections a[aria-current] {
 		color: var(--fg);
+	}
+
+	/* Underline for the section on screen (set by scroll-fx). */
+	.sections a::after {
+		content: '';
+		position: absolute;
+		inset: auto 0 -0.3rem;
+		height: 1px;
+		background: var(--accent);
+		transform: scaleX(0);
+		transform-origin: left;
+	}
+
+	.sections a[aria-current]::after {
+		transform: scaleX(1);
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		.sections a::after {
+			transition: transform 0.4s var(--ease);
+		}
 	}
 
 	.languages a {

@@ -23,17 +23,17 @@ const resumePath = getResumePath(locale);
 <Base>
 	<main id="main">
 		<section class="hero">
-			<p class="label">{t('home.status')}</p>
-			<h1>{t('home.heading')}</h1>
-			<p class="role">{t('home.role')}</p>
-			<p class="muted">{t('home.body')}</p>
+			<p class="label" data-reveal>{t('home.status')}</p>
+			<h1 data-split>{t('home.heading')}</h1>
+			<p class="role" data-reveal style="--d: 250ms">{t('home.role')}</p>
+			<p class="muted" data-reveal style="--d: 400ms">{t('home.body')}</p>
 		</section>
 
 		<section id="projects" aria-labelledby="projects-heading">
-			<h2 id="projects-heading" class="label">{t('projects.heading')}</h2>
+			<h2 id="projects-heading" class="label" data-reveal>{t('projects.heading')}</h2>
 			{
 				workProjects.map((p) => (
-					<article class:list={['card', { featured: p.role === 'featured' }]}>
+					<article class:list={['card', { featured: p.role === 'featured' }]} data-reveal>
 						{p.role === 'featured' && <p class="label">{t('projects.featured')}</p>}
 						<h3>{p.title}</h3>
 						<p class="muted">{p.tagline}</p>
@@ -61,11 +61,11 @@ const resumePath = getResumePath(locale);
 		</section>
 
 		<section id="signals" aria-labelledby="signals-heading">
-			<h2 id="signals-heading" class="label">{t('signals.heading')}</h2>
+			<h2 id="signals-heading" class="label" data-reveal>{t('signals.heading')}</h2>
 			<ul class="signals">
 				{
-					signals.map((s) => (
-						<li class="card">
+					signals.map((s, i) => (
+						<li class="card" data-reveal style={`--d: ${i * 120}ms`}>
 							<a href={s.repoUrl}>{s.title} ↗</a>
 							<p class="muted">{s.tagline}</p>
 						</li>
@@ -75,8 +75,8 @@ const resumePath = getResumePath(locale);
 		</section>
 
 		<section id="contact" aria-labelledby="contact-heading">
-			<h2 id="contact-heading" class="label">{t('contact.heading')}</h2>
-			<ul class="contacts primary">
+			<h2 id="contact-heading" class="label" data-reveal>{t('contact.heading')}</h2>
+			<ul class="contacts primary" data-reveal>
 				{
 					primaryContacts.map((c) => (
 						<li>
@@ -92,7 +92,7 @@ const resumePath = getResumePath(locale);
 					)
 				}
 			</ul>
-			<ul class="contacts secondary">
+			<ul class="contacts secondary" data-reveal style="--d: 150ms">
 				{
 					otherContacts.map((c) => (
 						<li>{c.kind !== 'email' && <a href={c.url}>{c.label}</a>}</li>
