@@ -17,7 +17,6 @@ const STEP = 14;
 const SIZE = 11;
 const TOP = 18;
 const weeks = Math.max(...cells.map((c) => c.week)) + 1;
-const dateFormat = new Intl.DateTimeFormat(localeTag, { dateStyle: 'medium', timeZone: 'UTC' });
 const monthFormat = new Intl.DateTimeFormat(localeTag, { month: 'short', timeZone: 'UTC' });
 const toDate = (d: string) => new Date(`${d}T00:00:00Z`);
 
@@ -26,12 +25,12 @@ const months = cells
 	.filter((c) => c.weekday === 0 && toDate(c.date).getUTCDate() <= 7 && c.week > 0)
 	.map((c) => ({ x: c.week * STEP, label: monthFormat.format(toDate(c.date)).replace('.', '') }));
 
-const label = (c: HeatCell) =>
-	(c.count === 1 ? labelOne : labelMany).replace('{n}', String(c.count)).replace('{date}', dateFormat.format(toDate(c.date)));
+// One shared tooltip (github-live.ts) instead of a <title> per day keeps the page ~370 nodes lighter.
 ---
 
 <figure class="heatmap" data-heatmap data-label-one={labelOne} data-label-many={labelMany}>
-	<div>
+	<div class="plot">
+		<p class="tip" data-heat-tip hidden></p>
 		<svg viewBox={`0 0 ${weeks * STEP} ${TOP + 7 * STEP}`} role="img" aria-label={summary}>
 			{
 				months.map((m) => (
@@ -50,9 +49,8 @@ const label = (c: HeatCell) =>
 						height={SIZE}
 						rx="2"
 						data-date={c.date}
-					>
-						<title>{label(c)}</title>
-					</rect>
+						data-count={c.count}
+					/>
 				))
 			}
 		</svg>
@@ -65,6 +63,26 @@ const label = (c: HeatCell) =>
 <style>
 	.heatmap {
 		margin: 0;
+	}
+
+	.plot {
+		position: relative;
+	}
+
+	.tip {
+		position: absolute;
+		z-index: 1;
+		margin: 0;
+		padding: 0.3rem 0.5rem;
+		background: var(--bg);
+		border: 1px solid var(--line);
+		border-radius: 0.35rem;
+		color: var(--fg);
+		font-family: var(--font-mono);
+		font-size: 0.7rem;
+		white-space: nowrap;
+		pointer-events: none;
+		transform: translate(-50%, calc(-100% - 6px));
 	}
 
 	/* The whole year always fits the card: the drawing scales with its width, no sideways scroll. */

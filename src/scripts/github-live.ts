@@ -143,6 +143,9 @@ function updateRadar(repos: Repo[]) {
 		if (!repo) continue;
 		const days = daysBetween(repo.pushedAt, today);
 		const { x, y } = pointAt(Number(blip.dataset.bearing), radiusForDays(days));
+		if (blip.querySelector('circle')?.getAttribute('cx') === String(x) && blip.querySelector('circle')?.getAttribute('cy') === String(y)) {
+			continue;
+		}
 		for (const circle of blip.querySelectorAll('circle')) {
 			circle.setAttribute('cx', String(x));
 			circle.setAttribute('cy', String(y));
@@ -189,13 +192,34 @@ function updateActivity(contributions: Contributions) {
 	const rects = new Map([...heatmap.querySelectorAll<SVGRectElement>('rect[data-date]')].map((r) => [r.dataset.date, r]));
 	for (const cell of heatmapCells(contributions, today())) {
 		const rect = rects.get(cell.date);
-		if (!rect) continue;
+		// Only days whose count changed since the snapshot are touched.
+		if (!rect || rect.dataset.count === String(cell.count)) continue;
 		rect.classList.remove('l0', 'l1', 'l2', 'l3', 'l4');
 		rect.classList.add(`l${cell.level}`);
-		const label = (cell.count === 1 ? heatmap.dataset.labelOne : heatmap.dataset.labelMany) ?? '';
-		const title = rect.querySelector('title');
-		if (title) title.textContent = label.replace('{n}', String(cell.count)).replace('{date}', dateFormat.format(at(cell.date)));
+		rect.dataset.count = String(cell.count);
 	}
+}
+
+// One tooltip for the whole heatmap: the day under the pointer, formatted only when needed.
+for (const heatmap of document.querySelectorAll<HTMLElement>('[data-heatmap]')) {
+	const tip = heatmap.querySelector<HTMLElement>('[data-heat-tip]');
+	const plot = tip?.parentElement;
+	if (!tip || !plot) continue;
+	heatmap.addEventListener('pointerover', (e) => {
+		const rect = (e.target as Element).closest<SVGRectElement>('rect[data-date]');
+		if (!rect?.dataset.date) return;
+		const count = Number(rect.dataset.count ?? 0);
+		const label = (count === 1 ? heatmap.dataset.labelOne : heatmap.dataset.labelMany) ?? '';
+		tip.textContent = label.replace('{n}', numberFormat.format(count)).replace('{date}', dateFormat.format(at(rect.dataset.date)));
+		const box = rect.getBoundingClientRect();
+		const area = plot.getBoundingClientRect();
+		// Kept inside the card so it never widens the page near the edges.
+		const x = Math.min(Math.max(box.left + box.width / 2 - area.left, 70), area.width - 70);
+		tip.style.left = `${x}px`;
+		tip.style.top = `${box.top - area.top}px`;
+		tip.hidden = false;
+	});
+	heatmap.addEventListener('pointerleave', () => (tip.hidden = true));
 }
 
 // ---- Recently pushed repositories (ticker and cards), rebuilt from live data with textContent ----
@@ -219,6 +243,16 @@ function updateRecent(repos: Repo[]) {
 		const variant = box.dataset.recent;
 		const list = recentRepos(repos, variant === 'ticker' ? 8 : 4);
 		if (list.length === 0) continue;
+
+		// Rebuild only when the list differs from what the build rendered (names and push dates).
+		const rendered = [...box.querySelectorAll('[data-recent-list="main"] time')].map((t) => t.getAttribute('datetime'));
+		const names = [...box.querySelectorAll('[data-recent-list="main"] .name')].map((n) => n.textContent?.replace(' ↗', ''));
+		if (
+			rendered.length === list.length &&
+			list.every((r, i) => rendered[i] === r.pushedAt && names[i] === r.name)
+		) {
+			continue;
+		}
 
 		for (const ul of box.querySelectorAll<HTMLUListElement>('[data-recent-list]')) {
 			// Scoped styles need the component's scope attribute on new nodes.
@@ -279,21 +313,27 @@ if (clock) {
 
 // ---- Load ----
 
+// Each update runs as its own idle task, so live data never blocks scrolling or input;
+// the page already shows the snapshot, so nothing is waiting on these.
+const whenIdle = (task: () => void) =>
+	'requestIdleCallback' in window ? requestIdleCallback(task, { timeout: 2000 }) : setTimeout(task, 200);
+
 function apply(data: LiveData) {
-	if (data.contributions) {
-		setCounter('contributions', data.contributions.total);
-		updateActivity(data.contributions);
+	const { contributions, profile, repos } = data;
+	if (contributions) {
+		setCounter('contributions', contributions.total);
+		whenIdle(() => updateActivity(contributions));
 	}
-	if (data.profile) setCounter('repos', data.profile.publicRepos);
-	if (data.repos) {
-		updateRadar(data.repos);
-		updateRecent(data.repos);
+	if (profile) setCounter('repos', profile.publicRepos);
+	if (repos) {
+		whenIdle(() => updateRadar(repos));
+		whenIdle(() => updateRecent(repos));
 	}
 }
 
 const cached = readCache();
 if (cached) {
-	apply(cached);
+	whenIdle(() => apply(cached));
 } else {
 	fetchLive().then((data) => {
 		apply(data);
