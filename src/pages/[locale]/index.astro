@@ -64,10 +64,10 @@ const age = (days: number | null) =>
 							{
 								radarContacts.map((c) => (
 									<li data-contact={c.id}>
-										<span class="fix">
-											{c.number} · {c.bearing}° · {age(c.days)}
-										</span>{' '}
-										<span class="title">{c.title}</span>
+										<span class="title">
+											<span class="num">{c.number}</span> {c.title}
+										</span>
+										<span class="age">{age(c.days)}</span>
 									</li>
 								))
 							}
@@ -351,32 +351,48 @@ const age = (days: number | null) =>
 	/* Radar readout inside the projects display. */
 	.contacts {
 		display: grid;
+		grid-template-columns: minmax(0, 1fr);
 		gap: 0.35rem;
+		letter-spacing: 0.02em;
 		margin: 0.25rem 0 0;
 		padding: 0;
 		list-style: none;
 		color: var(--fg-muted);
 	}
 
-	/* One line per contact so the display stays short enough to stick on laptop screens. */
+	/* One line per contact: number and name on the left, time since the last push on the right. */
 	.contacts li {
-		overflow: hidden;
+		display: flex;
+		justify-content: space-between;
+		gap: 1rem;
 		padding-left: 0.75rem;
 		border-left: 1px solid var(--line);
-		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
 
 	.contacts .title {
+		min-width: 0;
+		overflow: hidden;
 		color: var(--fg);
+		text-overflow: ellipsis;
 		text-transform: uppercase;
+	}
+
+	.contacts .num,
+	.contacts .age {
+		color: var(--fg-muted);
+	}
+
+	.contacts .age {
+		flex-shrink: 0;
 	}
 
 	.contacts li:global(.is-focus) {
 		border-left-color: var(--accent);
 	}
 
-	.contacts li:global(.is-focus) .fix {
+	.contacts li:global(.is-focus) .num,
+	.contacts li:global(.is-focus) .age {
 		color: var(--accent);
 	}
 
@@ -421,12 +437,20 @@ const age = (days: number | null) =>
 
 		.aside {
 			width: 100%;
-			max-width: 22rem;
+			max-width: 25rem;
+		}
+
+		/* The screen's drawing shrinks on shorter screens so the whole display fits while sticky;
+		   the readout keeps the full column width so project names stay readable. */
+		.aside :global([data-scope]),
+		.aside :global(.icon) {
+			max-width: clamp(12rem, calc(100vh - 28rem), 100%);
+			margin-inline: auto;
 		}
 	}
 
 	/* Only stick when the display fits on screen; otherwise it simply scrolls with its section. */
-	@media (min-width: 60rem) and (min-height: 42rem) {
+	@media (min-width: 60rem) and (min-height: 43rem) {
 		.aside {
 			position: sticky;
 			top: calc(var(--header-height) + 1.5rem);

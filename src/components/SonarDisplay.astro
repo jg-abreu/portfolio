@@ -28,6 +28,8 @@ const pad = (n: number) => String(n).padStart(2, '0');
 <style>
 	.display {
 		display: grid;
+		/* minmax(0, …) lets long single-line readouts truncate instead of widening the display. */
+		grid-template-columns: minmax(0, 1fr);
 		gap: 0.75rem;
 	}
 
@@ -44,6 +46,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
 
 	.readout {
 		display: grid;
+		grid-template-columns: minmax(0, 1fr);
 		gap: 0.5rem;
 		padding: 0.9rem 1rem;
 		font-family: var(--font-mono);
