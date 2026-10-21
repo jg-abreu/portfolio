@@ -30,6 +30,11 @@ src/
   content/projects.yaml     language-neutral project data (repo, role, order, stack)
   content/projects/<locale>/<id>.md  project text per locale; body reserved for case studies
   content/contacts.yaml     contact channels (https links only)
+  content/about/<locale>.md about paragraphs and "in progress" list per locale
+  content/stack.yaml        stack groups (names translated as stack.<id> in ui.ts)
+  lib/activity.ts           contribution stats, year heatmap layout, recent repos (shared by build and browser)
+  components/Heatmap.astro      year of contributions, one square per day
+  components/RecentRepos.astro  recently pushed repos as cards or as the hero ticker
   lib/content.ts            merges and cross-checks content; fails the build if locales diverge
   lib/github-data.ts        endpoints, types and validators for GitHub/LeetCode data (shared by build and browser)
   lib/github.ts             reads and revalidates the snapshot at build time (null parts = no data, never invented)
