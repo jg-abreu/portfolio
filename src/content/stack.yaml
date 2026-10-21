@@ -1,0 +1,22 @@
+# Technologies João has used in public repositories, grouped. Group names are translated in
+# src/i18n/ui.ts (stack.<id>); the items are proper names and stay the same in every locale.
+
+- id: backend
+  order: 0
+  items: [Java, Spring Boot, Spring Data JPA, Hibernate, Bean Validation]
+
+- id: data
+  order: 1
+  items: [PostgreSQL, MySQL, Flyway]
+
+- id: testing
+  order: 2
+  items: [JUnit 5, Mockito]
+
+- id: tooling
+  order: 3
+  items: [Docker, GitHub Actions, Maven, Git, nginx]
+
+- id: also
+  order: 4
+  items: [React, TypeScript, JavaScript, Python]

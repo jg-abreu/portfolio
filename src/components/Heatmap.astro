@@ -1,0 +1,139 @@
+---
+import type { HeatCell } from '../lib/activity';
+
+interface Props {
+	cells: HeatCell[];
+	today: string;
+	localeTag: string;
+	/** Tooltip templates with {n} and {date}. */
+	labelOne: string;
+	labelMany: string;
+	summary: string;
+}
+
+const { cells, today, localeTag, labelOne, labelMany, summary } = Astro.props;
+
+const STEP = 14;
+const SIZE = 11;
+const TOP = 18;
+const weeks = Math.max(...cells.map((c) => c.week)) + 1;
+const monthFormat = new Intl.DateTimeFormat(localeTag, { month: 'short', timeZone: 'UTC' });
+const toDate = (d: string) => new Date(`${d}T00:00:00Z`);
+
+// A month label above the first week whose Sunday falls in that month's first seven days.
+const months = cells
+	.filter((c) => c.weekday === 0 && toDate(c.date).getUTCDate() <= 7 && c.week > 0)
+	.map((c) => ({ x: c.week * STEP, label: monthFormat.format(toDate(c.date)).replace('.', '') }));
+
+// One shared tooltip (github-live.ts) instead of a <title> per day keeps the page ~370 nodes lighter.
+---
+
+<figure class="heatmap" data-heatmap data-label-one={labelOne} data-label-many={labelMany}>
+	<div class="plot">
+		<p class="tip" data-heat-tip hidden></p>
+		<svg viewBox={`0 0 ${weeks * STEP} ${TOP + 7 * STEP}`} role="img" aria-label={summary}>
+			{
+				months.map((m) => (
+					<text class="month" x={m.x} y="11">
+						{m.label}
+					</text>
+				))
+			}
+			{
+				cells.map((c) => (
+					<rect
+						class:list={[`l${c.level}`, { today: c.date === today }]}
+						x={c.week * STEP}
+						y={TOP + c.weekday * STEP}
+						width={SIZE}
+						height={SIZE}
+						rx="2"
+						data-date={c.date}
+						data-count={c.count}
+					/>
+				))
+			}
+		</svg>
+	</div>
+	<figcaption>
+		<slot />
+	</figcaption>
+</figure>
+
+<style>
+	.heatmap {
+		margin: 0;
+	}
+
+	.plot {
+		position: relative;
+	}
+
+	.tip {
+		position: absolute;
+		z-index: 1;
+		margin: 0;
+		padding: 0.3rem 0.5rem;
+		background: var(--bg);
+		border: 1px solid var(--line);
+		border-radius: 0.35rem;
+		color: var(--fg);
+		font-family: var(--font-mono);
+		font-size: 0.7rem;
+		white-space: nowrap;
+		pointer-events: none;
+		transform: translate(-50%, calc(-100% - 6px));
+	}
+
+	/* The whole year always fits the card: the drawing scales with its width, no sideways scroll. */
+	svg {
+		display: block;
+		width: 100%;
+		height: auto;
+	}
+
+	.month {
+		fill: var(--fg-muted);
+		font-family: var(--font-mono);
+		font-size: 10px;
+	}
+
+	rect {
+		stroke: var(--bg);
+		stroke-width: 0.5;
+	}
+
+	.l0 {
+		fill: var(--surface);
+		stroke: var(--line);
+	}
+
+	.l1 {
+		fill: color-mix(in srgb, var(--accent) 30%, var(--bg));
+	}
+
+	.l2 {
+		fill: color-mix(in srgb, var(--accent) 55%, var(--bg));
+	}
+
+	.l3 {
+		fill: color-mix(in srgb, var(--accent) 78%, var(--bg));
+	}
+
+	.l4 {
+		fill: var(--accent);
+	}
+
+	.today {
+		stroke: var(--fg);
+		stroke-width: 1.5;
+	}
+
+	figcaption {
+		margin-top: 0.5rem;
+		color: var(--fg-muted);
+		font-family: var(--font-mono);
+		font-size: 0.7rem;
+		letter-spacing: 0.08em;
+	}
+</style>

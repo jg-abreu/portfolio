@@ -63,6 +63,21 @@ export async function getProjects(locale: Locale): Promise<Project[]> {
 		.sort((a, b) => a.order - b.order);
 }
 
+/** About text in the given locale; throws (failing the build) if any locale is missing its file. */
+export async function getAbout(locale: Locale): Promise<CollectionEntry<'about'>['data']> {
+	const entries = await getCollection('about');
+	const missing = locales.filter((l) => !entries.some((e) => e.id === l));
+	if (missing.length > 0) throw new Error(`About text missing: ${missing.map((l) => `src/content/about/${l}.md`).join(', ')}`);
+	return entries.find((e) => e.id === locale)!.data;
+}
+
+export type StackGroup = CollectionEntry<'stack'>['data'] & { id: string };
+
+export async function getStack(): Promise<StackGroup[]> {
+	const groups = await getCollection('stack');
+	return groups.map(({ id, data }) => ({ ...data, id })).sort((a, b) => a.order - b.order);
+}
+
 export async function getContacts(): Promise<Contact[]> {
 	const contacts = await getCollection('contacts');
 	return contacts.map(({ id, data }) => ({ ...data, id })).sort((a, b) => a.order - b.order);

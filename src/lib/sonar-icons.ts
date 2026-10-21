@@ -4,7 +4,7 @@
  * every grid point that satisfies it becomes a dot with its own scatter offset and delay, so the
  * icon can assemble when its section arrives and dissolve when it leaves.
  */
-export type SonarIconName = 'dial' | 'antenna';
+export type SonarIconName = 'dial' | 'antenna' | 'anchor' | 'bars' | 'pulse';
 
 export interface SonarDot {
 	x: number;
@@ -31,7 +31,49 @@ function distanceToHand(u: number, v: number, bearing: number, len: number) {
 	return Math.hypot(u - hx * t, v - hy * t);
 }
 
+/** Distance from (u, v) to a polyline through `points`. */
+function distanceToPolyline(u: number, v: number, points: [number, number][]) {
+	let best = Infinity;
+	for (let i = 1; i < points.length; i++) {
+		const [ax, ay] = points[i - 1];
+		const [bx, by] = points[i];
+		const dx = bx - ax;
+		const dy = by - ay;
+		const t = Math.max(0, Math.min(1, ((u - ax) * dx + (v - ay) * dy) / (dx * dx + dy * dy)));
+		best = Math.min(best, Math.hypot(u - ax - t * dx, v - ay - t * dy));
+	}
+	return best;
+}
+
+const PULSE: [number, number][] = [
+	[-0.95, 0],
+	[-0.4, 0],
+	[-0.25, 0.45],
+	[-0.08, -0.6],
+	[0.12, 0.8],
+	[0.3, 0],
+	[0.95, 0],
+];
+
 const icons: Record<SonarIconName, (u: number, v: number) => boolean> = {
+	// "About": an anchor, for the path that started with the Naval Academy exam.
+	anchor(u, v) {
+		const ring = Math.abs(Math.hypot(u, v - 0.66) - 0.13) < 0.05;
+		const shank = Math.abs(u) < 0.05 && v > -0.72 && v < 0.52;
+		const stock = Math.abs(v - 0.36) < 0.05 && Math.abs(u) < 0.34;
+		const arms = Math.abs(Math.hypot(u, v + 0.02) - 0.7) < 0.05 && v < -0.3;
+		const flukes = Math.abs(v + 0.32) < 0.06 && Math.abs(Math.abs(u) - 0.66) < 0.1;
+		return ring || shank || stock || arms || flukes;
+	},
+	// "Stack": instrument bars, like signal strength meters.
+	bars(u, v) {
+		const heights = [0.55, 1.05, 0.75, 1.35, 0.9];
+		return heights.some((h, i) => Math.abs(u - (i - 2) * 0.34) < 0.09 && v > -0.75 && v < -0.75 + h);
+	},
+	// "Activity": a sonar return pulse.
+	pulse(u, v) {
+		return distanceToPolyline(u, v, PULSE) < 0.06;
+	},
 	// "Time on patrol": a dial with hour ticks and one hand.
 	dial(u, v) {
 		const r = Math.hypot(u, v);
