@@ -20,6 +20,7 @@ import {
 	type Profile,
 	type Repo,
 } from '../lib/github-data';
+import { activityStats, heatmapCells, recentRepos } from '../lib/activity';
 import { pointAt, radiusForDays } from '../lib/radar-geometry';
 
 interface LiveData {
@@ -146,12 +147,139 @@ function updateRadar(repos: Repo[]) {
 	}
 }
 
+// ---- Activity: statistics and heatmap ----
+
+const today = () => new Date().toISOString().slice(0, 10);
+const dateFormat = new Intl.DateTimeFormat(root.lang || undefined, { dateStyle: 'medium', timeZone: 'UTC' });
+const shortDate = new Intl.DateTimeFormat(root.lang || undefined, { day: '2-digit', month: 'short', timeZone: 'UTC' });
+const at = (d: string) => new Date(`${d}T00:00:00Z`);
+
+function updateActivity(contributions: Contributions) {
+	const stats = activityStats(contributions, today());
+	const box = document.querySelector<HTMLElement>('[data-activity-stats]');
+	const days = (n: number) => {
+		const source = document.querySelector<HTMLElement>('[data-day-one]');
+		return (n === 1 ? source?.dataset.dayOne : source?.dataset.dayMany)?.replace('{n}', String(n)) ?? String(n);
+	};
+	const set = (name: string, value: string) => {
+		const el = box?.querySelector<HTMLElement>(`[data-stat="${name}"]`);
+		if (el) el.textContent = value;
+	};
+	set('total', numberFormat.format(stats.total));
+	set('activeDays', numberFormat.format(stats.activeDays));
+	set('currentStreak', days(stats.currentStreak));
+	set('longestStreak', days(stats.longestStreak));
+	if (stats.bestDay) {
+		set('bestCount', numberFormat.format(stats.bestDay.count));
+		set('bestDate', dateFormat.format(at(stats.bestDay.date)));
+	}
+
+	// Same layout as the build, so cells are matched by date; days not drawn yet are skipped.
+	const heatmap = document.querySelector<HTMLElement>('[data-heatmap]');
+	if (!heatmap) return;
+	const rects = new Map([...heatmap.querySelectorAll<SVGRectElement>('rect[data-date]')].map((r) => [r.dataset.date, r]));
+	for (const cell of heatmapCells(contributions, today())) {
+		const rect = rects.get(cell.date);
+		if (!rect) continue;
+		rect.classList.remove('l0', 'l1', 'l2', 'l3', 'l4');
+		rect.classList.add(`l${cell.level}`);
+		const label = (cell.count === 1 ? heatmap.dataset.labelOne : heatmap.dataset.labelMany) ?? '';
+		const title = rect.querySelector('title');
+		if (title) title.textContent = label.replace('{n}', String(cell.count)).replace('{date}', dateFormat.format(at(cell.date)));
+	}
+}
+
+// ---- Recently pushed repositories (ticker and cards), rebuilt from live data with textContent ----
+
+function element<K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string) {
+	const el = document.createElement(tag);
+	if (className) el.className = className;
+	if (text !== undefined) el.textContent = text;
+	return el;
+}
+
+function updateRecent(repos: Repo[]) {
+	for (const box of document.querySelectorAll<HTMLElement>('[data-recent]')) {
+		let descriptions: Record<string, string> = {};
+		try {
+			descriptions = JSON.parse(box.dataset.descriptions ?? '{}');
+		} catch {
+			descriptions = {};
+		}
+		const describe = (r: Repo) => (typeof descriptions[r.name] === 'string' ? descriptions[r.name] : (r.description ?? ''));
+		const variant = box.dataset.recent;
+		const list = recentRepos(repos, variant === 'ticker' ? 8 : 4);
+		if (list.length === 0) continue;
+
+		for (const ul of box.querySelectorAll<HTMLUListElement>('[data-recent-list]')) {
+			// Scoped styles need the component's scope attribute on new nodes.
+			const scope = [...ul.attributes].find((a) => a.name.startsWith('data-astro-cid-'))?.name;
+			const items = list.map((r) => {
+				const time = element('time', undefined, variant === 'ticker' ? shortDate.format(at(r.pushedAt)) : dateFormat.format(at(r.pushedAt)));
+				time.dateTime = r.pushedAt;
+				let li: HTMLLIElement;
+				if (variant === 'ticker') {
+					li = element('li');
+					li.append(time, element('span', 'name', r.name), element('span', 'desc', describe(r)));
+				} else {
+					li = element('li', 'card');
+					const link = element('a', 'name', `${r.name} ↗`);
+					link.href = r.url; // validated https URL
+					const meta = element('p', 'meta');
+					if (r.language) meta.append(element('span', undefined, r.language));
+					const pushed = element('span', undefined, `${box.dataset.pushedLabel ?? ''} `);
+					pushed.append(time);
+					meta.append(pushed);
+					li.append(link, element('p', 'desc', describe(r)), meta);
+				}
+				if (scope) for (const el of [li, ...li.querySelectorAll('*')]) el.setAttribute(scope, '');
+				return li;
+			});
+			ul.replaceChildren(...items);
+		}
+	}
+}
+
+// ---- Ticker pause button (moving content must be pausable) ----
+
+for (const button of document.querySelectorAll<HTMLButtonElement>('[data-ticker-toggle]')) {
+	button.addEventListener('click', () => {
+		const ticker = button.closest<HTMLElement>('[data-recent]');
+		const paused = ticker?.classList.toggle('is-paused') ?? false;
+		button.setAttribute('aria-pressed', String(paused));
+		button.textContent = (paused ? button.dataset.play : button.dataset.pause) ?? '';
+	});
+}
+
+// ---- Local time in Rio de Janeiro ----
+
+const clock = document.querySelector<HTMLTimeElement>('[data-clock]');
+if (clock) {
+	const format = new Intl.DateTimeFormat(root.lang || undefined, {
+		hour: '2-digit',
+		minute: '2-digit',
+		timeZone: 'America/Sao_Paulo',
+	});
+	const tick = () => {
+		clock.textContent = format.format(new Date());
+	};
+	tick();
+	clock.closest<HTMLElement>('[data-clock-line]')?.removeAttribute('hidden');
+	setInterval(tick, 30_000);
+}
+
 // ---- Load ----
 
 function apply(data: LiveData) {
-	if (data.contributions) setCounter('contributions', data.contributions.total);
+	if (data.contributions) {
+		setCounter('contributions', data.contributions.total);
+		updateActivity(data.contributions);
+	}
 	if (data.profile) setCounter('repos', data.profile.publicRepos);
-	if (data.repos) updateRadar(data.repos);
+	if (data.repos) {
+		updateRadar(data.repos);
+		updateRecent(data.repos);
+	}
 }
 
 const cached = readCache();

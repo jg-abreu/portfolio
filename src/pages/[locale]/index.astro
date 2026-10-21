@@ -1,10 +1,13 @@
 ---
 import Base from '../../layouts/Base.astro';
+import Heatmap from '../../components/Heatmap.astro';
 import RadarScope from '../../components/RadarScope.astro';
+import RecentRepos from '../../components/RecentRepos.astro';
 import SonarDisplay from '../../components/SonarDisplay.astro';
 import SonarIcon from '../../components/SonarIcon.astro';
-import { localeTags, locales, useTranslations, type Locale } from '../../i18n/ui';
-import { getContacts, getProjects, getResumePath, obfuscatedMailto } from '../../lib/content';
+import { localeTags, locales, useTranslations, type Locale, type UiKey } from '../../i18n/ui';
+import { activityStats, heatmapCells, recentRepos } from '../../lib/activity';
+import { getAbout, getContacts, getProjects, getResumePath, getStack, obfuscatedMailto } from '../../lib/content';
 import { getGitHubSnapshot } from '../../lib/github';
 import { LEETCODE_USER } from '../../lib/github-data';
 import { toRadarContacts } from '../../lib/radar';
@@ -16,7 +19,7 @@ export function getStaticPaths() {
 const locale = Astro.params.locale as Locale;
 const t = useTranslations(locale);
 
-// Full sections (about, stack, activity) arrive in stage 8; each gets its own sonar display.
+// Each section after the hero has its own sonar display, numbered in page order.
 const projects = await getProjects(locale);
 const workProjects = projects.filter((p) => p.role !== 'signal');
 const signals = projects.filter((p) => p.role === 'signal');
@@ -34,8 +37,26 @@ const dateFormat = new Intl.DateTimeFormat(localeTags[locale], { dateStyle: 'med
 const contributionsTotal = snapshot?.contributions?.total ?? null;
 const publicRepos = snapshot?.profile?.publicRepos ?? null;
 const leetcode = snapshot?.leetcode ?? null;
+const localeTag = localeTags[locale];
 
-const SECTION_COUNT = 3;
+const about = await getAbout(locale);
+const stack = (await getStack()).map((g) => {
+	const label = t(`stack.${g.id}` as UiKey);
+	if (!label) throw new Error(`Missing UI string stack.${g.id} for the stack group in src/content/stack.yaml`);
+	return { ...g, label };
+});
+const instrumentCount = stack.reduce((n, g) => n + g.items.length, 0);
+
+// Activity: statistics and heatmap as of the snapshot day; the browser recomputes them live.
+const today = snapshot?.generatedAt ?? '';
+const contributions = snapshot?.contributions ?? null;
+const stats = contributions ? activityStats(contributions, today) : null;
+const cells = contributions ? heatmapCells(contributions, today) : [];
+const recent = snapshot?.repos ? recentRepos(snapshot.repos, 8) : [];
+// Repo descriptions in the page's language where the project has its own text.
+const descriptions = Object.fromEntries(projects.map((p) => [p.repo, p.tagline]));
+
+const SECTION_COUNT = 6;
 const count = (key: Parameters<typeof t>[0], n: number) => t(key).replace('{n}', String(n));
 const dayCount = (n: number) => (n === 1 ? t('leetcode.day') : count('leetcode.days', n));
 const age = (days: number | null) =>
@@ -71,9 +92,24 @@ const age = (days: number | null) =>
 				<p class="caption" aria-hidden="true">
 					<span class="accent">{t('radar.active')}</span>
 					<span>{t('panel.position')}</span>
+					<span data-clock-line hidden>{t('clock.label')} <time data-clock></time></span>
 				</p>
 			</div>
 		</section>
+
+		{
+			recent.length > 0 && (
+				<RecentRepos
+					variant="ticker"
+					repos={recent}
+					descriptions={descriptions}
+					localeTag={localeTag}
+					pushedLabel={t('activity.pushed')}
+					pauseLabel={t('ticker.pause')}
+					playLabel={t('ticker.play')}
+				/>
+			)
+		}
 
 		<section id="projects" class="split" aria-labelledby="projects-heading">
 			<div class="aside">
@@ -142,10 +178,172 @@ const age = (days: number | null) =>
 			</div>
 		</section>
 
-		<section id="signals" class="split" aria-labelledby="signals-heading">
+		<section id="about" class="split" aria-labelledby="about-heading">
 			<div class="aside">
 				<SonarDisplay
 					index={2}
+					total={SECTION_COUNT}
+					sectionWord={t('display.section')}
+					label={t('nav.about')}
+					detail={t('display.about')}
+				>
+					<SonarIcon name="anchor" />
+				</SonarDisplay>
+			</div>
+			<div class="body">
+				<p class="label" data-reveal>02 · {t('about.heading')}</p>
+				<h2 id="about-heading" data-split>{t('about.title')}</h2>
+				{
+					about.paragraphs.map((p) => (
+						<p class="lead" data-reveal>
+							{p}
+						</p>
+					))
+				}
+				<div class="card now" data-reveal>
+					<h3 class="label">{t('about.now')}</h3>
+					<ul>
+						{about.now.map((item) => <li>{item}</li>)}
+					</ul>
+				</div>
+			</div>
+		</section>
+
+		<section id="stack" class="split" aria-labelledby="stack-heading">
+			<div class="aside">
+				<SonarDisplay
+					index={3}
+					total={SECTION_COUNT}
+					sectionWord={t('display.section')}
+					label={t('nav.stack')}
+					detail={count('display.stack', instrumentCount)}
+				>
+					<SonarIcon name="bars" />
+				</SonarDisplay>
+			</div>
+			<div class="body">
+				<p class="label" data-reveal>03 · {t('stack.heading')}</p>
+				<h2 id="stack-heading" data-split>{t('stack.title')}</h2>
+				<div class="stack-groups">
+					{
+						stack.map((g, i) => (
+							<div class="card" data-reveal style={`--d: ${(i % 2) * 120}ms`}>
+								<h3>{g.label}</h3>
+								<ul class="stack">
+									{g.items.map((item) => (
+										<li>{item}</li>
+									))}
+								</ul>
+							</div>
+						))
+					}
+				</div>
+			</div>
+		</section>
+
+		<section id="activity" class="split" aria-labelledby="activity-heading">
+			<div class="aside">
+				<SonarDisplay
+					index={4}
+					total={SECTION_COUNT}
+					sectionWord={t('display.section')}
+					label={t('nav.activity')}
+					detail={stats ? count('display.activity', stats.activeDays) : t('radar.noData')}
+				>
+					<SonarIcon name="pulse" />
+				</SonarDisplay>
+			</div>
+			<div class="body">
+				<p class="label" data-reveal>04 · {t('activity.heading')}</p>
+				<h2 id="activity-heading" data-split>{t('activity.title')}</h2>
+				{
+					stats ? (
+						<>
+							<dl
+								class="readings activity-stats"
+								data-reveal
+								data-activity-stats
+								data-day-one={t('leetcode.day')}
+								data-day-many={t('leetcode.days')}
+							>
+								<div>
+									<dt>{t('activity.total')}</dt>
+									<dd>
+										<strong data-stat="total">{numberFormat.format(stats.total)}</strong>
+									</dd>
+								</div>
+								<div>
+									<dt>{t('activity.activeDays')}</dt>
+									<dd>
+										<strong data-stat="activeDays">{numberFormat.format(stats.activeDays)}</strong>
+									</dd>
+								</div>
+								<div>
+									<dt>{t('activity.currentStreak')}</dt>
+									<dd>
+										<strong data-stat="currentStreak">{dayCount(stats.currentStreak)}</strong>
+									</dd>
+								</div>
+								<div>
+									<dt>{t('activity.longestStreak')}</dt>
+									<dd>
+										<strong data-stat="longestStreak">{dayCount(stats.longestStreak)}</strong>
+									</dd>
+								</div>
+								{stats.bestDay && (
+									<div>
+										<dt>{t('activity.bestDay')}</dt>
+										<dd>
+											<strong data-stat="bestCount">{numberFormat.format(stats.bestDay.count)}</strong>
+											<span data-stat="bestDate">
+												{dateFormat.format(new Date(`${stats.bestDay.date}T00:00:00Z`))}
+											</span>
+										</dd>
+									</div>
+								)}
+							</dl>
+							<div class="card heat-card" data-reveal>
+								<Heatmap
+									cells={cells}
+									today={today}
+									localeTag={localeTag}
+									labelOne={t('activity.cellOne')}
+									labelMany={t('activity.cellMany')}
+									summary={t('activity.summary')}
+								>
+									{t('activity.legend')}
+								</Heatmap>
+							</div>
+						</>
+					) : (
+						<p class="muted">{t('activity.noData')}</p>
+					)
+				}
+				{
+					recent.length > 0 && (
+						<>
+							<h3 class="label recent-title" data-reveal>
+								{t('activity.recent')}
+							</h3>
+							<div data-reveal>
+								<RecentRepos
+									variant="cards"
+									repos={recent.slice(0, 4)}
+									descriptions={descriptions}
+									localeTag={localeTag}
+									pushedLabel={t('activity.pushed')}
+								/>
+							</div>
+						</>
+					)
+				}
+			</div>
+		</section>
+
+		<section id="signals" class="split" aria-labelledby="signals-heading">
+			<div class="aside">
+				<SonarDisplay
+					index={5}
 					total={SECTION_COUNT}
 					sectionWord={t('display.section')}
 					label={t('nav.signals')}
@@ -155,7 +353,7 @@ const age = (days: number | null) =>
 				</SonarDisplay>
 			</div>
 			<div class="body">
-				<p class="label" data-reveal>02 · {t('signals.heading')}</p>
+				<p class="label" data-reveal>05 · {t('signals.heading')}</p>
 				<h2 id="signals-heading" data-split>{t('signals.title')}</h2>
 				<ul class="signals">
 					{
@@ -219,7 +417,7 @@ const age = (days: number | null) =>
 		<section id="contact" class="split" aria-labelledby="contact-heading">
 			<div class="aside">
 				<SonarDisplay
-					index={3}
+					index={6}
 					total={SECTION_COUNT}
 					sectionWord={t('display.section')}
 					label={t('nav.contact')}
@@ -229,7 +427,7 @@ const age = (days: number | null) =>
 				</SonarDisplay>
 			</div>
 			<div class="body">
-				<p class="label" data-reveal>03 · {t('contact.heading')}</p>
+				<p class="label" data-reveal>06 · {t('contact.heading')}</p>
 				<h2 id="contact-heading" data-split>{t('contact.title')}</h2>
 				<ul class="contact-list primary" data-reveal>
 					{
@@ -300,8 +498,10 @@ const age = (days: number | null) =>
 	}
 
 	/* Section: sticky sonar display on the left that leaves with its section, content on the right. */
+	/* minmax(0, …): wide content (the year heatmap) scrolls inside its card instead of widening the page. */
 	.split {
 		display: grid;
+		grid-template-columns: minmax(0, 1fr);
 		gap: 2rem;
 		padding-block: 5rem;
 	}
@@ -409,6 +609,53 @@ const age = (days: number | null) =>
 
 	.signals .muted {
 		margin: 0.25rem 0 0;
+	}
+
+	.lead {
+		margin: 0 0 1.25rem;
+		font-size: 1.1rem;
+		line-height: 1.7;
+	}
+
+	.now ul {
+		display: grid;
+		gap: 0.5rem;
+		margin: 0;
+		padding-left: 1.1rem;
+	}
+
+	.now li::marker {
+		color: var(--accent);
+	}
+
+	.stack-groups {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+		gap: 1rem;
+	}
+
+	.stack-groups .card {
+		margin: 0;
+	}
+
+	.stack-groups h3 {
+		font-size: 1rem;
+	}
+
+	.stack-groups .stack {
+		margin-bottom: 0;
+	}
+
+	.activity-stats {
+		margin: 0 0 1.25rem;
+	}
+
+	.heat-card {
+		margin-top: 0;
+	}
+
+	.recent-title {
+		margin-top: 2rem;
 	}
 
 	/* Hero counters: real numbers from the snapshot, refreshed live. */
@@ -586,7 +833,7 @@ const age = (days: number | null) =>
 		}
 
 		.split {
-			grid-template-columns: minmax(18rem, 5fr) 7fr;
+			grid-template-columns: minmax(18rem, 5fr) minmax(0, 7fr);
 			gap: 4rem;
 			align-items: start;
 		}
