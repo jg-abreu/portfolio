@@ -10,8 +10,9 @@ const patternId = `sonar-grid-${Astro.props.name}`;
 
 // A sonar ping crosses the icon every PERIOD: each dot flares when the wave reaches it,
 // so its delay grows with the distance from the center (the wave takes WAVE_MS to the edge).
-const PERIOD = 5;
-const WAVE_MS = 1100;
+const PERIOD = 3;
+// The ring reaches the edge at 30% of the period (see @keyframes wave), so the dots follow it.
+const WAVE_MS = PERIOD * 300;
 const waveDelay = (x: number, y: number) => Math.round((Math.hypot(x - 200, y - 200) / 200) * WAVE_MS);
 ---
 
