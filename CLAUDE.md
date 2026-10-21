@@ -26,14 +26,20 @@ When a decision is needed, ask **one question at a time**.
 
 ```
 src/
-  i18n/ui.ts          UI strings per locale; English defines the shape
-  layouts/Base.astro  <html lang>, hreflang, Open Graph, language switch
-  pages/index.astro   redirects / to /en/ (static fallback)
-  pages/[locale]/     pages, generated for every locale
-public/               static files copied as-is
+  content.config.ts         content collections and their schemas
+  content/projects.yaml     language-neutral project data (repo, role, order, stack)
+  content/projects/<locale>/<id>.md  project text per locale; body reserved for case studies
+  content/contacts.yaml     contact channels (https links only)
+  lib/content.ts            merges and cross-checks content; fails the build if locales diverge
+  i18n/ui.ts                UI strings per locale; English defines the shape
+  layouts/Base.astro        <html lang>, hreflang, Open Graph, language switch
+  pages/index.astro         redirects / to /en/ (static fallback)
+  pages/[locale]/           pages, generated for every locale
+public/                     static files copied as-is
+  cv/joao-abreu-cv-<locale>.pdf  résumé; the link appears only when the file exists
 ```
 
-Planned: content data per locale in `src/content/` (stage 4); `deploy/` and `.github/workflows/` (written by João).
+Planned: `deploy/` and `.github/workflows/` (written by João).
 
 ## Internationalization
 
