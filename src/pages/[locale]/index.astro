@@ -10,30 +10,33 @@ export function getStaticPaths() {
 const locale = Astro.params.locale as Locale;
 const t = useTranslations(locale);
 
-// Plain rendering of the content data until the real layout (stage 5) and sections (stage 8).
+// Content in the new layout; the full sections (radar contacts, activity, etc.) arrive in stage 8.
 const projects = await getProjects(locale);
 const workProjects = projects.filter((p) => p.role !== 'signal');
 const signals = projects.filter((p) => p.role === 'signal');
 const contacts = await getContacts();
+const primaryContacts = contacts.filter((c) => c.primary);
+const otherContacts = contacts.filter((c) => !c.primary);
 const resumePath = getResumePath(locale);
 ---
 
 <Base>
-	<main>
+	<main id="main">
 		<section class="hero">
-			<p class="status">{t('home.status')}</p>
+			<p class="label">{t('home.status')}</p>
 			<h1>{t('home.heading')}</h1>
-			<p>{t('home.body')}</p>
+			<p class="role">{t('home.role')}</p>
+			<p class="muted">{t('home.body')}</p>
 		</section>
 
-		<section aria-labelledby="projects-heading">
-			<h2 id="projects-heading">{t('projects.heading')}</h2>
+		<section id="projects" aria-labelledby="projects-heading">
+			<h2 id="projects-heading" class="label">{t('projects.heading')}</h2>
 			{
 				workProjects.map((p) => (
-					<article>
-						{p.role === 'featured' && <p class="tag">{t('projects.featured')}</p>}
+					<article class:list={['card', { featured: p.role === 'featured' }]}>
+						{p.role === 'featured' && <p class="label">{t('projects.featured')}</p>}
 						<h3>{p.title}</h3>
-						<p>{p.tagline}</p>
+						<p class="muted">{p.tagline}</p>
 						<h4>{t('projects.problem')}</h4>
 						<p>{p.problem}</p>
 						<h4>{t('projects.decisions')}</h4>
@@ -44,42 +47,56 @@ const resumePath = getResumePath(locale);
 						</ul>
 						<h4>{t('projects.result')}</h4>
 						<p>{p.result}</p>
-						<p class="stack">{p.stack.join(' · ')}</p>
-						<a href={p.repoUrl}>{t('projects.repo')}</a>
+						<ul class="stack" aria-label={t('projects.stack')}>
+							{p.stack.map((s) => (
+								<li>{s}</li>
+							))}
+						</ul>
+						<a class="repo" href={p.repoUrl}>
+							{t('projects.repo')} ↗
+						</a>
 					</article>
 				))
 			}
 		</section>
 
-		<section aria-labelledby="signals-heading">
-			<h2 id="signals-heading">{t('signals.heading')}</h2>
-			<ul>
+		<section id="signals" aria-labelledby="signals-heading">
+			<h2 id="signals-heading" class="label">{t('signals.heading')}</h2>
+			<ul class="signals">
 				{
 					signals.map((s) => (
-						<li>
-							<a href={s.repoUrl}>{s.title}</a>: {s.tagline}
+						<li class="card">
+							<a href={s.repoUrl}>{s.title} ↗</a>
+							<p class="muted">{s.tagline}</p>
 						</li>
 					))
 				}
 			</ul>
 		</section>
 
-		<section aria-labelledby="contact-heading">
-			<h2 id="contact-heading">{t('contact.heading')}</h2>
-			<ul>
+		<section id="contact" aria-labelledby="contact-heading">
+			<h2 id="contact-heading" class="label">{t('contact.heading')}</h2>
+			<ul class="contacts primary">
 				{
-					contacts.map((c) => (
-						<li class={c.primary ? 'primary' : undefined}>
+					primaryContacts.map((c) => (
+						<li>
 							{c.kind === 'email' ? <Fragment set:html={obfuscatedMailto(c.address)} /> : <a href={c.url}>{c.label}</a>}
 						</li>
 					))
 				}
 				{
 					resumePath && (
-						<li class="primary">
+						<li>
 							<a href={resumePath}>{t('contact.resume')}</a>
 						</li>
 					)
+				}
+			</ul>
+			<ul class="contacts secondary">
+				{
+					otherContacts.map((c) => (
+						<li>{c.kind !== 'email' && <a href={c.url}>{c.label}</a>}</li>
+					))
 				}
 			</ul>
 		</section>
@@ -88,43 +105,132 @@ const resumePath = getResumePath(locale);
 
 <style>
 	main {
-		max-width: 44rem;
-		margin: 0 auto;
-		padding: 0 1rem 4rem;
+		max-width: 46rem;
+		padding: 0 1rem 5rem;
 		overflow-wrap: anywhere;
 	}
 
-	.hero {
-		display: grid;
-		place-content: center;
-		min-height: 60vh;
-		text-align: center;
+	section {
+		padding-top: 3rem;
 	}
 
-	.status,
-	.tag,
-	.stack {
-		margin: 0;
+	.hero {
+		padding-block: 4rem 2rem;
+	}
+
+	.label {
+		margin: 0 0 1rem;
 		color: var(--accent);
 		font-family: var(--font-mono);
 		font-size: 0.75rem;
+		font-weight: 400;
 		letter-spacing: 0.15em;
+		text-transform: uppercase;
 	}
 
 	h1 {
-		margin: 0.5rem 0;
-		font-size: clamp(2rem, 8vw, 3.5rem);
+		margin: 0;
+		font-size: clamp(2.25rem, 7vw, 3.75rem);
+		font-weight: 700;
+		letter-spacing: -0.02em;
+		line-height: 1.1;
 	}
 
-	article {
-		margin-block: 2rem;
+	.role {
+		margin: 0.75rem 0 0;
+		font-size: 1.15rem;
+	}
+
+	.muted {
+		color: var(--fg-muted);
+	}
+
+	.card {
+		margin-block: 1.25rem;
+		padding: 1.5rem;
+		background: var(--surface);
+		border: 1px solid var(--line);
+		border-radius: 0.5rem;
+	}
+
+	.featured {
+		border-color: var(--accent);
+	}
+
+	h3 {
+		margin: 0;
+		font-size: 1.35rem;
 	}
 
 	h4 {
-		margin-block: 1rem 0.25rem;
+		margin: 1.25rem 0 0.25rem;
+		color: var(--fg-muted);
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+		font-weight: 400;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
 	}
 
-	.primary {
+	h4 + p {
+		margin-top: 0;
+	}
+
+	.stack {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		margin: 1.25rem 0;
+		padding: 0;
+		list-style: none;
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+	}
+
+	.stack li {
+		padding: 0.15rem 0.5rem;
+		border: 1px solid var(--line);
+		border-radius: 999px;
+		color: var(--fg-muted);
+	}
+
+	.repo {
+		font-family: var(--font-mono);
+		font-size: 0.85rem;
+	}
+
+	.signals {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.signals .muted {
+		margin: 0.25rem 0 0;
+	}
+
+	.contacts {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.75rem 1.5rem;
+		margin: 0 0 1rem;
+		padding: 0;
+		list-style: none;
+	}
+
+	.contacts.primary {
+		font-size: 1.1rem;
 		font-weight: 600;
+	}
+
+	.contacts.secondary {
+		font-family: var(--font-mono);
+		font-size: 0.85rem;
+	}
+
+	@media (min-width: 60rem) {
+		main {
+			padding-inline: 2rem;
+		}
 	}
 </style>
