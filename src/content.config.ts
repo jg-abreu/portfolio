@@ -16,6 +16,9 @@ const projects = defineCollection({
 		order: z.int().nonnegative(),
 		stack: z.array(z.string().min(1)).min(1),
 		homepage: httpsUrl.optional(),
+		caseStudy: z.boolean().default(false),
+		// File name in src/assets/case-studies/; src/lib/content.ts checks that it exists.
+		cover: z.string().regex(/^[\w-]+\.(png|jpe?g|webp)$/).optional(),
 	}),
 });
 
@@ -32,6 +35,7 @@ const projectCopy = defineCollection({
 		problem: z.string().min(1).optional(),
 		decisions: z.array(z.string().min(1)).min(1).optional(),
 		result: z.string().min(1).optional(),
+		coverAlt: z.string().min(1).optional(),
 	}),
 });
 

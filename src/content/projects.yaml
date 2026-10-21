@@ -6,6 +6,9 @@
   role: featured
   order: 0
   stack: [Java 21, Spring Boot 4.1, PostgreSQL 17, React 19, TypeScript, Docker, GitHub Actions]
+  # Case study page: the Markdown body in each locale, with this cover from src/assets/case-studies/.
+  caseStudy: true
+  cover: tutoring-waitlist.png
 
 - id: screenmatch-quotes-java
   repo: screenmatch-quotes-java

@@ -98,6 +98,9 @@ const en = {
 	'ticker.pause': 'Pause',
 	'ticker.play': 'Play',
 	'clock.label': 'LOCAL TIME',
+	'caseStudy.label': 'CASE STUDY',
+	'caseStudy.read': 'Read the case study',
+	'caseStudy.back': 'Back to projects',
 };
 
 const pt: Record<keyof typeof en, string> = {
@@ -183,6 +186,9 @@ const pt: Record<keyof typeof en, string> = {
 	'ticker.pause': 'Pausar',
 	'ticker.play': 'Continuar',
 	'clock.label': 'HORA LOCAL',
+	'caseStudy.label': 'ESTUDO DE CASO',
+	'caseStudy.read': 'Ler o estudo de caso',
+	'caseStudy.back': 'Voltar aos projetos',
 };
 
 export const ui = { en, pt } as const satisfies Record<Locale, Record<keyof typeof en, string>>;

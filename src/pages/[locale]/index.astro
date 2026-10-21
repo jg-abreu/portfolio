@@ -1,4 +1,5 @@
 ---
+import { getRelativeLocaleUrl } from 'astro:i18n';
 import Base from '../../layouts/Base.astro';
 import Heatmap from '../../components/Heatmap.astro';
 import RadarScope from '../../components/RadarScope.astro';
@@ -169,9 +170,16 @@ const age = (days: number | null) =>
 									<li>{s}</li>
 								))}
 							</ul>
-							<a class="repo" href={p.repoUrl}>
-								{t('projects.repo')} ↗
-							</a>
+							<p class="card-links">
+								{p.caseStudy && (
+									<a class="btn btn-primary" href={getRelativeLocaleUrl(locale, `projects/${p.id}/`)}>
+										{t('caseStudy.read')} →
+									</a>
+								)}
+								<a class="btn" href={p.repoUrl}>
+									{t('projects.repo')} ↗
+								</a>
+							</p>
 						</article>
 					))
 				}
@@ -433,14 +441,22 @@ const age = (days: number | null) =>
 					{
 						primaryContacts.map((c) => (
 							<li>
-								{c.kind === 'email' ? <Fragment set:html={obfuscatedMailto(c.address)} /> : <a href={c.url}>{c.label}</a>}
+								{c.kind === 'email' ? (
+									<Fragment set:html={obfuscatedMailto(c.address, 'btn btn-primary')} />
+								) : (
+									<a class="btn" href={c.url}>
+										{c.label} ↗
+									</a>
+								)}
 							</li>
 						))
 					}
 					{
 						resumePath && (
 							<li>
-								<a href={resumePath}>{t('contact.resume')}</a>
+								<a class="btn" href={resumePath}>
+									{t('contact.resume')} ↓
+								</a>
 							</li>
 						)
 					}
@@ -600,9 +616,11 @@ const age = (days: number | null) =>
 		color: var(--fg-muted);
 	}
 
-	.repo {
-		font-family: var(--font-mono);
-		font-size: 0.85rem;
+	.card-links {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.75rem;
+		margin: 0;
 	}
 
 	.signals {
@@ -746,8 +764,8 @@ const age = (days: number | null) =>
 	}
 
 	.contact-list.primary {
-		font-size: 1.15rem;
-		font-weight: 600;
+		gap: 0.75rem;
+		margin-bottom: 1.75rem;
 	}
 
 	.contact-list.secondary {
