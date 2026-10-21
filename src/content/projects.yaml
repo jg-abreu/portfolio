@@ -1,0 +1,38 @@
+# Language-neutral project data. Each id needs a text file in every locale:
+# src/content/projects/en/<id>.md and src/content/projects/pt/<id>.md.
+
+- id: tutoring-management-system
+  repo: tutoring-management-system
+  role: featured
+  order: 0
+  stack: [Java 21, Spring Boot 4.1, PostgreSQL 17, React 19, TypeScript, Docker, GitHub Actions]
+
+- id: screenmatch-quotes-java
+  repo: screenmatch-quotes-java
+  role: secondary
+  order: 1
+  stack: [Java 17, Spring Boot 4, Spring Data JPA, PostgreSQL, JavaScript]
+
+- id: fipe-price-lookup-java
+  repo: fipe-price-lookup-java
+  role: secondary
+  order: 2
+  stack: [Java 17, Spring Boot 4, Jackson]
+
+- id: screensound-java
+  repo: screensound-java
+  role: secondary
+  order: 3
+  stack: [Java 17, Spring Boot 4, Spring Data JPA, PostgreSQL]
+
+- id: leetcode
+  repo: leetcode
+  role: signal
+  order: 4
+  stack: [Java, Python]
+
+- id: daily-learning-log
+  repo: daily-learning-log
+  role: signal
+  order: 5
+  stack: [Java 17, Spring Boot 3, MySQL]

@@ -1,0 +1,42 @@
+# Contact channels. Primary ones get prominence; the rest are a row of smaller links.
+
+- id: email
+  kind: email
+  address: jgabreudev@gmail.com
+  primary: true
+  order: 0
+
+- id: linkedin
+  kind: linkedin
+  label: LinkedIn
+  url: https://www.linkedin.com/in/jo%C3%A3o-abreuuu/
+  primary: true
+  order: 1
+
+- id: github
+  kind: github
+  label: GitHub
+  url: https://github.com/jg-abreu
+  primary: true
+  order: 2
+
+- id: devto
+  kind: devto
+  label: DEV
+  url: https://dev.to/joao_abreu
+  primary: false
+  order: 3
+
+- id: x
+  kind: x
+  label: X
+  url: https://x.com/jgabreudev
+  primary: false
+  order: 4
+
+- id: instagram
+  kind: instagram
+  label: Instagram
+  url: https://www.instagram.com/dev_abreu/
+  primary: false
+  order: 5
