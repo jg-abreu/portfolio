@@ -1,0 +1,224 @@
+---
+import type { ImageMetadata } from 'astro';
+import { Image } from 'astro:assets';
+import { render } from 'astro:content';
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import Base from '../../../layouts/Base.astro';
+import { locales, useTranslations, type Locale } from '../../../i18n/ui';
+import { getProjectEntry, getProjects } from '../../../lib/content';
+
+// One page per locale for every project marked `caseStudy: true` in src/content/projects.yaml.
+export async function getStaticPaths() {
+	const paths = [];
+	for (const locale of locales) {
+		for (const project of await getProjects(locale)) {
+			if (project.caseStudy) paths.push({ params: { locale, id: project.id } });
+		}
+	}
+	return paths;
+}
+
+const locale = Astro.params.locale as Locale;
+const t = useTranslations(locale);
+const project = (await getProjects(locale)).find((p) => p.id === Astro.params.id)!;
+const { Content } = await render(await getProjectEntry(locale, project.id));
+
+const covers = import.meta.glob<ImageMetadata>('../../../assets/case-studies/*', { eager: true, import: 'default' });
+const cover = project.cover ? covers[`../../../assets/case-studies/${project.cover}`] : undefined;
+---
+
+<Base title={`${project.title} — João Abreu`} description={project.tagline}>
+	<main id="main">
+		<article class="case">
+			<header class="intro">
+				<a class="back" href={`${getRelativeLocaleUrl(locale)}#projects`}>← {t('caseStudy.back')}</a>
+				<p class="label" data-reveal>{t('caseStudy.label')}</p>
+				<h1 data-split>{project.title}</h1>
+				<p class="tagline">{project.tagline}</p>
+				<ul class="stack" aria-label={t('projects.stack')}>
+					{project.stack.map((s) => <li>{s}</li>)}
+				</ul>
+				<p class="links">
+					<a href={project.repoUrl}>{t('projects.repo')} ↗</a>
+				</p>
+			</header>
+
+			{
+				cover && project.coverAlt && (
+					<figure class="cover" data-reveal>
+						<Image src={cover} alt={project.coverAlt} widths={[640, 960, 1280]} sizes="(min-width: 60rem) 52rem, 100vw" />
+					</figure>
+				)
+			}
+
+			<div class="prose">
+				<Content />
+			</div>
+
+			<footer class="outro">
+				<a href={project.repoUrl}>{t('projects.repo')} ↗</a>
+				<a href={`${getRelativeLocaleUrl(locale)}#projects`}>← {t('caseStudy.back')}</a>
+			</footer>
+		</article>
+	</main>
+</Base>
+
+<style>
+	main {
+		max-width: var(--page-width);
+		margin: 0 auto;
+		padding: 0 var(--gutter) 6rem;
+	}
+
+	.case {
+		max-width: 52rem;
+		margin: 0 auto;
+		overflow-wrap: anywhere;
+	}
+
+	.intro {
+		padding-block: 3rem 2rem;
+	}
+
+	.back,
+	.links a,
+	.outro a {
+		font-family: var(--font-mono);
+		font-size: 0.85rem;
+	}
+
+	.back {
+		display: inline-block;
+		margin-bottom: 2rem;
+		color: var(--fg-muted);
+		text-decoration: none;
+	}
+
+	.back:hover {
+		color: var(--fg);
+	}
+
+	.label {
+		margin: 0 0 1rem;
+		color: var(--accent);
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+		letter-spacing: 0.15em;
+	}
+
+	h1 {
+		margin: 0;
+		font-size: clamp(2.25rem, 6vw, 3.75rem);
+		letter-spacing: -0.02em;
+		line-height: 1.1;
+	}
+
+	.tagline {
+		margin: 1rem 0 0;
+		color: var(--fg-muted);
+		font-size: 1.2rem;
+	}
+
+	.stack {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		margin: 1.5rem 0 0;
+		padding: 0;
+		list-style: none;
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+	}
+
+	.stack li {
+		padding: 0.15rem 0.5rem;
+		border: 1px solid var(--line);
+		border-radius: 999px;
+		color: var(--fg-muted);
+	}
+
+	.links {
+		margin: 1.5rem 0 0;
+	}
+
+	.cover {
+		margin: 0 0 3rem;
+		padding: 0.75rem;
+		background: var(--surface);
+		border: 1px solid var(--line);
+		border-radius: 0.75rem;
+	}
+
+	.cover :global(img) {
+		display: block;
+		width: 100%;
+		height: auto;
+		border-radius: 0.4rem;
+	}
+
+	/* Rendered Markdown of the case study. */
+	.prose {
+		font-size: 1.05rem;
+		line-height: 1.75;
+	}
+
+	.prose :global(h2) {
+		margin: 3rem 0 1rem;
+		font-size: clamp(1.5rem, 3.5vw, 2rem);
+		letter-spacing: -0.01em;
+		line-height: 1.2;
+	}
+
+	.prose :global(h3) {
+		margin: 2rem 0 0.5rem;
+		font-size: 1.15rem;
+	}
+
+	.prose :global(li) {
+		margin-block: 0.4rem;
+	}
+
+	.prose :global(li::marker) {
+		color: var(--accent);
+	}
+
+	.prose :global(strong) {
+		color: var(--fg);
+	}
+
+	.prose :global(:not(pre) > code) {
+		padding: 0.1rem 0.35rem;
+		background: var(--surface);
+		border: 1px solid var(--line);
+		border-radius: 0.3rem;
+		font-family: var(--font-mono);
+		font-size: 0.88em;
+	}
+
+	/* Code blocks scroll inside themselves on narrow screens; the page never widens. */
+	.prose :global(pre) {
+		margin: 1.5rem 0;
+		padding: 1.25rem;
+		overflow-x: auto;
+		background: var(--surface) !important;
+		border: 1px solid var(--line);
+		border-radius: 0.6rem;
+		font-family: var(--font-mono);
+		font-size: 0.8rem;
+		line-height: 1.6;
+	}
+
+	.prose :global(pre code) {
+		font-family: inherit;
+	}
+
+	.outro {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		gap: 1rem;
+		margin-top: 4rem;
+		padding-top: 2rem;
+		border-top: 1px solid var(--line);
+	}
+</style>
