@@ -54,6 +54,17 @@ const en = {
 	'contact.heading': 'Contact',
 	'contact.title': "Let's talk",
 	'contact.resume': 'Résumé (PDF)',
+	'stats.contributions': 'contributions in the last year',
+	'stats.repos': 'public repositories',
+	'leetcode.solved': 'Solved',
+	'leetcode.breakdown': 'Easy {e} · Medium {m} · Hard {h}',
+	'leetcode.activeDays': 'Active days',
+	'leetcode.maxStreak': 'Longest streak',
+	'leetcode.last': 'Last submission',
+	'leetcode.day': '1 day',
+	'leetcode.days': '{n} days',
+	'leetcode.profile': 'LeetCode profile',
+	'leetcode.updated': 'Updated once a day',
 };
 
 const pt: Record<keyof typeof en, string> = {
@@ -95,6 +106,17 @@ const pt: Record<keyof typeof en, string> = {
 	'contact.heading': 'Contato',
 	'contact.title': 'Vamos conversar',
 	'contact.resume': 'Currículo (PDF)',
+	'stats.contributions': 'contribuições no último ano',
+	'stats.repos': 'repositórios públicos',
+	'leetcode.solved': 'Resolvidos',
+	'leetcode.breakdown': 'Fácil {e} · Médio {m} · Difícil {h}',
+	'leetcode.activeDays': 'Dias ativos',
+	'leetcode.maxStreak': 'Maior sequência',
+	'leetcode.last': 'Último envio',
+	'leetcode.day': '1 dia',
+	'leetcode.days': '{n} dias',
+	'leetcode.profile': 'Perfil no LeetCode',
+	'leetcode.updated': 'Atualizado uma vez por dia',
 };
 
 export const ui = { en, pt } as const satisfies Record<Locale, Record<keyof typeof en, string>>;
