@@ -11,8 +11,9 @@ export default defineConfig({
 		defaultLocale: 'en',
 		locales: ['en', 'pt'],
 		routing: {
-			// Every page lives under /en/ or /pt/; src/pages/index.astro redirects / to /en/.
-			// Language detection by Accept-Language will move to nginx (stage 2).
+			// Every page lives under /en/ or /pt/, and / always goes to /en/ (English is the default for
+			// everyone; no browser-language detection). nginx should answer / with a 301 to /en/;
+			// src/pages/index.astro is the static fallback.
 			prefixDefaultLocale: true,
 		},
 	},
