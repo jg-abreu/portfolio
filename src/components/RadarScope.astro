@@ -26,7 +26,13 @@ const ticks = Array.from({ length: 36 }, (_, i) => i * 10);
 		}
 		{
 			contacts.map((c) => (
-				<g class="blip" data-project={c.id} style={`--delay: ${((c.phase - 1) * PERIOD).toFixed(2)}s`}>
+				<g
+					class="blip"
+					data-project={c.id}
+					data-repo={c.repo}
+					data-bearing={c.bearing}
+					style={`--delay: ${((c.phase - 1) * PERIOD).toFixed(2)}s`}
+				>
 					<circle class="echo" cx={c.x} cy={c.y} r="12" />
 					<circle class="dot" cx={c.x} cy={c.y} r="5" />
 					<text class="tag" x={c.x + 10} y={c.y - 8}>
