@@ -116,7 +116,9 @@ export function getResumePath(locale: Locale): string | undefined {
  * open it normally, but naive scrapers don't find the address in plain text.
  * Only call it with an address already validated by the contacts schema.
  */
-export function obfuscatedMailto(address: string): string {
+export function obfuscatedMailto(address: string, className?: string): string {
 	const encoded = [...address].map((ch) => `&#${ch.codePointAt(0)};`).join('');
-	return `<a href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;${encoded}">${encoded}</a>`;
+	// className comes from our own templates, never from content, so it is safe in the attribute.
+	const cls = className ? ` class="${className}"` : '';
+	return `<a${cls} href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;${encoded}">${encoded}</a>`;
 }

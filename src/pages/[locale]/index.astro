@@ -172,11 +172,11 @@ const age = (days: number | null) =>
 							</ul>
 							<p class="card-links">
 								{p.caseStudy && (
-									<a class="case-link" href={getRelativeLocaleUrl(locale, `projects/${p.id}/`)}>
+									<a class="btn btn-primary" href={getRelativeLocaleUrl(locale, `projects/${p.id}/`)}>
 										{t('caseStudy.read')} →
 									</a>
 								)}
-								<a class="repo" href={p.repoUrl}>
+								<a class="btn" href={p.repoUrl}>
 									{t('projects.repo')} ↗
 								</a>
 							</p>
@@ -441,14 +441,22 @@ const age = (days: number | null) =>
 					{
 						primaryContacts.map((c) => (
 							<li>
-								{c.kind === 'email' ? <Fragment set:html={obfuscatedMailto(c.address)} /> : <a href={c.url}>{c.label}</a>}
+								{c.kind === 'email' ? (
+									<Fragment set:html={obfuscatedMailto(c.address, 'btn btn-primary')} />
+								) : (
+									<a class="btn" href={c.url}>
+										{c.label} ↗
+									</a>
+								)}
 							</li>
 						))
 					}
 					{
 						resumePath && (
 							<li>
-								<a href={resumePath}>{t('contact.resume')}</a>
+								<a class="btn" href={resumePath}>
+									{t('contact.resume')} ↓
+								</a>
 							</li>
 						)
 					}
@@ -611,18 +619,8 @@ const age = (days: number | null) =>
 	.card-links {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 0.75rem 1.5rem;
+		gap: 0.75rem;
 		margin: 0;
-	}
-
-	.repo,
-	.case-link {
-		font-family: var(--font-mono);
-		font-size: 0.85rem;
-	}
-
-	.case-link {
-		font-weight: 600;
 	}
 
 	.signals {
@@ -766,8 +764,8 @@ const age = (days: number | null) =>
 	}
 
 	.contact-list.primary {
-		font-size: 1.15rem;
-		font-weight: 600;
+		gap: 0.75rem;
+		margin-bottom: 1.75rem;
 	}
 
 	.contact-list.secondary {

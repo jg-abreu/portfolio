@@ -31,7 +31,7 @@ const cover = project.cover ? covers[`../../../assets/case-studies/${project.cov
 	<main id="main">
 		<article class="case">
 			<header class="intro">
-				<a class="back" href={`${getRelativeLocaleUrl(locale)}#projects`}>← {t('caseStudy.back')}</a>
+				<a class="btn btn-ghost back" href={`${getRelativeLocaleUrl(locale)}#projects`}>← {t('caseStudy.back')}</a>
 				<p class="label" data-reveal>{t('caseStudy.label')}</p>
 				<h1 data-split>{project.title}</h1>
 				<p class="tagline">{project.tagline}</p>
@@ -39,7 +39,7 @@ const cover = project.cover ? covers[`../../../assets/case-studies/${project.cov
 					{project.stack.map((s) => <li>{s}</li>)}
 				</ul>
 				<p class="links">
-					<a href={project.repoUrl}>{t('projects.repo')} ↗</a>
+					<a class="btn btn-primary" href={project.repoUrl}>{t('projects.repo')} ↗</a>
 				</p>
 			</header>
 
@@ -56,8 +56,8 @@ const cover = project.cover ? covers[`../../../assets/case-studies/${project.cov
 			</div>
 
 			<footer class="outro">
-				<a href={project.repoUrl}>{t('projects.repo')} ↗</a>
-				<a href={`${getRelativeLocaleUrl(locale)}#projects`}>← {t('caseStudy.back')}</a>
+				<a class="btn btn-ghost" href={`${getRelativeLocaleUrl(locale)}#projects`}>← {t('caseStudy.back')}</a>
+				<a class="btn btn-primary" href={project.repoUrl}>{t('projects.repo')} ↗</a>
 			</footer>
 		</article>
 	</main>
@@ -80,22 +80,9 @@ const cover = project.cover ? covers[`../../../assets/case-studies/${project.cov
 		padding-block: 3rem 2rem;
 	}
 
-	.back,
-	.links a,
-	.outro a {
-		font-family: var(--font-mono);
-		font-size: 0.85rem;
-	}
-
+	/* Aligns the ghost button's text with the page edge. */
 	.back {
-		display: inline-block;
-		margin-bottom: 2rem;
-		color: var(--fg-muted);
-		text-decoration: none;
-	}
-
-	.back:hover {
-		color: var(--fg);
+		margin: 0 0 1.5rem -0.8rem;
 	}
 
 	.label {
