@@ -28,7 +28,8 @@ When a decision is needed, ask **one question at a time**.
 src/
   content.config.ts         content collections and their schemas
   content/projects.yaml     language-neutral project data (repo, role, order, stack)
-  content/projects/<locale>/<id>.md  project text per locale; body reserved for case studies
+  content/projects/<locale>/<id>.md  project text per locale; the Markdown body is the case study
+  assets/case-studies/      case study cover images (optimized by astro:assets)
   content/contacts.yaml     contact channels (https links only)
   content/about/<locale>.md about paragraphs and "in progress" list per locale
   content/stack.yaml        stack groups (names translated as stack.<id> in ui.ts)
@@ -52,6 +53,7 @@ src/
   layouts/Base.astro        <html lang>, hreflang, Open Graph, palette tokens, fonts, full-width header nav
   pages/index.astro         redirects / to /en/ (static fallback)
   pages/[locale]/           pages, generated for every locale
+  pages/[locale]/projects/[id].astro  case study page for each project with `caseStudy: true`
 scripts/github-snapshot.ts  build-time fetch of profile, repos, contributions and LeetCode; each source keeps
                             its previous value if it fails (run by `npm run build`; uses GITHUB_TOKEN if set)
 public/                     static files copied as-is
