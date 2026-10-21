@@ -14,6 +14,7 @@ export type Project = ProjectData & {
 	problem?: string;
 	decisions?: string[];
 	result?: string;
+	coverAlt?: string;
 };
 
 export type Contact = CollectionEntry<'contacts'>['data'] & { id: string };
@@ -29,6 +30,7 @@ export async function getProjects(locale: Locale): Promise<Project[]> {
 	const [projects, copies] = await Promise.all([getCollection('projects'), getCollection('projectCopy')]);
 	const ids = new Set(projects.map((p) => p.id));
 	const copyByLocale = new Map<string, CopyData>(copies.map((c) => [c.id, c.data]));
+	const bodyByLocale = new Map(copies.map((c) => [c.id, (c.body ?? '').trim()]));
 
 	const problems: string[] = [];
 	for (const l of locales) {
@@ -49,6 +51,16 @@ export async function getProjects(locale: Locale): Promise<Project[]> {
 			if (copy && (!copy.problem || !copy.decisions || !copy.result)) {
 				problems.push(`src/content/projects/${l}/${id}.md needs problem, decisions and result (${data.role})`);
 			}
+			// A case study needs its page text, and alt text for its cover, in every locale.
+			if (data.caseStudy && !bodyByLocale.get(`${l}/${id}`)) {
+				problems.push(`src/content/projects/${l}/${id}.md needs a Markdown body (caseStudy: true)`);
+			}
+			if (data.cover && copy && !copy.coverAlt) {
+				problems.push(`src/content/projects/${l}/${id}.md needs coverAlt (cover: ${data.cover})`);
+			}
+		}
+		if (data.cover && !existsSync(join(process.cwd(), 'src/assets/case-studies', data.cover))) {
+			problems.push(`src/assets/case-studies/${data.cover} does not exist (cover of ${id})`);
 		}
 	}
 	if (problems.length > 0) throw new Error(`Project content is inconsistent:\n- ${problems.join('\n- ')}`);
@@ -61,6 +73,13 @@ export async function getProjects(locale: Locale): Promise<Project[]> {
 			repoUrl: `https://github.com/${GITHUB_USER}/${data.repo}`,
 		}))
 		.sort((a, b) => a.order - b.order);
+}
+
+/** The text entry of a project in a locale, for rendering its case study body. */
+export async function getProjectEntry(locale: Locale, id: string): Promise<CollectionEntry<'projectCopy'>> {
+	const entry = (await getCollection('projectCopy')).find((c) => c.id === `${locale}/${id}`);
+	if (!entry) throw new Error(`missing src/content/projects/${locale}/${id}.md`);
+	return entry;
 }
 
 /** About text in the given locale; throws (failing the build) if any locale is missing its file. */
