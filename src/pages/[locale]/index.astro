@@ -33,7 +33,7 @@ const resumePath = getResumePath(locale);
 			<h2 id="projects-heading" class="label" data-reveal>{t('projects.heading')}</h2>
 			{
 				workProjects.map((p) => (
-					<article class:list={['card', { featured: p.role === 'featured' }]} data-reveal>
+					<article class:list={['card', { featured: p.role === 'featured' }]} data-reveal data-project={p.id}>
 						{p.role === 'featured' && <p class="label">{t('projects.featured')}</p>}
 						<h3>{p.title}</h3>
 						<p class="muted">{p.tagline}</p>

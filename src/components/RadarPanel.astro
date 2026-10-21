@@ -1,48 +1,115 @@
 ---
 import { useTranslations, type Locale } from '../i18n/ui';
+import { getProjects } from '../lib/content';
+import { daysSincePush, getGitHubSnapshot } from '../lib/github';
 
 interface Props {
 	locale: Locale;
 }
 
-const t = useTranslations(Astro.props.locale);
+const { locale } = Astro.props;
+const t = useTranslations(locale);
 
-// Static radar scope; stage 6 turns it into the animated island.
+// One sweep every PERIOD seconds; blips flash in sync because their delay matches their bearing.
+const PERIOD = 6;
+const CENTER = 200;
+const R_MIN = 45;
+const R_MAX = 170;
+
+// Projects are the contacts: bearings are spread evenly (they carry no meaning), while the
+// distance is real data, the days since the repository's last push on a log scale.
+const snapshot = getGitHubSnapshot();
+const projects = (await getProjects(locale)).filter((p) => p.role !== 'signal');
+const contacts = projects.map((p, i) => {
+	const bearing = Math.round((360 / projects.length) * (i + 0.5));
+	const days = daysSincePush(snapshot, p.repo);
+	const r = days === null ? R_MAX : R_MIN + (R_MAX - R_MIN) * Math.min(1, Math.log1p(days) / Math.log1p(365));
+	const rad = (bearing * Math.PI) / 180;
+	const age =
+		days === null
+			? t('radar.noData')
+			: days === 0
+				? t('radar.today')
+				: days === 1
+					? t('radar.day')
+					: t('radar.days').replace('{n}', String(days));
+	return {
+		id: p.id,
+		title: p.title,
+		number: String(i + 1).padStart(2, '0'),
+		bearing: String(bearing).padStart(3, '0'),
+		age,
+		x: +(CENTER + r * Math.sin(rad)).toFixed(1),
+		y: +(CENTER - r * Math.cos(rad)).toFixed(1),
+		delay: `${((bearing / 360) * PERIOD - PERIOD).toFixed(2)}s`,
+	};
+});
+
 const rings = [60, 120, 180];
 const ticks = Array.from({ length: 36 }, (_, i) => i * 10);
+const states = {
+	hero: t('radar.state.hero'),
+	projects: t('radar.state.projects').replace('{n}', String(contacts.length)),
+	signals: t('radar.state.signals'),
+	contact: t('radar.state.contact'),
+};
 ---
 
-<div class="panel" aria-hidden="true">
-	<svg class="scope" viewBox="0 0 400 400">
-		<defs>
-			<radialGradient id="sweep-fade" cx="200" cy="200" r="180" gradientUnits="userSpaceOnUse">
-				<stop offset="0" stop-color="var(--accent)" stop-opacity="0.35" />
-				<stop offset="1" stop-color="var(--accent)" stop-opacity="0.05" />
-			</radialGradient>
-		</defs>
-		{rings.map((r) => <circle class="ring" cx="200" cy="200" r={r} />)}
-		<line class="axis" x1="20" y1="200" x2="380" y2="200" />
-		<line class="axis" x1="200" y1="20" x2="200" y2="380" />
-		{
-			ticks.map((deg) => (
-				<line
-					class="tick"
-					x1="200"
-					y1={deg % 90 === 0 ? 8 : 14}
-					x2="200"
-					y2="20"
-					transform={`rotate(${deg} 200 200)`}
-				/>
-			))
-		}
-		<path class="sweep" d="M200 200 L200 20 A180 180 0 0 1 355.9 110 Z" fill="url(#sweep-fade)" />
-		<line class="beam" x1="200" y1="200" x2="355.9" y2="110" />
-		<circle class="origin" cx="200" cy="200" r="4" />
-	</svg>
-	<p class="caption">
-		<span>{t('panel.status')}</span>
-		<span>{t('panel.position')}</span>
-	</p>
+<div
+	class="panel"
+	data-radar
+	data-state="hero"
+	data-state-hero={states.hero}
+	data-state-projects={states.projects}
+	data-state-signals={states.signals}
+	data-state-contact={states.contact}
+	style={`--period: ${PERIOD}s`}
+	aria-hidden="true"
+>
+	<div class="scope">
+		<svg viewBox="0 0 400 400">
+			{rings.map((r) => <circle class="ring" cx="200" cy="200" r={r} />)}
+			<line class="axis" x1="20" y1="200" x2="380" y2="200" />
+			<line class="axis" x1="200" y1="20" x2="200" y2="380" />
+			{
+				ticks.map((deg) => (
+					<line class="tick" x1="200" y1={deg % 90 === 0 ? 8 : 14} x2="200" y2="20" transform={`rotate(${deg} 200 200)`} />
+				))
+			}
+			{
+				contacts.map((c) => (
+					<g class="blip" data-project={c.id} style={`--delay: ${c.delay}`}>
+						<circle class="echo" cx={c.x} cy={c.y} r="12" />
+						<circle class="dot" cx={c.x} cy={c.y} r="5" />
+						<text class="tag" x={c.x + 10} y={c.y - 8}>
+							{c.number}
+						</text>
+					</g>
+				))
+			}
+			<circle class="origin" cx="200" cy="200" r="4" />
+		</svg>
+		<div class="sweep"></div>
+	</div>
+
+	<div class="readout">
+		<p class="status" data-radar-status>{states.hero}</p>
+		<ol class="contacts">
+			{
+				contacts.map((c) => (
+					<li data-project={c.id}>
+						<span>
+							{t('radar.contact')} {c.number} · {t('radar.bearing')} {c.bearing}° · {c.age}
+						</span>
+						<span class="title">{c.title}</span>
+					</li>
+				))
+			}
+		</ol>
+		<p class="meta">{t('radar.legend')}</p>
+		<p class="meta hint">{t('radar.hint')}</p>
+		<p class="meta">{t('panel.position')}</p>
+	</div>
 </div>
 
 <style>
@@ -50,14 +117,25 @@ const ticks = Array.from({ length: 36 }, (_, i) => i * 10);
 		display: grid;
 		place-items: center;
 		align-content: center;
-		gap: 1.25rem;
+		gap: 1.5rem;
 		height: 100%;
 		padding: 1.5rem;
 	}
 
 	.scope {
-		width: min(100%, 26rem);
-		height: auto;
+		position: relative;
+		/* Leaves room for the readout below without overflowing short screens. */
+		width: min(100%, 26rem, 50vh);
+		aspect-ratio: 1;
+		cursor: crosshair;
+	}
+
+	svg {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		overflow: visible;
 	}
 
 	.ring {
@@ -73,29 +151,181 @@ const ticks = Array.from({ length: 36 }, (_, i) => i * 10);
 		stroke-width: 1;
 	}
 
-	.beam {
-		stroke: var(--accent);
-		stroke-width: 2;
-	}
-
 	.origin {
 		fill: var(--accent);
 	}
 
-	.caption {
+	/* The sweep covers the outer ring (r = 180 of 400, so 5% inset); its leading edge is the beam. */
+	.sweep {
+		position: absolute;
+		inset: 5%;
+		border-radius: 50%;
+		background: conic-gradient(
+			from 300deg,
+			transparent 0deg,
+			color-mix(in srgb, var(--accent) 32%, transparent) 60deg,
+			transparent 60deg
+		);
+		transform: rotate(60deg);
+		pointer-events: none;
+	}
+
+	.sweep::after {
+		content: '';
+		position: absolute;
+		top: 0;
+		left: calc(50% - 1px);
+		width: 2px;
+		height: 50%;
+		background: var(--accent);
+	}
+
+	.dot {
+		fill: var(--accent);
+	}
+
+	.echo {
+		fill: none;
+		stroke: var(--accent);
+		stroke-width: 1.5;
+		opacity: 0;
+		transform-box: fill-box;
+		transform-origin: center;
+	}
+
+	.tag {
+		fill: var(--fg-muted);
+		font-family: var(--font-mono);
+		font-size: 13px;
+	}
+
+	.blip.is-focus .echo {
+		opacity: 1;
+	}
+
+	.blip.is-focus .tag {
+		fill: var(--fg);
+	}
+
+	/* An expanding ring from the center, added by radar.ts on click. */
+	.scope :global(.ping) {
+		position: absolute;
+		inset: 5%;
+		border: 2px solid var(--accent);
+		border-radius: 50%;
+		pointer-events: none;
+	}
+
+	.readout {
 		display: grid;
-		gap: 0.25rem;
-		margin: 0;
-		color: var(--fg-muted);
+		gap: 0.75rem;
+		width: min(100%, 26rem);
 		font-family: var(--font-mono);
 		font-size: 0.7rem;
-		letter-spacing: 0.15em;
-		text-align: center;
+		letter-spacing: 0.12em;
+	}
+
+	.readout p {
+		margin: 0;
+	}
+
+	.status {
+		color: var(--accent);
+	}
+
+	.contacts {
+		display: grid;
+		gap: 0.5rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		color: var(--fg-muted);
+	}
+
+	.contacts li {
+		display: grid;
+		padding-left: 0.75rem;
+		border-left: 1px solid var(--line);
+	}
+
+	.contacts .title {
+		color: var(--fg);
+		text-transform: uppercase;
+	}
+
+	.contacts li.is-focus {
+		border-left-color: var(--accent);
+	}
+
+	.contacts li.is-focus span:first-child {
+		color: var(--accent);
+	}
+
+	.meta {
+		color: var(--fg-muted);
+	}
+
+	/* Outside the projects section the contact list steps back. */
+	.panel:not([data-state='projects']) .contacts {
+		opacity: 0.6;
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		.sweep {
+			animation: sweep var(--period) linear infinite;
+		}
+
+		.dot,
+		.tag {
+			animation: blip var(--period) linear infinite;
+			animation-delay: var(--delay);
+		}
+
+		.panel.is-paused .sweep,
+		.panel.is-paused .dot,
+		.panel.is-paused .tag {
+			animation-play-state: paused;
+		}
+
+		.contacts,
+		.contacts li,
+		.contacts li span:first-child,
+		.echo {
+			transition:
+				opacity 0.4s,
+				color 0.3s,
+				border-color 0.3s;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.hint {
+			display: none;
+		}
+	}
+
+	@keyframes sweep {
+		to {
+			transform: rotate(360deg);
+		}
+	}
+
+	/* Bright when the beam passes (0%), then fading until the next pass. */
+	@keyframes blip {
+		0% {
+			opacity: 1;
+		}
+		70%,
+		100% {
+			opacity: 0.25;
+		}
 	}
 
 	@media (max-width: 59.99rem) {
 		.panel {
-			grid-template-columns: auto auto;
+			grid-template-columns: auto 1fr;
+			justify-items: start;
+			gap: 1rem;
 			padding: 1rem;
 		}
 
@@ -103,8 +333,14 @@ const ticks = Array.from({ length: 36 }, (_, i) => i * 10);
 			width: 6rem;
 		}
 
-		.caption {
-			text-align: left;
+		.tag,
+		.contacts,
+		.readout .meta {
+			display: none;
 		}
 	}
 </style>
+
+<script>
+	import '../scripts/radar';
+</script>
