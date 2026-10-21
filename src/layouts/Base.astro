@@ -2,7 +2,6 @@
 import { getAbsoluteLocaleUrl, getRelativeLocaleUrl } from 'astro:i18n';
 import interLatin from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
 import monoLatin from '@fontsource/jetbrains-mono/files/jetbrains-mono-latin-400-normal.woff2?url';
-import RadarPanel from '../components/RadarPanel.astro';
 import {
 	defaultLocale,
 	isLocale,
@@ -89,49 +88,45 @@ const fontFaces = `
 	<body>
 		<div class="progress" aria-hidden="true"></div>
 		<a class="skip-link" href="#main">{t('nav.skip')}</a>
-		<div class="shell">
-			<aside class="side">
-				<RadarPanel locale={locale} />
-			</aside>
-			<div class="content">
-				<header class="site-header">
-					<a class="brand" href={home}>JA<span>/</span></a>
-					<nav class="sections" aria-label={t('nav.sections')}>
-						<ul>
-							{
-								sections.map((s) => (
-									<li>
-										<a href={`${home}#${s.id}`}>{s.label}</a>
-									</li>
-								))
-							}
-						</ul>
-					</nav>
-					<nav class="languages" aria-label={t('nav.language')}>
-						<ul>
-							{
-								locales.map((l) => (
-									<li>
-										<a
-											href={getRelativeLocaleUrl(l, pathInLocale)}
-											hreflang={localeTags[l]}
-											lang={localeTags[l]}
-											aria-current={l === locale ? 'page' : undefined}
-										>
-											{l.toUpperCase()}
-											<span class="visually-hidden">{localeNames[l]}</span>
-										</a>
-									</li>
-								))
-							}
-						</ul>
-					</nav>
-				</header>
-				<slot />
+		<header class="site-header">
+			<div class="header-inner">
+				<a class="brand" href={home}>JA<span>/</span></a>
+				<nav class="sections" aria-label={t('nav.sections')}>
+					<ul>
+						{
+							sections.map((s) => (
+								<li>
+									<a href={`${home}#${s.id}`}>{s.label}</a>
+								</li>
+							))
+						}
+					</ul>
+				</nav>
+				<nav class="languages" aria-label={t('nav.language')}>
+					<ul>
+						{
+							locales.map((l) => (
+								<li>
+									<a
+										href={getRelativeLocaleUrl(l, pathInLocale)}
+										hreflang={localeTags[l]}
+										lang={localeTags[l]}
+										aria-current={l === locale ? 'page' : undefined}
+									>
+										{l.toUpperCase()}
+										<span class="visually-hidden">{localeNames[l]}</span>
+									</a>
+								</li>
+							))
+						}
+					</ul>
+				</nav>
 			</div>
-		</div>
+		</header>
+		<slot />
 		<script>
 			import '../scripts/scroll-fx';
+			import '../scripts/sonar';
 		</script>
 	</body>
 </html>
@@ -149,6 +144,8 @@ const fontFaces = `
 		--font-sans: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 		--font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
 		--header-height: 3.5rem;
+		--page-width: 76rem;
+		--gutter: clamp(1rem, 4vw, 2.5rem);
 		--ease: cubic-bezier(0.2, 0.7, 0.2, 1);
 	}
 
@@ -267,24 +264,25 @@ const fontFaces = `
 		transform: none;
 	}
 
-	.side {
-		border-bottom: 1px solid var(--line);
-	}
-
 	.site-header {
 		position: sticky;
 		top: 0;
 		z-index: 5;
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 0.5rem 1.5rem;
-		min-height: var(--header-height);
-		padding: 0.5rem 1rem;
 		background: var(--bg);
 		border-bottom: 1px solid var(--line);
 		font-family: var(--font-mono);
 		font-size: 0.8rem;
+	}
+
+	.header-inner {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.5rem 1.5rem;
+		max-width: var(--page-width);
+		min-height: var(--header-height);
+		margin: 0 auto;
+		padding: 0.5rem var(--gutter);
 	}
 
 	.brand {
@@ -352,22 +350,10 @@ const fontFaces = `
 		color: var(--accent);
 	}
 
-	@media (min-width: 60rem) {
-		.shell {
-			display: grid;
-			grid-template-columns: minmax(20rem, 2fr) 3fr;
-		}
-
-		.side {
-			position: sticky;
-			top: 0;
-			height: 100vh;
-			border-right: 1px solid var(--line);
-			border-bottom: 0;
-		}
-
-		.site-header {
-			padding-inline: 2rem;
+	/* Section links centered between the brand and the language switch on wide screens. */
+	@media (min-width: 48rem) {
+		.sections ul {
+			justify-content: center;
 		}
 	}
 </style>

@@ -9,7 +9,8 @@
   },
   "scripts": {
     "dev": "astro dev",
-    "build": "astro check && astro build",
+    "build": "npm run snapshot && astro check && astro build",
+    "snapshot": "node scripts/github-snapshot.mjs",
     "check": "astro check",
     "preview": "astro preview",
     "astro": "astro"
