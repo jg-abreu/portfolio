@@ -1,32 +1,109 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { locales, useTranslations, type Locale } from '../../i18n/ui';
+import { getContacts, getProjects, getResumePath, obfuscatedMailto } from '../../lib/content';
 
 export function getStaticPaths() {
 	return locales.map((locale) => ({ params: { locale } }));
 }
 
-const t = useTranslations(Astro.params.locale as Locale);
+const locale = Astro.params.locale as Locale;
+const t = useTranslations(locale);
+
+// Plain rendering of the content data until the real layout (stage 5) and sections (stage 8).
+const projects = await getProjects(locale);
+const workProjects = projects.filter((p) => p.role !== 'signal');
+const signals = projects.filter((p) => p.role === 'signal');
+const contacts = await getContacts();
+const resumePath = getResumePath(locale);
 ---
 
 <Base>
 	<main>
-		<p class="status">{t('home.status')}</p>
-		<h1>{t('home.heading')}</h1>
-		<p>{t('home.body')}</p>
+		<section class="hero">
+			<p class="status">{t('home.status')}</p>
+			<h1>{t('home.heading')}</h1>
+			<p>{t('home.body')}</p>
+		</section>
+
+		<section aria-labelledby="projects-heading">
+			<h2 id="projects-heading">{t('projects.heading')}</h2>
+			{
+				workProjects.map((p) => (
+					<article>
+						{p.role === 'featured' && <p class="tag">{t('projects.featured')}</p>}
+						<h3>{p.title}</h3>
+						<p>{p.tagline}</p>
+						<h4>{t('projects.problem')}</h4>
+						<p>{p.problem}</p>
+						<h4>{t('projects.decisions')}</h4>
+						<ul>
+							{p.decisions?.map((d) => (
+								<li>{d}</li>
+							))}
+						</ul>
+						<h4>{t('projects.result')}</h4>
+						<p>{p.result}</p>
+						<p class="stack">{p.stack.join(' · ')}</p>
+						<a href={p.repoUrl}>{t('projects.repo')}</a>
+					</article>
+				))
+			}
+		</section>
+
+		<section aria-labelledby="signals-heading">
+			<h2 id="signals-heading">{t('signals.heading')}</h2>
+			<ul>
+				{
+					signals.map((s) => (
+						<li>
+							<a href={s.repoUrl}>{s.title}</a>: {s.tagline}
+						</li>
+					))
+				}
+			</ul>
+		</section>
+
+		<section aria-labelledby="contact-heading">
+			<h2 id="contact-heading">{t('contact.heading')}</h2>
+			<ul>
+				{
+					contacts.map((c) => (
+						<li class={c.primary ? 'primary' : undefined}>
+							{c.kind === 'email' ? <Fragment set:html={obfuscatedMailto(c.address)} /> : <a href={c.url}>{c.label}</a>}
+						</li>
+					))
+				}
+				{
+					resumePath && (
+						<li class="primary">
+							<a href={resumePath}>{t('contact.resume')}</a>
+						</li>
+					)
+				}
+			</ul>
+		</section>
 	</main>
 </Base>
 
 <style>
 	main {
+		max-width: 44rem;
+		margin: 0 auto;
+		padding: 0 1rem 4rem;
+		overflow-wrap: anywhere;
+	}
+
+	.hero {
 		display: grid;
 		place-content: center;
-		min-height: 70vh;
-		padding: 0 1rem;
+		min-height: 60vh;
 		text-align: center;
 	}
 
-	.status {
+	.status,
+	.tag,
+	.stack {
 		margin: 0;
 		color: var(--accent);
 		font-family: var(--font-mono);
@@ -37,5 +114,17 @@ const t = useTranslations(Astro.params.locale as Locale);
 	h1 {
 		margin: 0.5rem 0;
 		font-size: clamp(2rem, 8vw, 3.5rem);
+	}
+
+	article {
+		margin-block: 2rem;
+	}
+
+	h4 {
+		margin-block: 1rem 0.25rem;
+	}
+
+	.primary {
+		font-weight: 600;
 	}
 </style>
