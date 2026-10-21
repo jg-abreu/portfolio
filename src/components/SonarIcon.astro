@@ -1,0 +1,55 @@
+---
+import { sonarIconDots, type SonarIconName } from '../lib/sonar-icons';
+
+interface Props {
+	name: SonarIconName;
+}
+
+const dots = sonarIconDots(Astro.props.name);
+const patternId = `sonar-grid-${Astro.props.name}`;
+---
+
+<svg class="icon" viewBox="0 0 400 400" aria-hidden="true">
+	<defs>
+		<pattern id={patternId} x="0" y="0" width="16" height="16" patternUnits="userSpaceOnUse">
+			<circle cx="8" cy="8" r="1.6" />
+		</pattern>
+	</defs>
+	<rect class="grid" width="400" height="400" fill={`url(#${patternId})`} />
+	{dots.map((d) => <circle class="dot" cx={d.x} cy={d.y} r="3.4" style={`--dx: ${d.dx}px; --dy: ${d.dy}px; --d: ${d.delay}ms`} />)}
+</svg>
+
+<style>
+	.icon {
+		display: block;
+		width: 100%;
+		height: auto;
+	}
+
+	.grid circle {
+		fill: var(--line);
+		opacity: 0.55;
+	}
+
+	.dot {
+		fill: var(--accent);
+	}
+
+	/*
+	 * With motion allowed (html.fx), dots wait scattered and invisible until their display is
+	 * switched on by sonar.ts, then fly into place; switching off sends them back out.
+	 */
+	:global(.fx) .dot {
+		opacity: 0;
+		transform: translate(var(--dx), var(--dy));
+		transition:
+			transform 0.9s var(--ease),
+			opacity 0.6s var(--ease);
+		transition-delay: var(--d);
+	}
+
+	:global(.fx [data-display].is-on) .dot {
+		opacity: 1;
+		transform: none;
+	}
+</style>
