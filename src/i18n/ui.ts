@@ -23,6 +23,15 @@ const en = {
 	'home.status': 'SIGNAL ACQUIRED · BUILDING',
 	'home.heading': 'João Abreu',
 	'home.body': 'This portfolio is under construction. Check back soon.',
+	'projects.heading': 'Projects',
+	'projects.featured': 'Featured',
+	'projects.problem': 'Problem',
+	'projects.decisions': 'Technical decisions',
+	'projects.result': 'Result',
+	'projects.repo': 'Repository',
+	'signals.heading': 'Consistency signals',
+	'contact.heading': 'Contact',
+	'contact.resume': 'Résumé (PDF)',
 };
 
 const pt: Record<keyof typeof en, string> = {
@@ -33,6 +42,15 @@ const pt: Record<keyof typeof en, string> = {
 	'home.status': 'SINAL CAPTADO · EM CONSTRUÇÃO',
 	'home.heading': 'João Abreu',
 	'home.body': 'Este portfólio está em construção. Volte em breve.',
+	'projects.heading': 'Projetos',
+	'projects.featured': 'Destaque',
+	'projects.problem': 'Problema',
+	'projects.decisions': 'Decisões técnicas',
+	'projects.result': 'Resultado',
+	'projects.repo': 'Repositório',
+	'signals.heading': 'Sinais de constância',
+	'contact.heading': 'Contato',
+	'contact.resume': 'Currículo (PDF)',
 };
 
 export const ui = { en, pt } as const satisfies Record<Locale, Record<keyof typeof en, string>>;
