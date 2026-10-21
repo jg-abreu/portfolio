@@ -52,11 +52,14 @@ src/
   scripts/github-live.ts    live GitHub data in the browser (30-min localStorage cache); updates counters and radar
   layouts/Base.astro        <html lang>, hreflang, Open Graph, palette tokens, fonts, full-width header nav
   pages/index.astro         redirects / to /en/ (static fallback)
+  pages/404.astro           bilingual 404 (noindex); nginx should serve it with `error_page 404 /404.html`
   pages/[locale]/           pages, generated for every locale
   pages/[locale]/projects/[id].astro  case study page for each project with `caseStudy: true`
 scripts/github-snapshot.ts  build-time fetch of profile, repos, contributions and LeetCode; each source keeps
                             its previous value if it fails (run by `npm run build`; uses GITHUB_TOKEN if set)
-public/                     static files copied as-is
+scripts/og-images.ts        `npm run og`: renders public/og/og-<locale>.png (1200 × 630) with headless Chrome;
+                            rerun after changing the name, role or position strings
+public/                     static files copied as-is (robots.txt points to the sitemap from @astrojs/sitemap)
   cv/joao-abreu-cv-<locale>.pdf  résumé; the link appears only when the file exists
 ```
 
