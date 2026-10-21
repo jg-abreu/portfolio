@@ -31,12 +31,16 @@ src/
   content/projects/<locale>/<id>.md  project text per locale; body reserved for case studies
   content/contacts.yaml     contact channels (https links only)
   lib/content.ts            merges and cross-checks content; fails the build if locales diverge
+  lib/github.ts             reads and validates the GitHub snapshot (null when missing, never invented)
+  data/github-snapshot.json written by scripts/github-snapshot.mjs on every build (git-ignored)
   i18n/ui.ts                UI strings per locale; English defines the shape
-  components/RadarPanel.astro  left-column radar scope (static until stage 6)
-  scripts/scroll-fx.ts      progress bar, active nav link, reveal on scroll ([data-reveal], [data-split])
+  components/RadarPanel.astro  radar: CSS sweep, projects as contacts (distance = days since last push)
+  scripts/radar.ts          radar island: section status, pause off-screen, ping on click, card highlight
+  scripts/scroll-fx.ts      progress bar, active nav link, reveal on scroll ([data-reveal], [data-split]); publishes the section
   layouts/Base.astro        <html lang>, hreflang, Open Graph, palette tokens, fonts, two-column shell, header nav
   pages/index.astro         redirects / to /en/ (static fallback)
   pages/[locale]/           pages, generated for every locale
+scripts/github-snapshot.mjs build-time fetch of public repo data; keeps the old snapshot if GitHub fails
 public/                     static files copied as-is
   cv/joao-abreu-cv-<locale>.pdf  résumé; the link appears only when the file exists
 ```
