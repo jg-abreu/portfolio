@@ -54,4 +54,22 @@ const contacts = defineCollection({
 	]),
 });
 
-export const collections = { projects, projectCopy, contacts };
+/** About text per locale: src/content/about/<locale>.md. */
+const about = defineCollection({
+	loader: glob({ pattern: '*.md', base: 'src/content/about' }),
+	schema: z.object({
+		paragraphs: z.array(z.string().min(1)).min(1),
+		now: z.array(z.string().min(1)).min(1),
+	}),
+});
+
+/** Stack groups; their names are UI strings (stack.<id>), so the ids are fixed. */
+const stack = defineCollection({
+	loader: file('src/content/stack.yaml'),
+	schema: z.object({
+		order: z.int().nonnegative(),
+		items: z.array(z.string().min(1)).min(1),
+	}),
+});
+
+export const collections = { projects, projectCopy, contacts, about, stack };
