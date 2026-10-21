@@ -1,0 +1,175 @@
+---
+import type { RadarContact } from '../lib/radar';
+
+interface Props {
+	/** Projects to draw as blips; the hero scope has none. */
+	contacts?: RadarContact[];
+}
+
+const { contacts = [] } = Astro.props;
+
+// One sweep every PERIOD seconds; each blip's delay matches its bearing so it flashes as the beam passes.
+const PERIOD = 6;
+const rings = [60, 120, 180];
+const ticks = Array.from({ length: 36 }, (_, i) => i * 10);
+---
+
+<div class="scope" data-scope style={`--period: ${PERIOD}s`} aria-hidden="true">
+	<svg viewBox="0 0 400 400">
+		{rings.map((r) => <circle class="ring" cx="200" cy="200" r={r} />)}
+		<line class="axis" x1="20" y1="200" x2="380" y2="200" />
+		<line class="axis" x1="200" y1="20" x2="200" y2="380" />
+		{
+			ticks.map((deg) => (
+				<line class="tick" x1="200" y1={deg % 90 === 0 ? 8 : 14} x2="200" y2="20" transform={`rotate(${deg} 200 200)`} />
+			))
+		}
+		{
+			contacts.map((c) => (
+				<g class="blip" data-project={c.id} style={`--delay: ${((c.phase - 1) * PERIOD).toFixed(2)}s`}>
+					<circle class="echo" cx={c.x} cy={c.y} r="12" />
+					<circle class="dot" cx={c.x} cy={c.y} r="5" />
+					<text class="tag" x={c.x + 10} y={c.y - 8}>
+						{c.number}
+					</text>
+				</g>
+			))
+		}
+		<circle class="origin" cx="200" cy="200" r="4" />
+	</svg>
+	<div class="sweep"></div>
+</div>
+
+<style>
+	.scope {
+		position: relative;
+		width: 100%;
+		aspect-ratio: 1;
+		/* Clip to the scope's circle: the rotating sweep's box would otherwise widen the page. */
+		overflow: hidden;
+		border-radius: 50%;
+		cursor: crosshair;
+	}
+
+	svg {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		overflow: visible;
+	}
+
+	.ring {
+		fill: none;
+		stroke: var(--line);
+		stroke-width: 1.5;
+		stroke-dasharray: 4 6;
+	}
+
+	.axis,
+	.tick {
+		stroke: var(--line);
+		stroke-width: 1;
+	}
+
+	.origin,
+	.dot {
+		fill: var(--accent);
+	}
+
+	/* The sweep covers the outer ring (r = 180 of 400, so a 5% inset); its leading edge is the beam. */
+	.sweep {
+		position: absolute;
+		inset: 5%;
+		border-radius: 50%;
+		background: conic-gradient(
+			from 300deg,
+			transparent 0deg,
+			color-mix(in srgb, var(--accent) 32%, transparent) 60deg,
+			transparent 60deg
+		);
+		transform: rotate(60deg);
+		pointer-events: none;
+	}
+
+	.sweep::after {
+		content: '';
+		position: absolute;
+		top: 0;
+		left: calc(50% - 1px);
+		width: 2px;
+		height: 50%;
+		background: var(--accent);
+	}
+
+	.echo {
+		fill: none;
+		stroke: var(--accent);
+		stroke-width: 1.5;
+		opacity: 0;
+		transform-box: fill-box;
+		transform-origin: center;
+	}
+
+	.tag {
+		fill: var(--fg-muted);
+		font-family: var(--font-mono);
+		font-size: 13px;
+	}
+
+	.blip:global(.is-focus) .echo {
+		opacity: 1;
+	}
+
+	.blip:global(.is-focus) .tag {
+		fill: var(--fg);
+	}
+
+	/* An expanding ring from the center, added by sonar.ts on click. */
+	.scope :global(.ping) {
+		position: absolute;
+		inset: 5%;
+		border: 2px solid var(--accent);
+		border-radius: 50%;
+		pointer-events: none;
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		.sweep {
+			animation: sweep var(--period) linear infinite;
+		}
+
+		.dot,
+		.tag {
+			animation: blip var(--period) linear infinite;
+			animation-delay: var(--delay);
+		}
+
+		.scope:global(.is-paused) .sweep,
+		.scope:global(.is-paused) .dot,
+		.scope:global(.is-paused) .tag {
+			animation-play-state: paused;
+		}
+
+		.echo {
+			transition: opacity 0.3s;
+		}
+	}
+
+	@keyframes sweep {
+		to {
+			transform: rotate(360deg);
+		}
+	}
+
+	/* Bright when the beam passes (0%), then fading until the next pass. */
+	@keyframes blip {
+		0% {
+			opacity: 1;
+		}
+		70%,
+		100% {
+			opacity: 0.25;
+		}
+	}
+</style>
