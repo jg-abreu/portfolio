@@ -82,13 +82,22 @@ function animateNumber(el: HTMLElement, from: number, to: number) {
 	}
 	const start = performance.now();
 	const duration = 1200;
+	let done = false;
+	const finish = () => {
+		done = true;
+		el.textContent = numberFormat.format(to);
+	};
 	const step = (now: number) => {
+		if (done) return;
 		const t = Math.min(1, (now - start) / duration);
 		const eased = 1 - (1 - t) ** 3;
 		el.textContent = numberFormat.format(Math.round(from + (to - from) * eased));
 		if (t < 1) requestAnimationFrame(step);
+		else finish();
 	};
 	requestAnimationFrame(step);
+	// Animation frames can stall (background tabs, headless renderers): the real number always lands.
+	setTimeout(finish, duration + 200);
 }
 
 const counters = [...document.querySelectorAll<HTMLElement>('[data-live]')];
