@@ -1,0 +1,197 @@
+---
+import type { Repo } from '../lib/github-data';
+
+interface Props {
+	repos: Repo[];
+	/** Repo name → description in the page's language (project taglines); GitHub's text otherwise. */
+	descriptions: Record<string, string>;
+	localeTag: string;
+	pushedLabel: string;
+	variant: 'cards' | 'ticker';
+	pauseLabel?: string;
+	playLabel?: string;
+}
+
+const { repos, descriptions, localeTag, pushedLabel, variant, pauseLabel, playLabel } = Astro.props;
+const dateFormat = new Intl.DateTimeFormat(localeTag, { day: '2-digit', month: 'short', timeZone: 'UTC' });
+const fullDate = new Intl.DateTimeFormat(localeTag, { dateStyle: 'medium', timeZone: 'UTC' });
+const at = (d: string) => new Date(`${d}T00:00:00Z`);
+const describe = (r: Repo) => descriptions[r.name] ?? r.description ?? '';
+// The ticker loops by repeating its items, so the copy is hidden from assistive technology.
+const loops = variant === 'ticker' ? [false, true] : [false];
+---
+
+<div
+	class:list={['recent', variant]}
+	data-recent={variant}
+	data-descriptions={JSON.stringify(descriptions)}
+	data-pushed-label={pushedLabel}
+>
+	{
+		variant === 'ticker' && (
+			<button class="toggle" type="button" data-ticker-toggle data-pause={pauseLabel} data-play={playLabel} aria-pressed="false">
+				{pauseLabel}
+			</button>
+		)
+	}
+	<div class="track">
+		{
+			loops.map((copy) => (
+				<ul aria-hidden={copy ? 'true' : undefined} data-recent-list={copy ? 'copy' : 'main'}>
+					{repos.map((r) =>
+						variant === 'ticker' ? (
+							<li>
+								<time datetime={r.pushedAt}>{dateFormat.format(at(r.pushedAt))}</time>
+								<span class="name">{r.name}</span>
+								<span class="desc">{describe(r)}</span>
+							</li>
+						) : (
+							<li class="card">
+								<a class="name" href={r.url}>
+									{r.name} ↗
+								</a>
+								<p class="desc">{describe(r)}</p>
+								<p class="meta">
+									{r.language && <span>{r.language}</span>}
+									<span>
+										{pushedLabel} <time datetime={r.pushedAt}>{fullDate.format(at(r.pushedAt))}</time>
+									</span>
+								</p>
+							</li>
+						),
+					)}
+				</ul>
+			))
+		}
+	</div>
+</div>
+
+<style>
+	.recent ul {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	/* Cards: the most recently pushed repositories in the activity section. */
+	.cards ul {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+		gap: 1rem;
+	}
+
+	.card {
+		display: grid;
+		align-content: start;
+		gap: 0.4rem;
+		padding: 1.25rem;
+		background: var(--surface);
+		border: 1px solid var(--line);
+		border-radius: 0.75rem;
+	}
+
+	.card .name {
+		font-family: var(--font-mono);
+		font-size: 0.9rem;
+	}
+
+	.card .desc {
+		margin: 0;
+		color: var(--fg-muted);
+		font-size: 0.9rem;
+	}
+
+	.meta {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.25rem 1rem;
+		margin: 0;
+		color: var(--fg-muted);
+		font-family: var(--font-mono);
+		font-size: 0.7rem;
+		letter-spacing: 0.05em;
+	}
+
+	/* Ticker: a strip of recent pushes under the hero, looping by repeating the list once. */
+	.ticker {
+		position: relative;
+		overflow: hidden;
+		padding-block: 0.75rem;
+		border-block: 1px solid var(--line);
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+		mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+	}
+
+	.ticker .track {
+		display: flex;
+		width: max-content;
+	}
+
+	.ticker ul {
+		display: flex;
+		gap: 3rem;
+		padding-right: 3rem;
+	}
+
+	.ticker li {
+		display: flex;
+		gap: 0.75rem;
+		white-space: nowrap;
+	}
+
+	.ticker time {
+		color: var(--accent);
+	}
+
+	.ticker .desc {
+		color: var(--fg-muted);
+	}
+
+	.toggle {
+		position: absolute;
+		top: 50%;
+		right: 0;
+		z-index: 1;
+		padding: 0.2rem 0.5rem;
+		background: var(--bg);
+		border: 1px solid var(--line);
+		border-radius: 0.4rem;
+		color: var(--fg-muted);
+		font: inherit;
+		font-size: 0.65rem;
+		cursor: pointer;
+		transform: translateY(-50%);
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		.ticker .track {
+			animation: ticker 50s linear infinite;
+		}
+
+		.ticker:hover .track,
+		.ticker:focus-within .track,
+		.ticker:global(.is-paused) .track {
+			animation-play-state: paused;
+		}
+	}
+
+	/* Without motion the strip simply scrolls sideways. */
+	@media (prefers-reduced-motion: reduce) {
+		.ticker {
+			overflow-x: auto;
+			mask-image: none;
+		}
+
+		.toggle,
+		.ticker [data-recent-list='copy'] {
+			display: none;
+		}
+	}
+
+	@keyframes ticker {
+		to {
+			transform: translateX(-50%);
+		}
+	}
+</style>
