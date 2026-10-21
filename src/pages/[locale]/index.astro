@@ -504,6 +504,10 @@ const age = (days: number | null) =>
 		grid-template-columns: minmax(0, 1fr);
 		gap: 2rem;
 		padding-block: 5rem;
+		/* The browser skips style and layout for sections far from the screen (hundreds of SVG dots
+		   and heatmap cells) until they approach; `auto` remembers each section's real height. */
+		content-visibility: auto;
+		contain-intrinsic-size: auto 60rem;
 	}
 
 	.aside {
