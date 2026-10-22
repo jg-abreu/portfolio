@@ -4,7 +4,7 @@
  * every grid point that satisfies it becomes a dot with its own scatter offset and delay, so the
  * icon can assemble when its section arrives and dissolve when it leaves.
  */
-export type SonarIconName = 'dial' | 'antenna' | 'anchor' | 'bars' | 'pulse';
+export type SonarIconName = 'dial' | 'antenna' | 'anchor' | 'bars' | 'pulse' | 'route';
 
 export interface SonarDot {
 	x: number;
@@ -55,7 +55,21 @@ const PULSE: [number, number][] = [
 	[0.95, 0],
 ];
 
+const ROUTE: [number, number][] = [
+	[-0.72, -0.55],
+	[-0.24, 0.4],
+	[0.24, -0.4],
+	[0.72, 0.55],
+];
+
 const icons: Record<SonarIconName, (u: number, v: number) => boolean> = {
+	// "Pipeline": a route of waypoints, one per stage the site passes through.
+	route(u, v) {
+		const node = ROUTE.map(([x, y]) => Math.hypot(u - x, v - y));
+		const ring = node.some((d) => Math.abs(d - 0.14) < 0.05);
+		const leg = distanceToPolyline(u, v, ROUTE) < 0.06 && node.every((d) => d > 0.19);
+		return ring || leg;
+	},
 	// "About": an anchor, for the path that started with the Naval Academy exam.
 	anchor(u, v) {
 		const ring = Math.abs(Math.hypot(u, v - 0.66) - 0.13) < 0.05;
