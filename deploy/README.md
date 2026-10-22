@@ -7,7 +7,7 @@ visitor ──HTTPS──▶ Cloudflare (proxy, cache, edge certificate)
                        │  HTTPS, SSL mode Full (strict)
                        ▼
                  AWS Lightsail · Ubuntu 24.04 · nginx
-                 /var/www/portfolio  ◀── rsync over SSH (user deploy) from GitHub Actions (stage 3)
+                 /var/www/portfolio  ◀── rsync over SSH (user deploy) from GitHub Actions
 ```
 
 | Piece | Where | Notes |
@@ -92,6 +92,18 @@ Run on your machine unless the step says *on the server*. `<ip>` is the static I
    sudo nginx -t && sudo systemctl reload nginx
    ```
 10. **Point Cloudflare at the server:** DNS records `A @` → `<ip>` and `CNAME www` → `joaoabreu.dev`, both proxied. *SSL/TLS → Overview* → **Full (strict)**. *SSL/TLS → Edge Certificates* → **Always Use HTTPS** on.
+
+## Automatic deploys
+
+[`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) builds the site and copies `dist/` with rsync on every push to `main`, every day at 06:00 (Rio) to refresh the GitHub snapshot, and on demand (*Actions → Deploy → Run workflow*). It needs three repository secrets (*Settings → Secrets and variables → Actions*):
+
+| Secret | Value |
+|---|---|
+| `DEPLOY_SSH_KEY` | the private key `~/.ssh/portfolio_deploy` (step 6), whole file |
+| `DEPLOY_HOST` | the static IP |
+| `DEPLOY_KNOWN_HOSTS` | the server's `ssh-ed25519` line from `ssh-keygen -F <ip>`, after you have connected once and checked the fingerprint |
+
+GitHub disables scheduled workflows after 60 days without activity in the repository; re-enable it in the Actions tab if the daily run stops.
 
 ## Check that it works
 
