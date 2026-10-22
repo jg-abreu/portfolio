@@ -28,8 +28,6 @@ const workProjects = projects.filter((p) => p.role !== 'signal');
 const signals = projects.filter((p) => p.role === 'signal');
 const radarContacts = toRadarContacts(workProjects);
 const contacts = await getContacts();
-const primaryContacts = contacts.filter((c) => c.primary);
-const otherContacts = contacts.filter((c) => !c.primary);
 const resumePath = getResumePath(locale);
 const channelCount = contacts.length + (resumePath ? 1 : 0);
 
@@ -495,9 +493,9 @@ const age = (days: number | null) =>
 			<div class="body">
 				<p class="label" data-reveal>07 · {t('contact.heading')}</p>
 				<h2 id="contact-heading" data-split>{t('contact.title')}</h2>
-				<ul class="contact-list primary" data-reveal>
+				<ul class="contact-list" data-reveal>
 					{
-						primaryContacts.map((c) => (
+						contacts.map((c) => (
 							<li>
 								{c.kind === 'email' ? (
 									<Fragment set:html={obfuscatedMailto(c.address, 'btn btn-primary')} />
@@ -517,13 +515,6 @@ const age = (days: number | null) =>
 								</a>
 							</li>
 						)
-					}
-				</ul>
-				<ul class="contact-list secondary" data-reveal style="--d: 150ms">
-					{
-						otherContacts.map((c) => (
-							<li>{c.kind !== 'email' && <a href={c.url}>{c.label}</a>}</li>
-						))
 					}
 				</ul>
 			</div>
@@ -843,20 +834,10 @@ const age = (days: number | null) =>
 	.contact-list {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 0.75rem 1.5rem;
+		gap: 0.75rem;
 		margin: 0 0 1.25rem;
 		padding: 0;
 		list-style: none;
-	}
-
-	.contact-list.primary {
-		gap: 0.75rem;
-		margin-bottom: 1.75rem;
-	}
-
-	.contact-list.secondary {
-		font-family: var(--font-mono);
-		font-size: 0.85rem;
 	}
 
 	/* Radar readout inside the projects display. */
