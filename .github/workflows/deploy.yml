@@ -21,6 +21,10 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # Each run is recorded as a deployment, listed with the live URL on the repository page.
+    environment:
+      name: production
+      url: https://joaoabreu.dev
     steps:
       - uses: actions/checkout@v5
 
