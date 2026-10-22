@@ -1,6 +1,7 @@
 ---
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import Base from '../../layouts/Base.astro';
+import DeployPipeline from '../../components/DeployPipeline.astro';
 import Heatmap from '../../components/Heatmap.astro';
 import RadarScope from '../../components/RadarScope.astro';
 import RecentRepos from '../../components/RecentRepos.astro';
@@ -69,7 +70,16 @@ const personJsonLd = JSON.stringify({
 	sameAs: contacts.filter((c) => c.kind !== 'email').map((c) => c.url),
 }).replace(/</g, '\\u003c');
 
-const SECTION_COUNT = 6;
+// The real path a commit takes to the visitor (see deploy/README.md and .github/workflows/deploy.yml).
+const pipelineStages = (['commit', 'build', 'ship', 'serve', 'edge', 'you'] as const).map((id) => ({
+	id,
+	name: t(`pipeline.${id}.name`),
+	body: t(`pipeline.${id}.body`),
+}));
+// This page is rebuilt on every deploy, so the build date is the date of the last deploy.
+const builtOn = dateFormat.format(new Date());
+
+const SECTION_COUNT = 7;
 const count = (key: Parameters<typeof t>[0], n: number) => t(key).replace('{n}', String(n));
 const dayCount = (n: number) => (n === 1 ? t('leetcode.day') : count('leetcode.days', n));
 const age = (days: number | null) =>
@@ -435,10 +445,42 @@ const age = (days: number | null) =>
 			</div>
 		</section>
 
-		<section id="contact" class="split" aria-labelledby="contact-heading">
+		<section id="pipeline" class="split" aria-labelledby="pipeline-heading">
 			<div class="aside">
 				<SonarDisplay
 					index={6}
+					total={SECTION_COUNT}
+					sectionWord={t('display.section')}
+					label={t('nav.pipeline')}
+					detail={count('display.pipeline', pipelineStages.length).replace('{date}', builtOn)}
+				>
+					<SonarIcon name="route" />
+				</SonarDisplay>
+			</div>
+			<div class="body">
+				<p class="label" data-reveal>06 · {t('pipeline.heading')}</p>
+				<h2 id="pipeline-heading" data-split>{t('pipeline.title')}</h2>
+				<div data-reveal>
+					<DeployPipeline stages={pipelineStages} />
+				</div>
+				<div class="card pipeline-note" data-reveal style="--d: 150ms">
+					<p>{t('pipeline.when')}</p>
+					<p class="card-links">
+						<a class="btn" href="https://github.com/jg-abreu/portfolio/blob/main/.github/workflows/deploy.yml">
+							{t('pipeline.workflow')} ↗
+						</a>
+						<a class="btn" href="https://github.com/jg-abreu/portfolio/blob/main/deploy/README.md">
+							{t('pipeline.server')} ↗
+						</a>
+					</p>
+				</div>
+			</div>
+		</section>
+
+		<section id="contact" class="split" aria-labelledby="contact-heading">
+			<div class="aside">
+				<SonarDisplay
+					index={7}
 					total={SECTION_COUNT}
 					sectionWord={t('display.section')}
 					label={t('nav.contact')}
@@ -448,7 +490,7 @@ const age = (days: number | null) =>
 				</SonarDisplay>
 			</div>
 			<div class="body">
-				<p class="label" data-reveal>06 · {t('contact.heading')}</p>
+				<p class="label" data-reveal>07 · {t('contact.heading')}</p>
 				<h2 id="contact-heading" data-split>{t('contact.title')}</h2>
 				<ul class="contact-list primary" data-reveal>
 					{
@@ -836,6 +878,14 @@ const age = (days: number | null) =>
 
 	.meta {
 		color: var(--fg-muted);
+	}
+
+	.pipeline-note {
+		margin-top: 2rem;
+	}
+
+	.pipeline-note > p:first-child {
+		margin: 0 0 1rem;
 	}
 
 	@media (prefers-reduced-motion: reduce) {
