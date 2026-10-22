@@ -7,7 +7,7 @@ Project rules for Claude Code in this repository. Machine-specific instructions 
 Personal portfolio of João Abreu: a static, bilingual (EN/PT) site with a sonar/radar visual theme and real GitHub data. Audience: recruiters arriving from GitHub and LinkedIn, so the essentials go on the first screen and the site must load fast and never stutter.
 
 - **Stack:** Astro (static output), TypeScript (strict). Zero JavaScript by default; JS only in interactive islands.
-- **Hosting:** own VM (Ubuntu, nginx) behind Cloudflare, deployed by GitHub Actions (build + rsync over SSH) on every push to `main` and once a day.
+- **Hosting:** own VM (AWS Lightsail, Ubuntu, nginx) behind Cloudflare, deployed by GitHub Actions (build + rsync over SSH) on every push to `main` and once a day.
 - **Domain:** https://joaoabreu.dev
 
 ## Division of responsibilities
@@ -63,7 +63,13 @@ public/                     static files copied as-is (robots.txt points to the 
   cv/joao-abreu-cv-<locale>.pdf  résumé; the link appears only when the file exists
 ```
 
-Planned: `deploy/` and `.github/workflows/` (written by João).
+```
+deploy/
+  README.md                 how the server is built (Lightsail, nginx, Cloudflare) and how to rebuild it
+  nginx/portfolio.conf      nginx site; copied to /etc/nginx/sites-available/portfolio with scp
+```
+
+Planned: `.github/workflows/` (stage 3).
 
 ## Internationalization
 
