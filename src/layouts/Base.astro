@@ -1,5 +1,6 @@
 ---
 import { getAbsoluteLocaleUrl, getRelativeLocaleUrl } from 'astro:i18n';
+import { createHash } from 'node:crypto';
 import interLatin from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
 import monoLatin from '@fontsource/jetbrains-mono/files/jetbrains-mono-latin-400-normal.woff2?url';
 import {
@@ -51,6 +52,10 @@ const fontFaces = `
 @font-face{font-family:'Inter Variable';font-style:normal;font-display:swap;font-weight:100 900;src:url(${interLatin}) format('woff2-variations');unicode-range:${latinRange}}
 @font-face{font-family:'JetBrains Mono';font-style:normal;font-display:swap;font-weight:400;src:url(${monoLatin}) format('woff2');unicode-range:${latinRange}}
 `;
+// Hash the exact inline payloads; changing either automatically changes its CSP allowance.
+const revealBootstrap = `(function(){var d=document.documentElement;if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;d.classList.add('fx');setTimeout(function(){if(!d.hasAttribute('data-fx-ready'))d.classList.remove('fx')},2500)})();`;
+Astro.csp?.insertScriptHash(`sha256-${createHash('sha256').update(revealBootstrap).digest('base64')}`);
+Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).digest('base64')}`);
 ---
 
 <!doctype html>
@@ -68,18 +73,7 @@ const fontFaces = `
 
 		<link rel="preload" href={interLatin} as="font" type="font/woff2" crossorigin />
 		<style is:inline set:html={fontFaces} />
-		<script is:inline>
-			// Hide reveal targets before first paint, unless the visitor prefers reduced motion.
-			// If scroll-fx never starts (blocked or failed), show everything after 2.5 s.
-			(function () {
-				var d = document.documentElement;
-				if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-				d.classList.add('fx');
-				setTimeout(function () {
-					if (!d.hasAttribute('data-fx-ready')) d.classList.remove('fx');
-				}, 2500);
-			})();
-		</script>
+		<script is:inline set:html={revealBootstrap} />
 
 		{
 			standalone ? (
