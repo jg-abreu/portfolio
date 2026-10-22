@@ -7,6 +7,23 @@ const site = 'https://joaoabreu.dev';
 // https://astro.build/config
 export default defineConfig({
 	site,
+	security: {
+		csp: {
+			directives: [
+				"default-src 'self'",
+				"base-uri 'none'",
+				"object-src 'none'",
+				"form-action 'none'",
+				"img-src 'self'",
+				"font-src 'self'",
+				"connect-src 'self' https://api.github.com https://github-contributions-api.jogruber.de",
+			],
+			// Sonar timing, reveals and syntax highlighting use inline style attributes.
+			styleDirective: {
+				resources: ["'self'", { resource: "'unsafe-inline'", kind: 'attribute' }],
+			},
+		},
+	},
 	i18n: {
 		defaultLocale: 'en',
 		locales: ['en', 'pt'],

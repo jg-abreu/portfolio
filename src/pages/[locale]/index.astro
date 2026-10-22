@@ -1,5 +1,6 @@
 ---
 import { getRelativeLocaleUrl } from 'astro:i18n';
+import { createHash } from 'node:crypto';
 import Base from '../../layouts/Base.astro';
 import DeployPipeline from '../../components/DeployPipeline.astro';
 import Heatmap from '../../components/Heatmap.astro';
@@ -69,6 +70,8 @@ const personJsonLd = JSON.stringify({
 	knowsAbout: stack.flatMap((g) => g.items),
 	sameAs: contacts.filter((c) => c.kind !== 'email').map((c) => c.url),
 }).replace(/</g, '\\u003c');
+
+Astro.csp?.insertScriptHash(`sha256-${createHash('sha256').update(personJsonLd).digest('base64')}`);
 
 // The real path a commit takes to the visitor (see deploy/README.md and .github/workflows/deploy.yml).
 const pipelineStages = (['commit', 'build', 'ship', 'serve', 'edge', 'you'] as const).map((id) => ({
