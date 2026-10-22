@@ -1,7 +1,8 @@
 /**
  * Sonar islands:
  * - section displays ([data-display]) switch on when they come into view, so their icon assembles,
- *   and off as they scroll away, so it dissolves;
+ *   and off as they scroll away, so it dissolves; the deploy pipeline ([data-pipeline]) only runs
+ *   its ping while switched on;
  * - radar scopes ([data-scope]) pause off-screen and send a ping on click;
  * - hovering or focusing a project card lights its contact on the scope and in the readout.
  * Sweeps and blip flashes are CSS animations (RadarScope.astro); icon motion is CSS transitions
@@ -20,7 +21,7 @@ const displayObserver = new IntersectionObserver(
 	},
 	{ threshold: [0, 0.1, 0.3] },
 );
-document.querySelectorAll('[data-display]').forEach((el) => displayObserver.observe(el));
+document.querySelectorAll('[data-display], [data-pipeline]').forEach((el) => displayObserver.observe(el));
 
 // No animation work while a scope is off-screen or the tab is hidden.
 const visibleScopes = new Set<Element>();

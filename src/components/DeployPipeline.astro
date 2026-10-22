@@ -1,0 +1,185 @@
+---
+interface Stage {
+	id: string;
+	name: string;
+	body: string;
+}
+
+interface Props {
+	stages: Stage[];
+}
+
+const { stages } = Astro.props;
+
+// The ping spends STEP seconds on each stage, so stage i answers at i × STEP into the cycle.
+// The keyframe percentages below assume six stages (one STEP = 1/6 of the period).
+const STEP = 1;
+const period = stages.length * STEP;
+---
+
+<ol class="pipeline" data-pipeline style={`--period: ${period}s`}>
+	{
+		stages.map((s, i) => (
+			<li class="stage" style={`--at: ${i * STEP}s`}>
+				<span class="node" aria-hidden="true">
+					<span class="ring" />
+				</span>
+				<div>
+					<h3>{s.name}</h3>
+					<p>{s.body}</p>
+				</div>
+			</li>
+		))
+	}
+</ol>
+
+<style>
+	.pipeline {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.stage {
+		position: relative;
+		display: grid;
+		grid-template-columns: 1.5rem minmax(0, 1fr);
+		gap: 1rem;
+		padding-bottom: 1.75rem;
+	}
+
+	.stage:last-child {
+		padding-bottom: 0;
+	}
+
+	/* The line from each stage down to the next; ::after is its lit copy, drawn by the ping. */
+	.stage:not(:last-child)::before,
+	.stage:not(:last-child)::after {
+		content: '';
+		position: absolute;
+		top: 1.6rem;
+		bottom: 0.1rem;
+		left: calc(0.75rem - 0.5px);
+		width: 1px;
+		background: var(--line);
+	}
+
+	.stage::after {
+		background: var(--accent);
+		opacity: 0;
+		transform: scaleY(0);
+		transform-origin: top;
+	}
+
+	.node {
+		position: relative;
+		display: grid;
+		place-items: center;
+		width: 1.5rem;
+		height: 1.5rem;
+		margin-top: 0.05rem;
+		border: 1px solid var(--accent);
+		border-radius: 50%;
+	}
+
+	.node::after {
+		content: '';
+		width: 0.5rem;
+		height: 0.5rem;
+		background: var(--accent);
+		border-radius: 50%;
+	}
+
+	.ring {
+		position: absolute;
+		inset: -1px;
+		border: 1px solid var(--accent);
+		border-radius: 50%;
+		opacity: 0;
+	}
+
+	h3 {
+		margin: 0;
+		color: var(--fg);
+		font-family: var(--font-mono);
+		font-size: 0.85rem;
+		font-weight: 400;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+	}
+
+	p {
+		margin: 0.3rem 0 0;
+		color: var(--fg-muted);
+	}
+
+	/*
+	 * Wide screens with motion allowed: a sonar ping hops from stage to stage while the list is on
+	 * screen (sonar.ts adds .is-on). Each stage rests dim, flares and sends a ring when the ping
+	 * arrives, then the line to the next stage lights up. Phones get the still list.
+	 */
+	@media (min-width: 60rem) and (prefers-reduced-motion: no-preference) {
+		:global(.fx) .pipeline .node::after {
+			opacity: 0.35;
+		}
+
+		:global(.fx) .pipeline:global(.is-on) .node::after {
+			animation: respond var(--period) ease-out infinite;
+			animation-delay: var(--at);
+		}
+
+		:global(.fx) .pipeline:global(.is-on) .ring {
+			animation: ping var(--period) ease-out infinite;
+			animation-delay: var(--at);
+		}
+
+		:global(.fx) .pipeline:global(.is-on) .stage::after {
+			animation: travel var(--period) linear infinite;
+			animation-delay: var(--at);
+		}
+	}
+
+	@keyframes respond {
+		0% {
+			opacity: 1;
+			transform: scale(1.5);
+		}
+		8% {
+			opacity: 1;
+			transform: scale(1);
+		}
+		30%,
+		100% {
+			opacity: 0.35;
+			transform: scale(1);
+		}
+	}
+
+	@keyframes ping {
+		0% {
+			opacity: 0.8;
+			transform: scale(1);
+		}
+		15%,
+		100% {
+			opacity: 0;
+			transform: scale(2.6);
+		}
+	}
+
+	@keyframes travel {
+		0% {
+			opacity: 1;
+			transform: scaleY(0);
+		}
+		16.6% {
+			opacity: 1;
+			transform: scaleY(1);
+		}
+		30%,
+		100% {
+			opacity: 0;
+			transform: scaleY(1);
+		}
+	}
+</style>
