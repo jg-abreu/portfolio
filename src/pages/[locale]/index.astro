@@ -3,6 +3,7 @@ import { getRelativeLocaleUrl } from 'astro:i18n';
 import { createHash } from 'node:crypto';
 import Base from '../../layouts/Base.astro';
 import HeroContacts from '../../components/HeroContacts.astro';
+import ContactForm from '../../components/ContactForm.astro';
 import DeployPipeline from '../../components/DeployPipeline.astro';
 import Heatmap from '../../components/Heatmap.astro';
 import RadarScope from '../../components/RadarScope.astro';
@@ -79,7 +80,7 @@ const pipelineStages = (['commit', 'build', 'ship', 'serve', 'edge', 'you'] as c
 // This page is rebuilt on every deploy, so the build date is the date of the last deploy.
 const builtOn = dateFormat.format(new Date());
 
-const SECTION_COUNT = 6;
+const SECTION_COUNT = 7;
 const count = (key: Parameters<typeof t>[0], n: number) => t(key).replace('{n}', String(n));
 const dayCount = (n: number) => (n === 1 ? t('leetcode.day') : count('leetcode.days', n));
 const age = (days: number | null) =>
@@ -479,6 +480,19 @@ const age = (days: number | null) =>
 		</section>
 
 
+		<section id="contact" class="split" aria-labelledby="contact-heading">
+			<div class="aside">
+				<SonarDisplay index={7} total={SECTION_COUNT} sectionWord={t('display.section')} label={t('nav.contact')} detail={t('contact.direct')}>
+					<SonarIcon name="antenna" />
+				</SonarDisplay>
+			</div>
+			<div class="body">
+				<p class="label" data-reveal>07 · {t('contact.heading')}</p>
+				<h2 id="contact-heading" data-split>{t('contact.title')}</h2>
+				<p class="muted">{t('contact.intro')}</p>
+				<ContactForm locale={locale} />
+			</div>
+		</section>
 	</main>
 </Base>
 

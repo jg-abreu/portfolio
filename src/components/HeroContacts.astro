@@ -1,28 +1,21 @@
 ---
 import ContactIcon from './ContactIcon.astro';
-import { getContacts, getResumePath, obfuscatedMailto } from '../lib/content';
+import { getContacts, getResumePath } from '../lib/content';
 import { useTranslations, type Locale } from '../i18n/ui';
 interface Props { locale: Locale }
 const { locale } = Astro.props;
 const t = useTranslations(locale);
-const contacts = await getContacts();
+const contacts = (await getContacts()).filter(c => c.kind !== 'email');
 const resumePath = getResumePath(locale);
 ---
 
-<nav id="contact" class="hero-contacts" aria-label={t('nav.contact')}>
+<nav class="hero-contacts" aria-label={t('nav.contact')}>
 	<ul>
 		{contacts.map(c => (
 			<li>
-				{c.kind === 'email' ? (
-					<div class="email-icon">
-						<Fragment set:html={obfuscatedMailto(c.address, 'icon-link email-link')} />
-						<ContactIcon name="email" />
-					</div>
-				) : (
-					<a class="icon-link" href={c.url} aria-label={c.label} title={c.label}>
-						<ContactIcon name={c.kind} />
-					</a>
-				)}
+				<a class="icon-link" href={c.url} aria-label={c.label} title={c.label}>
+					<ContactIcon name={c.kind} />
+				</a>
 			</li>
 		))}
 		{resumePath && <li><a class="icon-link" href={resumePath} aria-label={t('contact.resume')} title={t('contact.resume')}><ContactIcon name="resume" /></a></li>}
@@ -39,9 +32,6 @@ const resumePath = getResumePath(locale);
 		border-radius: 50%; color: var(--fg-muted); background: var(--surface); text-decoration: none;
 	}
 	:global(.hero-contacts .icon-link:hover), :global(.hero-contacts .icon-link:focus-visible) { color: var(--accent); border-color: var(--accent); }
-	:global(.hero-contacts .email-link) { font-size: 0; }
-	.email-icon > :global(svg) { position: absolute; top: 11px; left: 11px; pointer-events: none; color: var(--fg-muted); }
-	.email-icon:has(:global(a:hover)) > :global(svg), .email-icon:has(:global(a:focus-visible)) > :global(svg) { color: var(--accent); }
 	@media (prefers-reduced-motion: no-preference) {
 		:global(.hero-contacts .icon-link) { transition: transform 180ms ease, opacity 180ms ease; }
 		:global(.hero-contacts .icon-link:hover) { transform: translateY(-2px); }
