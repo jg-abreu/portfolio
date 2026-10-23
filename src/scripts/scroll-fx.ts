@@ -19,8 +19,14 @@ function update() {
 
 	// The current section is the last one whose top has passed 40% of the viewport.
 	let current = -1;
+	let currentTop = -Infinity;
 	targets.forEach((section, i) => {
-		if (section && section.getBoundingClientRect().top <= innerHeight * 0.4) current = i;
+		if (!section) return;
+		const top = section.getBoundingClientRect().top;
+		if (top <= innerHeight * 0.4 && top > currentTop) {
+			current = i;
+			currentTop = top;
+		}
 	});
 	links.forEach((a, i) => {
 		if (i === current) a.setAttribute('aria-current', 'true');

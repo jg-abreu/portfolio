@@ -120,5 +120,5 @@ export function obfuscatedMailto(address: string, className?: string): string {
 	const encoded = [...address].map((ch) => `&#${ch.codePointAt(0)};`).join('');
 	// className comes from our own templates, never from content, so it is safe in the attribute.
 	const cls = className ? ` class="${className}"` : '';
-	return `<a${cls} href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;${encoded}">${encoded}</a>`;
+	return `<a${cls} title="${encoded}" href="&#109;&#97;&#105;&#108;&#116;&#111;&#58;${encoded}">${encoded}</a>`;
 }
