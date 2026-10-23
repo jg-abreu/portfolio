@@ -1,0 +1,48 @@
+---
+import { getContacts, obfuscatedMailto } from '../lib/content';
+import { useTranslations, type Locale } from '../i18n/ui';
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+const email = (await getContacts()).find(c => c.kind === 'email');
+---
+
+<form data-contact-form aria-labelledby="contact-heading" aria-describedby="contact-required contact-status">
+	<p id="contact-required" class="hint">{t('contact.required')}</p>
+	<div class="fields">
+		<label for="contact-name">{t('contact.name')}
+			<input id="contact-name" name="name" autocomplete="name" required maxlength="100" />
+		</label>
+		<label for="contact-email">{t('contact.email')}
+			<input id="contact-email" name="email" type="email" autocomplete="email" required maxlength="254" />
+		</label>
+	</div>
+	<label for="contact-message">{t('contact.message')}
+		<textarea id="contact-message" name="message" required minlength="10" maxlength="5000" rows="6"></textarea>
+	</label>
+	<p id="contact-status" class="hint" role="status">{t('contact.unavailable')}</p>
+	<button type="submit" class="btn btn-primary" disabled aria-describedby="contact-status">{t('contact.send')}</button>
+	{email?.kind === 'email' && <div class="direct"><p>{t('contact.direct')}</p><Fragment set:html={obfuscatedMailto(email.address)} /></div>}
+</form>
+
+<script>
+	// No endpoint yet: never navigate, transmit fields, or show a fabricated success.
+	document.querySelectorAll<HTMLFormElement>('[data-contact-form]').forEach(form => {
+		form.addEventListener('submit', event => event.preventDefault());
+	});
+</script>
+
+<style>
+	form { padding: clamp(1rem, 3vw, 1.75rem); border: 1px solid var(--line); border-radius: .75rem; background: var(--surface); }
+	.fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+	label { display: grid; gap: .5rem; margin-bottom: 1.25rem; color: var(--fg); font-size: .9rem; }
+	input, textarea { box-sizing: border-box; width: 100%; min-width: 0; border: 1px solid var(--line); border-radius: .4rem; padding: .8rem; background: var(--bg); color: var(--fg); font: inherit; font-size: 1rem; }
+	textarea { resize: vertical; min-height: 10rem; }
+	input:focus-visible, textarea:focus-visible { border-color: var(--accent); }
+	.hint, .direct { color: var(--fg-muted); font-size: .85rem; line-height: 1.6; }
+	.hint:first-child { margin-top: 0; }
+	button:disabled { cursor: not-allowed; opacity: .55; }
+	.direct { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--line); overflow-wrap: anywhere; }
+	.direct p { margin: 0 0 .35rem; }
+	@media (max-width: 32rem) { .fields { grid-template-columns: minmax(0, 1fr); gap: 0; } }
+</style>

@@ -2,6 +2,8 @@
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import { createHash } from 'node:crypto';
 import Base from '../../layouts/Base.astro';
+import HeroContacts from '../../components/HeroContacts.astro';
+import ContactForm from '../../components/ContactForm.astro';
 import DeployPipeline from '../../components/DeployPipeline.astro';
 import Heatmap from '../../components/Heatmap.astro';
 import RadarScope from '../../components/RadarScope.astro';
@@ -10,7 +12,7 @@ import SonarDisplay from '../../components/SonarDisplay.astro';
 import SonarIcon from '../../components/SonarIcon.astro';
 import { localeTags, locales, useTranslations, type Locale, type UiKey } from '../../i18n/ui';
 import { activityStats, heatmapCells, recentRepos } from '../../lib/activity';
-import { getAbout, getContacts, getProjects, getResumePath, getStack, obfuscatedMailto } from '../../lib/content';
+import { getAbout, getContacts, getProjects, getStack } from '../../lib/content';
 import { getGitHubSnapshot } from '../../lib/github';
 import { LEETCODE_USER } from '../../lib/github-data';
 import { toRadarContacts } from '../../lib/radar';
@@ -28,8 +30,6 @@ const workProjects = projects.filter((p) => p.role !== 'signal');
 const signals = projects.filter((p) => p.role === 'signal');
 const radarContacts = toRadarContacts(workProjects);
 const contacts = await getContacts();
-const resumePath = getResumePath(locale);
-const channelCount = contacts.length + (resumePath ? 1 : 0);
 
 // Build snapshot of GitHub and LeetCode data; the browser refreshes the GitHub parts live.
 const snapshot = getGitHubSnapshot();
@@ -94,6 +94,7 @@ const age = (days: number | null) =>
 			<div class="hero-text">
 				<p class="label" data-reveal>{t('home.status')}</p>
 				<h1 data-split>{t('home.heading')}</h1>
+				<HeroContacts locale={locale} />
 				<!-- Role and intro are visible from the first paint: the intro is the page's LCP element. -->
 				<p class="role">{t('home.role')}</p>
 				<p class="muted">{t('home.body')}</p>
@@ -478,45 +479,18 @@ const age = (days: number | null) =>
 			</div>
 		</section>
 
+
 		<section id="contact" class="split" aria-labelledby="contact-heading">
 			<div class="aside">
-				<SonarDisplay
-					index={7}
-					total={SECTION_COUNT}
-					sectionWord={t('display.section')}
-					label={t('nav.contact')}
-					detail={count('display.contact', channelCount)}
-				>
+				<SonarDisplay index={7} total={SECTION_COUNT} sectionWord={t('display.section')} label={t('nav.contact')} detail={t('contact.direct')}>
 					<SonarIcon name="antenna" />
 				</SonarDisplay>
 			</div>
 			<div class="body">
 				<p class="label" data-reveal>07 · {t('contact.heading')}</p>
 				<h2 id="contact-heading" data-split>{t('contact.title')}</h2>
-				<ul class="contact-list" data-reveal>
-					{
-						contacts.map((c) => (
-							<li>
-								{c.kind === 'email' ? (
-									<Fragment set:html={obfuscatedMailto(c.address, 'btn btn-primary')} />
-								) : (
-									<a class="btn" href={c.url}>
-										{c.label} ↗
-									</a>
-								)}
-							</li>
-						))
-					}
-					{
-						resumePath && (
-							<li>
-								<a class="btn" href={resumePath}>
-									{t('contact.resume')} ↓
-								</a>
-							</li>
-						)
-					}
-				</ul>
+				<p class="muted">{t('contact.intro')}</p>
+				<ContactForm locale={locale} />
 			</div>
 		</section>
 	</main>
@@ -829,15 +803,6 @@ const age = (days: number | null) =>
 		margin: 1.25rem 0 0;
 		font-family: var(--font-mono);
 		font-size: 0.8rem;
-	}
-
-	.contact-list {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.75rem;
-		margin: 0 0 1.25rem;
-		padding: 0;
-		list-style: none;
 	}
 
 	/* Radar readout inside the projects display. */
