@@ -21,6 +21,8 @@ A portfolio is the first thing a recruiter opens, so it has to show the essentia
 - **Sonar theme** — projects appear as contacts on a radar, placed by how recently each repository was pushed; every section has a sticky sonar display whose dot-matrix icon assembles as you scroll.
 - **Live GitHub data, never fake** — contributions, repositories and a year heatmap are fetched in the browser (30-minute cache) on top of a snapshot taken at build time, so the page is complete even if the API is down. LeetCode stats come from the build.
 - **Bilingual** — English by default and Portuguese (`/en/`, `/pt/`), with `hreflang`, per-language Open Graph images and locale-aware dates and numbers. English defines the shape of every string; the build fails if Portuguese diverges.
+- **Résumés in both languages** — English and Portuguese PDF résumés are available through the hero icons, matching the selected site language.
+- **Contact** — a direct email link and a bilingual contact form interface. Form submission is disabled until the back end is implemented; the integration requirements are documented in [`deploy/CONTACT-FORM.md`](deploy/CONTACT-FORM.md).
 - **Case study** — a full write-up of the tutoring management system: problem, design decisions, trade-offs.
 - **"How this site reaches you"** — the real deploy pipeline, from commit to browser, with a sonar ping travelling between the stages.
 - **Fast and accessible** — static HTML, JavaScript only where something moves, animations on `transform`/`opacity` only and off with `prefers-reduced-motion`. Lighthouse on the live site: 97–100 in Performance and 100 in Accessibility, Best Practices and SEO.
@@ -80,7 +82,7 @@ src/
   pages/              home and case study per language, 404
 scripts/              build-time GitHub snapshot and share image rendering
 deploy/               server documentation and nginx config
-public/               favicons, share images, robots.txt
+public/               favicons, share images, résumé PDFs (cv/), robots.txt
 ```
 
 ## Built with Claude Code
