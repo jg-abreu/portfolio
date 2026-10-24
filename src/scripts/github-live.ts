@@ -21,6 +21,7 @@ import {
 	type Repo,
 } from '../lib/github-data';
 import { activityStats, heatmapCells, recentRepos } from '../lib/activity';
+import { rioDate } from '../lib/calendar';
 import { pointAt, radiusForDays } from '../lib/radar-geometry';
 
 interface LiveData {
@@ -137,7 +138,7 @@ function ageLabel(list: HTMLElement, days: number): string {
 }
 
 function updateRadar(repos: Repo[]) {
-	const today = new Date().toISOString().slice(0, 10);
+	const today = rioDate();
 	for (const blip of document.querySelectorAll<SVGGElement>('.blip[data-repo]')) {
 		const repo = repos.find((r) => r.name === blip.dataset.repo);
 		if (!repo) continue;
@@ -161,7 +162,7 @@ function updateRadar(repos: Repo[]) {
 
 // ---- Activity: statistics and heatmap ----
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = rioDate;
 const dateFormat = new Intl.DateTimeFormat(root.lang || undefined, { dateStyle: 'medium', timeZone: 'UTC' });
 const shortDate = new Intl.DateTimeFormat(root.lang || undefined, { day: '2-digit', month: 'short', timeZone: 'UTC' });
 const at = (d: string) => new Date(`${d}T00:00:00Z`);
