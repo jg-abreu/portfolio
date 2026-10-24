@@ -3,6 +3,7 @@
 // fails keeps its value from the previous snapshot, or stays null, so the site never invents data.
 import { existsSync, readFileSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
+import { rioDate } from '../src/lib/calendar.ts';
 import {
 	ENDPOINTS,
 	LEETCODE_QUERY,
@@ -54,7 +55,7 @@ const names = Object.keys(sources) as (keyof typeof sources)[];
 const results = await Promise.allSettled(names.map((name) => sources[name]()));
 
 const snapshot: Snapshot = {
-	generatedAt: new Date().toISOString().slice(0, 10),
+	generatedAt: rioDate(),
 	profile: previous?.profile ?? null,
 	repos: previous?.repos ?? null,
 	contributions: previous?.contributions ?? null,
