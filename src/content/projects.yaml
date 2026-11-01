@@ -10,14 +10,21 @@
   caseStudy: true
   cover: tutoring-waitlist.png
 
+- id: portfolio-api
+  repo: portfolio-api
+  role: secondary
+  order: 1
+  stack: [Java 21, Spring Boot 4.1, PostgreSQL 18, Flyway, Testcontainers, Docker Compose]
+  inProgress: true
+
 - id: leetcode
   repo: leetcode
   role: signal
-  order: 1
+  order: 2
   stack: [Java, Python]
 
 - id: daily-learning-log
   repo: daily-learning-log
   role: signal
-  order: 2
+  order: 3
   stack: [Java 17, Spring Boot 3, MySQL]
