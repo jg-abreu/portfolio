@@ -144,7 +144,7 @@ const age = (days: number | null) =>
 					total={SECTION_COUNT}
 					sectionWord={t('display.section')}
 					label={t('nav.projects')}
-					detail={count('display.projects', radarContacts.length)}
+					detail={count(radarContacts.length === 1 ? 'display.project' : 'display.projects', radarContacts.length)}
 				>
 					<RadarScope contacts={radarContacts} />
 					<Fragment slot="readout">
@@ -178,6 +178,7 @@ const age = (days: number | null) =>
 					workProjects.map((p) => (
 						<article class:list={['card', { featured: p.role === 'featured' }]} data-reveal data-project={p.id}>
 							{p.role === 'featured' && <p class="label">{t('projects.featured')}</p>}
+							{p.inProgress && <p class="label">{t('projects.inProgress')}</p>}
 							<h3>{p.title}</h3>
 							<p class="muted">{p.tagline}</p>
 							<h4>{t('projects.problem')}</h4>
