@@ -53,7 +53,7 @@ const en = {
 	'signals.title': 'Steady practice',
 	'contact.heading': 'Contact',
 	'contact.title': 'Contact me',
-	'contact.intro': 'Have a project, an opportunity or a question? Let?s talk.',
+	'contact.intro': 'Have a project, an opportunity or a question? Let’s talk.',
 	'contact.name': 'Your name',
 	'contact.email': 'Your email',
 	'contact.message': 'Message',
