@@ -97,6 +97,18 @@ Planned: `.github/workflows/` (stage 3).
 - PR description in English: what changed, why, how to test, and the definition-of-done checklist.
 - Work happens on two machines: `git pull` at the start of a session; commit and push everything at the end.
 
+## Keeping CLAUDE.md and AGENTS.md in sync
+
+`CLAUDE.md` and `AGENTS.md` hold the same project rules, one file per coding assistant. They must stay identical except for the title line and the assistant's name.
+
+- Any change to the project rules goes into **both files in the same commit**: structure, responsibilities, i18n, performance, Git workflow, definition of done and commands.
+- Machine-specific instructions (vault path, handoff steps) do not go here; they live in the git-ignored `CLAUDE.local.md`.
+- Before committing, check that only the title line differs (both sides are normalized to the same assistant name):
+
+  ```bash
+  n='s/Claude Code/Codex/g;s/Claude/Codex/g'; diff <(sed "$n" CLAUDE.md) <(sed "$n" AGENTS.md)
+  ```
+
 ## Definition of done (per stage)
 
 A stage becomes a PR only when:
