@@ -19,7 +19,7 @@ const waveDelay = (x: number, y: number) => Math.round((Math.hypot(x - 200, y - 
 <svg class="icon" viewBox="0 0 400 400" aria-hidden="true" style={`--period: ${PERIOD}s`}>
 	<defs>
 		<pattern id={patternId} x="0" y="0" width="16" height="16" patternUnits="userSpaceOnUse">
-			<circle cx="8" cy="8" r="1.6" />
+			<circle class="grid-dot" cx="8" cy="8" r="1.6" />
 		</pattern>
 	</defs>
 	<rect class="grid" width="400" height="400" fill={`url(#${patternId})`} />
@@ -40,7 +40,8 @@ const waveDelay = (x: number, y: number) => Math.round((Math.hypot(x - 200, y - 
 		height: auto;
 	}
 
-	.grid circle {
+	/* The dot lives in the <pattern>, outside .grid, so it needs its own class to get the palette. */
+	.grid-dot {
 		fill: var(--line);
 		opacity: 0.55;
 	}
