@@ -52,8 +52,11 @@ const fontFaces = `
 @font-face{font-family:'Inter Variable';font-style:normal;font-display:swap;font-weight:100 900;src:url(${interLatin}) format('woff2-variations');unicode-range:${latinRange}}
 @font-face{font-family:'JetBrains Mono';font-style:normal;font-display:swap;font-weight:400;src:url(${monoLatin}) format('woff2');unicode-range:${latinRange}}
 `;
-// Hash the exact inline payloads; changing either automatically changes its CSP allowance.
+// Runs before the first paint so the page never flashes the wrong theme: stored choice, else the system.
+const themeBootstrap = `(function(){var d=document.documentElement,t=null;try{t=localStorage.getItem('theme')}catch(e){}if(t!=='light'&&t!=='dark')t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';d.setAttribute('data-theme',t);var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',t==='light'?'#F5F2EA':'#070D1C')})();`;
+// Hash the exact inline payloads; changing any of them automatically changes its CSP allowance.
 const revealBootstrap = `(function(){var d=document.documentElement;if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;d.classList.add('fx');setTimeout(function(){if(!d.hasAttribute('data-fx-ready'))d.classList.remove('fx')},2500)})();`;
+Astro.csp?.insertScriptHash(`sha256-${createHash('sha256').update(themeBootstrap).digest('base64')}`);
 Astro.csp?.insertScriptHash(`sha256-${createHash('sha256').update(revealBootstrap).digest('base64')}`);
 Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).digest('base64')}`);
 ---
@@ -73,6 +76,7 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 
 		<link rel="preload" href={interLatin} as="font" type="font/woff2" crossorigin />
 		<style is:inline set:html={fontFaces} />
+		<script is:inline set:html={themeBootstrap} />
 		<script is:inline set:html={revealBootstrap} />
 
 		{
@@ -144,10 +148,22 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 						}
 					</ul>
 				</nav>
+				<!-- Shown by scripts/theme.ts; without JavaScript the page simply follows the system theme. -->
+				<button class="theme-toggle" type="button" data-theme-toggle aria-pressed="false" title={t('nav.theme')} hidden>
+					<svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+						<circle cx="12" cy="12" r="4"></circle>
+						<path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path>
+					</svg>
+					<svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+						<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5Z"></path>
+					</svg>
+					<span class="visually-hidden">{t('nav.theme')}</span>
+				</button>
 			</div>
 		</header>
 		<slot />
 		<script>
+			import '../scripts/theme';
 			import '../scripts/scroll-fx';
 			import '../scripts/sonar';
 		</script>
@@ -170,6 +186,33 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 		--page-width: 76rem;
 		--gutter: clamp(1rem, 4vw, 2.5rem);
 		--ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+	}
+
+	/*
+	 * Nautical chart palette: paper background, navy ink, BIC blue as the accent (8.6:1 on the paper).
+	 * Kept in two places on purpose: [data-theme] is set by the head script, the media query covers
+	 * visitors without JavaScript. Change both together (and the bar colors in scripts/theme.ts).
+	 */
+	:root[data-theme='light'] {
+		color-scheme: light;
+		--bg: #f5f2ea;
+		--surface: #ebe6d9;
+		--line: #a3b1d4;
+		--fg: #0b1a3a;
+		--fg-muted: #4a5674;
+		--accent: #1f3d99;
+	}
+
+	@media (prefers-color-scheme: light) {
+		:root:not([data-theme]) {
+			color-scheme: light;
+			--bg: #f5f2ea;
+			--surface: #ebe6d9;
+			--line: #a3b1d4;
+			--fg: #0b1a3a;
+			--fg-muted: #4a5674;
+			--accent: #1f3d99;
+		}
 	}
 
 	*,
@@ -433,6 +476,44 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 
 	.languages a[aria-current='page'] {
 		color: var(--accent);
+	}
+
+	/* Shows the theme it switches to: the sun on the dark sonar, the moon on the light chart. */
+	.theme-toggle {
+		display: inline-grid;
+		place-items: center;
+		width: 2rem;
+		height: 2rem;
+		padding: 0;
+		background: transparent;
+		border: 1px solid transparent;
+		border-radius: 0.5rem;
+		color: var(--fg-muted);
+		cursor: pointer;
+	}
+
+	.theme-toggle[hidden] {
+		display: none;
+	}
+
+	.theme-toggle:hover {
+		border-color: var(--line);
+		color: var(--fg);
+	}
+
+	.theme-toggle svg {
+		width: 1.1rem;
+		height: 1.1rem;
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 1.75;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+	}
+
+	.theme-toggle[aria-pressed='true'] .icon-sun,
+	.theme-toggle[aria-pressed='false'] .icon-moon {
+		display: none;
 	}
 
 	/* Section links centered between the brand and the language switch on wide screens. */
