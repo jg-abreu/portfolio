@@ -14,7 +14,7 @@ import { localeTags, locales, useTranslations, type Locale, type UiKey } from '.
 import { activityStats, heatmapCells, recentRepos } from '../../lib/activity';
 import { getAbout, getContacts, getProjects, getStack } from '../../lib/content';
 import { getGitHubSnapshot } from '../../lib/github';
-import { LEETCODE_USER } from '../../lib/github-data';
+import { LEETCODE_USER, practiceStats } from '../../lib/github-data';
 import { toRadarContacts } from '../../lib/radar';
 
 export function getStaticPaths() {
@@ -38,6 +38,8 @@ const dateFormat = new Intl.DateTimeFormat(localeTags[locale], { dateStyle: 'med
 const contributionsTotal = snapshot?.contributions?.total ?? null;
 const publicRepos = snapshot?.profile?.publicRepos ?? null;
 const leetcode = snapshot?.leetcode ?? null;
+const practiceDays = snapshot?.practiceDays ?? [];
+const practice = practiceStats(practiceDays);
 const localeTag = localeTags[locale];
 
 const about = await getAbout(locale);
@@ -395,49 +397,58 @@ const age = (days: number | null) =>
 							<li class="card" data-reveal style={`--d: ${i * 120}ms`}>
 								<a href={s.repoUrl}>{s.title} ↗</a>
 								<p class="muted">{s.tagline}</p>
-								{s.id === 'leetcode' && leetcode && (
+								{s.id === 'leetcode' && (leetcode || practice) && (
 									<>
-										<dl class="readings">
-											<div>
-												<dt>{t('leetcode.solved')}</dt>
-												<dd>
-													<strong>{numberFormat.format(leetcode.solved)}</strong>
-													<span>
-														{t('leetcode.breakdown')
-															.replace('{e}', numberFormat.format(leetcode.easy))
-															.replace('{m}', numberFormat.format(leetcode.medium))
-															.replace('{h}', numberFormat.format(leetcode.hard))}
-													</span>
-												</dd>
-											</div>
-											<div>
-												<dt>{t('leetcode.activeDays')}</dt>
-												<dd>
-													<strong>{numberFormat.format(leetcode.activeDays)}</strong>
-												</dd>
-											</div>
-											<div>
-												<dt>{t('leetcode.maxStreak')}</dt>
-												<dd>
-													<strong>{dayCount(leetcode.maxStreak)}</strong>
-												</dd>
-											</div>
-											{leetcode.lastSubmission && (
+										<dl
+											class="readings"
+											data-practice={practice ? JSON.stringify(practiceDays) : undefined}
+											data-day-one={t('leetcode.day')}
+											data-day-many={t('leetcode.days')}
+										>
+											{practice && (
+												<>
+													<div>
+														<dt>{t('practice.activeDays')}</dt>
+														<dd>
+															<strong data-stat="practiceDays">{numberFormat.format(practice.activeDays)}</strong>
+														</dd>
+													</div>
+													<div>
+														<dt>{t('practice.longestStreak')}</dt>
+														<dd>
+															<strong data-stat="practiceStreak">{dayCount(practice.longestStreak)}</strong>
+														</dd>
+													</div>
+													<div>
+														<dt>{t('practice.last')}</dt>
+														<dd>
+															<strong>
+																<time data-stat="practiceLast" datetime={practice.lastDay}>
+																	{dateFormat.format(new Date(`${practice.lastDay}T00:00:00Z`))}
+																</time>
+															</strong>
+														</dd>
+													</div>
+												</>
+											)}
+											{leetcode && (
 												<div>
-													<dt>{t('leetcode.last')}</dt>
+													<dt>{t('leetcode.solved')}</dt>
 													<dd>
-														<strong>
-															<time datetime={leetcode.lastSubmission}>
-																{dateFormat.format(new Date(`${leetcode.lastSubmission}T00:00:00Z`))}
-															</time>
-														</strong>
+														<strong>{numberFormat.format(leetcode.solved)}</strong>
+														<span>
+															{t('leetcode.breakdown')
+																.replace('{e}', numberFormat.format(leetcode.easy))
+																.replace('{m}', numberFormat.format(leetcode.medium))
+																.replace('{h}', numberFormat.format(leetcode.hard))}
+														</span>
 													</dd>
 												</div>
 											)}
 										</dl>
 										<p class="note">
 											<a href={`https://leetcode.com/u/${LEETCODE_USER}/`}>{t('leetcode.profile')} ↗</a>
-											<span>{t('leetcode.updated')}</span>
+											<span>{t('practice.note')}</span>
 										</p>
 									</>
 								)}

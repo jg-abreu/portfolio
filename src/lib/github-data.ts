@@ -5,18 +5,23 @@
  * https links only, YYYY-MM-DD dates, non-negative integers, plain-text strings (rendered with
  * textContent, never as HTML). No Node or DOM APIs here.
  */
+import { rioDate } from './calendar.ts';
+
 export const GITHUB_USER = 'jg-abreu';
 export const LEETCODE_USER = 'jg-abreu';
+/** Where all algorithm practice lands, from any platform: a day with a commit here is a day practiced. */
+export const PRACTICE_REPO = 'algorithms-and-data-structures';
 
 export const ENDPOINTS = {
 	profile: `https://api.github.com/users/${GITHUB_USER}`,
 	repos: `https://api.github.com/users/${GITHUB_USER}/repos?per_page=100&sort=pushed`,
 	contributions: `https://github-contributions-api.jogruber.de/v4/${GITHUB_USER}?y=last`,
 	leetcode: 'https://leetcode.com/graphql',
+	practiceCommits: `https://api.github.com/repos/${GITHUB_USER}/${PRACTICE_REPO}/commits?per_page=100`,
 } as const;
 
 export const LEETCODE_QUERY =
-	'query($u:String!){matchedUser(username:$u){submitStatsGlobal{acSubmissionNum{difficulty count}} userCalendar{streak totalActiveDays submissionCalendar}}}';
+	'query($u:String!){matchedUser(username:$u){submitStatsGlobal{acSubmissionNum{difficulty count}}}}';
 
 export interface Profile {
 	publicRepos: number;
@@ -44,9 +49,12 @@ export interface LeetCode {
 	easy: number;
 	medium: number;
 	hard: number;
+}
+
+export interface PracticeStats {
 	activeDays: number;
-	maxStreak: number;
-	lastSubmission: string | null;
+	longestStreak: number;
+	lastDay: string;
 }
 
 /** Each source is independent: null means "no data", which the site shows as absent, never invented. */
@@ -56,6 +64,8 @@ export interface Snapshot {
 	repos: Repo[] | null;
 	contributions: Contributions | null;
 	leetcode: LeetCode | null;
+	/** Calendar days (Rio) with at least one commit in PRACTICE_REPO, sorted. */
+	practiceDays: string[] | null;
 }
 
 type Unknown = Record<string, unknown> | undefined | null;
@@ -124,17 +134,17 @@ export function validContributions(v: unknown): Contributions | null {
 export function validLeetCode(v: unknown): LeetCode | null {
 	const o = obj(v);
 	if (!o) return null;
-	const counts = [o.solved, o.easy, o.medium, o.hard, o.activeDays, o.maxStreak];
-	if (!counts.every(isCount)) return null;
+	if (![o.solved, o.easy, o.medium, o.hard].every(isCount)) return null;
 	return {
 		solved: o.solved as number,
 		easy: o.easy as number,
 		medium: o.medium as number,
 		hard: o.hard as number,
-		activeDays: o.activeDays as number,
-		maxStreak: o.maxStreak as number,
-		lastSubmission: isDate(o.lastSubmission) ? o.lastSubmission : null,
 	};
+}
+
+export function validDays(v: unknown): string[] | null {
+	return Array.isArray(v) ? [...new Set(v.filter(isDate))].sort() : null;
 }
 
 export function validSnapshot(v: unknown): Snapshot | null {
@@ -146,6 +156,7 @@ export function validSnapshot(v: unknown): Snapshot | null {
 		repos: validRepos(o.repos),
 		contributions: validContributions(o.contributions),
 		leetcode: validLeetCode(o.leetcode),
+		practiceDays: validDays(o.practiceDays),
 	};
 }
 
@@ -183,34 +194,40 @@ export function fromContributionsApi(raw: unknown): Contributions | null {
 export function fromLeetCodeApi(raw: unknown): LeetCode | null {
 	const user = obj(obj(obj(raw)?.data)?.matchedUser);
 	const stats = obj(user?.submitStatsGlobal)?.acSubmissionNum;
-	const calendar = obj(user?.userCalendar);
-	if (!Array.isArray(stats) || !calendar) return null;
+	if (!Array.isArray(stats)) return null;
 	const count = (difficulty: string) => obj(stats.find((s) => obj(s)?.difficulty === difficulty))?.count;
-
-	// submissionCalendar is a JSON string of { "<unix seconds>": submissions }.
-	let lastSubmission: string | null = null;
-	try {
-		const days = Object.keys(JSON.parse(String(calendar.submissionCalendar ?? '{}')))
-			.map(Number)
-			.filter((s) => Number.isFinite(s) && s > 0);
-		if (days.length) lastSubmission = new Date(Math.max(...days) * 1000).toISOString().slice(0, 10);
-	} catch {
-		lastSubmission = null;
-	}
-
 	return validLeetCode({
 		solved: count('All'),
 		easy: count('Easy'),
 		medium: count('Medium'),
 		hard: count('Hard'),
-		activeDays: calendar.totalActiveDays,
-		maxStreak: calendar.streak,
-		lastSubmission,
 	});
+}
+
+/** The day each commit was authored, in Rio: a commit at 23:39 there is already the next day in UTC. */
+export function fromGitHubCommits(raw: unknown): string[] | null {
+	if (!Array.isArray(raw)) return null;
+	const dates = raw.map((c) => obj(obj(obj(c)?.commit)?.author)?.date);
+	return validDays(
+		dates.filter((d): d is string => typeof d === 'string' && !Number.isNaN(Date.parse(d))).map((d) => rioDate(new Date(d))),
+	);
 }
 
 /** Whole days from `from` to `to` (both YYYY-MM-DD), never negative. */
 export function daysBetween(from: string, to: string): number {
 	const ms = Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`);
 	return Math.max(0, Math.round(ms / 86_400_000));
+}
+
+/** Active days, longest run of consecutive days and the latest day; null when there are no days. */
+export function practiceStats(days: string[]): PracticeStats | null {
+	const sorted = validDays(days) ?? [];
+	if (sorted.length === 0) return null;
+	let longestStreak = 0;
+	let run = 0;
+	sorted.forEach((day, i) => {
+		run = i > 0 && daysBetween(sorted[i - 1], day) === 1 ? run + 1 : 1;
+		longestStreak = Math.max(longestStreak, run);
+	});
+	return { activeDays: sorted.length, longestStreak, lastDay: sorted[sorted.length - 1] };
 }
