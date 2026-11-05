@@ -55,7 +55,7 @@ src/
   pages/404.astro           bilingual 404 (noindex); nginx should serve it with `error_page 404 /404.html`
   pages/[locale]/           pages, generated for every locale
   pages/[locale]/projects/[id].astro  case study page for each project with `caseStudy: true`
-scripts/github-snapshot.ts  build-time fetch of profile, repos, contributions and LeetCode; each source keeps
+scripts/github-snapshot.ts  build-time fetch of profile, repos, contributions, LeetCode and practice commits; each source keeps
                             its previous value if it fails (run by `npm run build`; uses GITHUB_TOKEN if set)
 scripts/og-images.ts        `npm run og`: renders public/og/og-<locale>.png (1200 × 630) with headless Chrome;
                             rerun after changing the name, role or position strings

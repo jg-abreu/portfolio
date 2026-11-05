@@ -1,4 +1,4 @@
 ---
-title: LeetCode
-tagline: Prática de estruturas de dados e algoritmos em Java e Python, sincronizada automaticamente a cada submissão aceita pelo LeetHub.
+title: Algoritmos e Estruturas de Dados
+tagline: Minha prática de estruturas de dados e algoritmos em Java e Python, do LeetCode (sincronizado automaticamente pelo LeetHub) e dos outros lugares onde estudo.
 ---

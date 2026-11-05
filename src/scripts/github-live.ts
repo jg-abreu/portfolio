@@ -2,7 +2,8 @@
  * Live GitHub data in the browser. The page is rendered with the build snapshot, so it is never
  * empty; this script then fetches fresh data and updates it in place:
  * - [data-live="contributions" | "repos"] counters (animated unless motion is reduced);
- * - radar blips and readout ages for each project repo ([data-repo]).
+ * - radar blips and readout ages for each project repo ([data-repo]);
+ * - practice readings ([data-practice]), from the latest commits added to the days in the snapshot.
  * Responses are cached for 30 minutes (the anonymous API allows 60 requests/hour per IP), each
  * source loads independently, and anything that fails or does not validate leaves the snapshot
  * value in place. LeetCode is build-only: it blocks browser requests.
@@ -11,9 +12,12 @@ import {
 	ENDPOINTS,
 	daysBetween,
 	fromContributionsApi,
+	fromGitHubCommits,
 	fromGitHubProfile,
 	fromGitHubRepos,
+	practiceStats,
 	validContributions,
+	validDays,
 	validProfile,
 	validRepos,
 	type Contributions,
@@ -28,9 +32,10 @@ interface LiveData {
 	profile: Profile | null;
 	repos: Repo[] | null;
 	contributions: Contributions | null;
+	practiceDays: string[] | null;
 }
 
-const CACHE_KEY = 'portfolio:github-live:v1';
+const CACHE_KEY = 'portfolio:github-live:v2';
 const CACHE_MS = 30 * 60 * 1000;
 const root = document.documentElement;
 const motion = root.classList.contains('fx') && !matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -44,6 +49,7 @@ function readCache(): LiveData | null {
 			profile: validProfile(raw.profile),
 			repos: validRepos(raw.repos),
 			contributions: validContributions(raw.contributions),
+			practiceDays: validDays(raw.practiceDays),
 		};
 	} catch {
 		return null;
@@ -65,13 +71,14 @@ async function getJson(url: string): Promise<unknown> {
 }
 
 async function fetchLive(): Promise<LiveData> {
-	const [profile, repos, contributions] = await Promise.allSettled([
+	const [profile, repos, contributions, practiceDays] = await Promise.allSettled([
 		getJson(ENDPOINTS.profile).then(fromGitHubProfile),
 		getJson(ENDPOINTS.repos).then(fromGitHubRepos),
 		getJson(ENDPOINTS.contributions).then(fromContributionsApi),
+		getJson(ENDPOINTS.practiceCommits).then(fromGitHubCommits),
 	]);
 	const value = <T>(r: PromiseSettledResult<T | null>) => (r.status === 'fulfilled' ? r.value : null);
-	return { profile: value(profile), repos: value(repos), contributions: value(contributions) };
+	return { profile: value(profile), repos: value(repos), contributions: value(contributions), practiceDays: value(practiceDays) };
 }
 
 // ---- Counters ----
@@ -166,22 +173,22 @@ const today = rioDate;
 const dateFormat = new Intl.DateTimeFormat(root.lang || undefined, { dateStyle: 'medium', timeZone: 'UTC' });
 const shortDate = new Intl.DateTimeFormat(root.lang || undefined, { day: '2-digit', month: 'short', timeZone: 'UTC' });
 const at = (d: string) => new Date(`${d}T00:00:00Z`);
+const dayLabel = (n: number) => {
+	const source = document.querySelector<HTMLElement>('[data-day-one]');
+	return (n === 1 ? source?.dataset.dayOne : source?.dataset.dayMany)?.replace('{n}', String(n)) ?? String(n);
+};
 
 function updateActivity(contributions: Contributions) {
 	const stats = activityStats(contributions, today());
 	const box = document.querySelector<HTMLElement>('[data-activity-stats]');
-	const days = (n: number) => {
-		const source = document.querySelector<HTMLElement>('[data-day-one]');
-		return (n === 1 ? source?.dataset.dayOne : source?.dataset.dayMany)?.replace('{n}', String(n)) ?? String(n);
-	};
 	const set = (name: string, value: string) => {
 		const el = box?.querySelector<HTMLElement>(`[data-stat="${name}"]`);
 		if (el) el.textContent = value;
 	};
 	set('total', numberFormat.format(stats.total));
 	set('activeDays', numberFormat.format(stats.activeDays));
-	set('currentStreak', days(stats.currentStreak));
-	set('longestStreak', days(stats.longestStreak));
+	set('currentStreak', dayLabel(stats.currentStreak));
+	set('longestStreak', dayLabel(stats.longestStreak));
 	if (stats.bestDay) {
 		set('bestCount', numberFormat.format(stats.bestDay.count));
 		set('bestDate', dateFormat.format(at(stats.bestDay.date)));
@@ -221,6 +228,30 @@ for (const heatmap of document.querySelectorAll<HTMLElement>('[data-heatmap]')) 
 		tip.hidden = false;
 	});
 	heatmap.addEventListener('pointerleave', () => (tip.hidden = true));
+}
+
+// ---- Practice: days with a commit in the practice repo ----
+
+function updatePractice(latest: string[]) {
+	const box = document.querySelector<HTMLElement>('[data-practice]');
+	if (!box) return;
+	// The live request only sees the latest commits, so older days come from the snapshot.
+	let built: string[] = [];
+	try {
+		built = validDays(JSON.parse(box.dataset.practice ?? '[]')) ?? [];
+	} catch {
+		built = [];
+	}
+	const stats = practiceStats([...built, ...latest]);
+	if (!stats) return;
+	const set = (name: string, value: string) => {
+		const el = box.querySelector<HTMLElement>(`[data-stat="${name}"]`);
+		if (el) el.textContent = value;
+	};
+	set('practiceDays', numberFormat.format(stats.activeDays));
+	set('practiceStreak', dayLabel(stats.longestStreak));
+	set('practiceLast', dateFormat.format(at(stats.lastDay)));
+	box.querySelector<HTMLTimeElement>('[data-stat="practiceLast"]')?.setAttribute('datetime', stats.lastDay);
 }
 
 // ---- Recently pushed repositories (ticker and cards), rebuilt from live data with textContent ----
@@ -320,12 +351,13 @@ const whenIdle = (task: () => void) =>
 	'requestIdleCallback' in window ? requestIdleCallback(task, { timeout: 2000 }) : setTimeout(task, 200);
 
 function apply(data: LiveData) {
-	const { contributions, profile, repos } = data;
+	const { contributions, practiceDays, profile, repos } = data;
 	if (contributions) {
 		setCounter('contributions', contributions.total);
 		whenIdle(() => updateActivity(contributions));
 	}
 	if (profile) setCounter('repos', profile.publicRepos);
+	if (practiceDays) whenIdle(() => updatePractice(practiceDays));
 	if (repos) {
 		whenIdle(() => updateRadar(repos));
 		whenIdle(() => updateRecent(repos));
@@ -338,6 +370,6 @@ if (cached) {
 } else {
 	fetchLive().then((data) => {
 		apply(data);
-		if (data.profile || data.repos || data.contributions) writeCache(data);
+		if (data.profile || data.repos || data.contributions || data.practiceDays) writeCache(data);
 	});
 }

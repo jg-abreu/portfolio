@@ -18,7 +18,7 @@
   inProgress: true
 
 - id: leetcode
-  repo: leetcode
+  repo: algorithms-and-data-structures
   role: signal
   order: 2
   stack: [Java, Python]

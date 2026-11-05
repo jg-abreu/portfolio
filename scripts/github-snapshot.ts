@@ -10,9 +10,11 @@ import {
 	LEETCODE_USER,
 	GITHUB_USER,
 	fromContributionsApi,
+	fromGitHubCommits,
 	fromGitHubProfile,
 	fromGitHubRepos,
 	fromLeetCodeApi,
+	validDays,
 	validSnapshot,
 	type Snapshot,
 } from '../src/lib/github-data.ts';
@@ -34,6 +36,19 @@ async function getJson(url: string, init: RequestInit = {}): Promise<unknown> {
 
 const previous: Snapshot | null = existsSync(OUT) ? validSnapshot(JSON.parse(readFileSync(OUT, 'utf8'))) : null;
 
+/** Every page of the practice repo's commits; any failed page fails the source, so a partial history is never kept. */
+async function practiceDays(): Promise<string[] | null> {
+	const days: string[] = [];
+	for (let page = 1; page <= 50; page++) {
+		const raw = await getJson(`${ENDPOINTS.practiceCommits}&page=${page}`, { headers: githubHeaders });
+		const parsed = fromGitHubCommits(raw);
+		if (!parsed) return null;
+		days.push(...parsed);
+		if ((raw as unknown[]).length < 100) return validDays(days);
+	}
+	throw new Error('more commit pages than expected');
+}
+
 const sources = {
 	profile: () => getJson(ENDPOINTS.profile, { headers: githubHeaders }).then(fromGitHubProfile),
 	repos: () => getJson(ENDPOINTS.repos, { headers: githubHeaders }).then(fromGitHubRepos),
@@ -49,6 +64,7 @@ const sources = {
 			},
 			body: JSON.stringify({ query: LEETCODE_QUERY, variables: { u: LEETCODE_USER } }),
 		}).then(fromLeetCodeApi),
+	practiceDays,
 };
 
 const names = Object.keys(sources) as (keyof typeof sources)[];
@@ -60,6 +76,7 @@ const snapshot: Snapshot = {
 	repos: previous?.repos ?? null,
 	contributions: previous?.contributions ?? null,
 	leetcode: previous?.leetcode ?? null,
+	practiceDays: previous?.practiceDays ?? null,
 };
 
 names.forEach((name, i) => {

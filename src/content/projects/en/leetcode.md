@@ -1,4 +1,4 @@
 ---
-title: LeetCode
-tagline: Data structures and algorithms practice in Java and Python, synced automatically from every accepted submission with LeetHub.
+title: Algorithms & Data Structures
+tagline: My data structures and algorithms practice in Java and Python, from LeetCode (synced automatically with LeetHub) and the other places I study.
 ---
