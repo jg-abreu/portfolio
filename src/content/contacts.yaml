@@ -40,3 +40,10 @@
   url: https://www.instagram.com/dev_abreu/
   primary: false
   order: 5
+
+- id: spotify
+  kind: spotify
+  label: Spotify
+  url: https://open.spotify.com/user/d4fatvvauq0a3zjh763pkrbmw
+  primary: false
+  order: 6

@@ -53,7 +53,7 @@ const contacts = defineCollection({
 			order: z.int().nonnegative(),
 		}),
 		z.object({
-			kind: z.enum(['linkedin', 'github', 'devto', 'x', 'instagram']),
+			kind: z.enum(['linkedin', 'github', 'devto', 'x', 'instagram', 'spotify']),
 			label: z.string().min(1),
 			url: httpsUrl,
 			primary: z.boolean(),
