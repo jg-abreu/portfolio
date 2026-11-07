@@ -15,7 +15,7 @@ import { activityStats, heatmapCells, recentRepos } from '../../lib/activity';
 import { utcDate } from '../../lib/calendar';
 import { getAbout, getContacts, getProjects, getStack } from '../../lib/content';
 import { getGitHubSnapshot } from '../../lib/github';
-import { LEETCODE_USER, practiceStats } from '../../lib/github-data';
+import { practiceStats } from '../../lib/github-data';
 import { toRadarContacts } from '../../lib/radar';
 
 export function getStaticPaths() {
@@ -436,10 +436,21 @@ const age = (days: number | null) =>
 											</div>
 										</dl>
 										<p class="note">
-											<a href={`https://leetcode.com/u/${LEETCODE_USER}/`}>{t('leetcode.profile')} ↗</a>
 											<span>{t('practice.note')}</span>
 										</p>
 									</>
+								)}
+								{s.profiles && (
+									<div class="profiles">
+										<span id={`profiles-${s.id}`}>{t('practice.profiles')}</span>
+										<ul aria-labelledby={`profiles-${s.id}`}>
+											{s.profiles.map((p) => (
+												<li>
+													<a href={p.url}>{p.label} ↗</a>
+												</li>
+											))}
+										</ul>
+									</div>
 								)}
 							</li>
 						))
@@ -804,6 +815,33 @@ const age = (days: number | null) =>
 		margin: 1.25rem 0 0;
 		font-family: var(--font-mono);
 		font-size: 0.8rem;
+	}
+
+	/* Profiles on the platforms where the practice repo's solutions are submitted. */
+	.profiles {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: 0.5rem 1rem;
+		margin: 1rem 0 0;
+		font-family: var(--font-mono);
+		font-size: 0.8rem;
+	}
+
+	.profiles > span {
+		color: var(--fg-muted);
+		font-size: 0.7rem;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+	}
+
+	.profiles ul {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem 1rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
 	}
 
 	/* Radar readout inside the projects display. */
