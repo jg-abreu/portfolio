@@ -446,7 +446,9 @@ const age = (days: number | null) =>
 										<ul aria-labelledby={`profiles-${s.id}`}>
 											{s.profiles.map((p) => (
 												<li>
-													<a href={p.url}>{p.label} ↗</a>
+													<a class="btn" href={p.url}>
+														{p.label} ↗
+													</a>
 												</li>
 											))}
 										</ul>
@@ -819,17 +821,14 @@ const age = (days: number | null) =>
 
 	/* Profiles on the platforms where the practice repo's solutions are submitted. */
 	.profiles {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: baseline;
-		gap: 0.5rem 1rem;
-		margin: 1rem 0 0;
-		font-family: var(--font-mono);
-		font-size: 0.8rem;
+		display: grid;
+		gap: 0.6rem;
+		margin: 1.25rem 0 0;
 	}
 
 	.profiles > span {
 		color: var(--fg-muted);
+		font-family: var(--font-mono);
 		font-size: 0.7rem;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
@@ -838,7 +837,7 @@ const age = (days: number | null) =>
 	.profiles ul {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 0.5rem 1rem;
+		gap: 0.6rem;
 		margin: 0;
 		padding: 0;
 		list-style: none;
