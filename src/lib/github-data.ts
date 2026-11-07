@@ -5,11 +5,11 @@
  * https links only, YYYY-MM-DD dates, non-negative integers, plain-text strings (rendered with
  * textContent, never as HTML). No Node or DOM APIs here.
  */
-import { rioDate } from './calendar.ts';
+import { utcDate } from './calendar.ts';
 
 export const GITHUB_USER = 'jg-abreu';
 export const LEETCODE_USER = 'jg-abreu';
-/** Where all algorithm practice lands, from any platform: a day with a commit here is a day practiced. */
+/** Where all algorithm practice lands: a UTC day with a solution committed here is a day practiced. */
 export const PRACTICE_REPO = 'algorithms-and-data-structures';
 
 export const ENDPOINTS = {
@@ -53,6 +53,8 @@ export interface LeetCode {
 
 export interface PracticeStats {
 	activeDays: number;
+	/** Consecutive days up to today; today may still be empty, so a run ending yesterday counts. */
+	currentStreak: number;
 	longestStreak: number;
 	lastDay: string;
 }
@@ -204,12 +206,21 @@ export function fromLeetCodeApi(raw: unknown): LeetCode | null {
 	});
 }
 
-/** The day each commit was authored, in Rio: a commit at 23:39 there is already the next day in UTC. */
+/** Solution commits are titled with the run's stats, e.g. "Time: 2 ms (92.71%), Space: 71.53 MB (60.77%)". */
+const SOLUTION_COMMIT = /^Time: .+, Space: /;
+
+/**
+ * The UTC day of each solution commit, like LeetCode's own calendar: a commit at 23:39 in Rio is
+ * already the next day. Commits that only touch docs or the repository layout are not practice.
+ */
 export function fromGitHubCommits(raw: unknown): string[] | null {
 	if (!Array.isArray(raw)) return null;
-	const dates = raw.map((c) => obj(obj(obj(c)?.commit)?.author)?.date);
+	const dates = raw
+		.map((c) => obj(obj(c)?.commit))
+		.filter((commit) => typeof commit?.message === 'string' && SOLUTION_COMMIT.test(commit.message))
+		.map((commit) => obj(commit?.author)?.date);
 	return validDays(
-		dates.filter((d): d is string => typeof d === 'string' && !Number.isNaN(Date.parse(d))).map((d) => rioDate(new Date(d))),
+		dates.filter((d): d is string => typeof d === 'string' && !Number.isNaN(Date.parse(d))).map((d) => utcDate(new Date(d))),
 	);
 }
 
@@ -219,8 +230,8 @@ export function daysBetween(from: string, to: string): number {
 	return Math.max(0, Math.round(ms / 86_400_000));
 }
 
-/** Active days, longest run of consecutive days and the latest day; null when there are no days. */
-export function practiceStats(days: string[]): PracticeStats | null {
+/** Active days, current and longest runs of consecutive days and the latest day; null when there are no days. */
+export function practiceStats(days: string[], today: string): PracticeStats | null {
 	const sorted = validDays(days) ?? [];
 	if (sorted.length === 0) return null;
 	let longestStreak = 0;
@@ -229,5 +240,8 @@ export function practiceStats(days: string[]): PracticeStats | null {
 		run = i > 0 && daysBetween(sorted[i - 1], day) === 1 ? run + 1 : 1;
 		longestStreak = Math.max(longestStreak, run);
 	});
-	return { activeDays: sorted.length, longestStreak, lastDay: sorted[sorted.length - 1] };
+	const lastDay = sorted[sorted.length - 1];
+	// `run` ends at the last day; it is still current only if that day is today or yesterday.
+	const currentStreak = daysBetween(lastDay, today) <= 1 ? run : 0;
+	return { activeDays: sorted.length, currentStreak, longestStreak, lastDay };
 }

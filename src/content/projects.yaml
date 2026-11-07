@@ -22,6 +22,15 @@
   role: signal
   order: 2
   stack: [Java, Python]
+  profiles:
+    - label: LeetCode
+      url: https://leetcode.com/u/jg-abreu/
+    - label: Codeforces
+      url: https://codeforces.com/profile/jg-abreu
+    - label: AtCoder
+      url: https://atcoder.jp/users/jgabreu
+    - label: CSES
+      url: https://cses.fi/user/522406
 
 - id: daily-learning-log
   repo: daily-learning-log

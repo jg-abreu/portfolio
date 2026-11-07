@@ -25,7 +25,7 @@ import {
 	type Repo,
 } from '../lib/github-data';
 import { activityStats, heatmapCells, recentRepos } from '../lib/activity';
-import { rioDate } from '../lib/calendar';
+import { rioDate, utcDate } from '../lib/calendar';
 import { pointAt, radiusForDays } from '../lib/radar-geometry';
 
 interface LiveData {
@@ -35,7 +35,7 @@ interface LiveData {
 	practiceDays: string[] | null;
 }
 
-const CACHE_KEY = 'portfolio:github-live:v2';
+const CACHE_KEY = 'portfolio:github-live:v3';
 const CACHE_MS = 30 * 60 * 1000;
 const root = document.documentElement;
 const motion = root.classList.contains('fx') && !matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -230,7 +230,7 @@ for (const heatmap of document.querySelectorAll<HTMLElement>('[data-heatmap]')) 
 	heatmap.addEventListener('pointerleave', () => (tip.hidden = true));
 }
 
-// ---- Practice: days with a commit in the practice repo ----
+// ---- Practice: UTC days with a solution committed to the practice repo ----
 
 function updatePractice(latest: string[]) {
 	const box = document.querySelector<HTMLElement>('[data-practice]');
@@ -242,13 +242,14 @@ function updatePractice(latest: string[]) {
 	} catch {
 		built = [];
 	}
-	const stats = practiceStats([...built, ...latest]);
+	const stats = practiceStats([...built, ...latest], utcDate());
 	if (!stats) return;
 	const set = (name: string, value: string) => {
 		const el = box.querySelector<HTMLElement>(`[data-stat="${name}"]`);
 		if (el) el.textContent = value;
 	};
 	set('practiceDays', numberFormat.format(stats.activeDays));
+	set('practiceCurrent', dayLabel(stats.currentStreak));
 	set('practiceStreak', dayLabel(stats.longestStreak));
 	set('practiceLast', dateFormat.format(at(stats.lastDay)));
 	box.querySelector<HTMLTimeElement>('[data-stat="practiceLast"]')?.setAttribute('datetime', stats.lastDay);
