@@ -50,9 +50,9 @@ test('no days means no stats', () => {
 	assert.equal(practiceStats([], '2026-11-03'), null);
 });
 
-test('a snapshot from before this source still loads, without practice days', () => {
-	const old = { generatedAt: '2026-11-01', leetcode: { solved: 9, easy: 6, medium: 3, hard: 0, activeDays: 9, maxStreak: 3 } };
+test('an older snapshot still loads: unknown fields are dropped and missing sources are no data', () => {
+	const old = { generatedAt: '2026-11-01', leetcode: { solved: 9, easy: 6, medium: 3, hard: 0 } };
 	const snapshot = validSnapshot(old);
 	assert.equal(snapshot?.practiceDays, null);
-	assert.deepEqual(snapshot?.leetcode, { solved: 9, easy: 6, medium: 3, hard: 0 });
+	assert.equal(snapshot && 'leetcode' in snapshot, false);
 });

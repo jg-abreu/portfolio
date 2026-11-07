@@ -32,7 +32,7 @@ const signals = projects.filter((p) => p.role === 'signal');
 const radarContacts = toRadarContacts(workProjects);
 const contacts = await getContacts();
 
-// Build snapshot of GitHub and LeetCode data; the browser refreshes the GitHub parts live.
+// Build snapshot of GitHub data; the browser refreshes it live.
 const snapshot = getGitHubSnapshot();
 const numberFormat = new Intl.NumberFormat(localeTags[locale]);
 const dateFormat = new Intl.DateTimeFormat(localeTags[locale], { dateStyle: 'medium', timeZone: 'UTC' });
@@ -777,7 +777,7 @@ const age = (days: number | null) =>
 		letter-spacing: 0.08em;
 	}
 
-	/* LeetCode readings inside the consistency card. */
+	/* Practice readings inside the consistency card. */
 	.readings {
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
