@@ -37,7 +37,7 @@ src/
   components/Heatmap.astro      year of contributions, one square per day
   components/RecentRepos.astro  recently pushed repos as cards or as the hero ticker
   lib/content.ts            merges and cross-checks content; fails the build if locales diverge
-  lib/github-data.ts        endpoints, types and validators for GitHub/LeetCode data (shared by build and browser)
+  lib/github-data.ts        endpoints, types and validators for GitHub data (shared by build and browser)
   lib/github.ts             reads and revalidates the snapshot at build time (null parts = no data, never invented)
   lib/radar-geometry.ts     contact position from days since push (shared by build and browser)
   data/github-snapshot.json written by scripts/github-snapshot.ts on every build (git-ignored)
@@ -55,7 +55,7 @@ src/
   pages/404.astro           bilingual 404 (noindex); nginx should serve it with `error_page 404 /404.html`
   pages/[locale]/           pages, generated for every locale
   pages/[locale]/projects/[id].astro  case study page for each project with `caseStudy: true`
-scripts/github-snapshot.ts  build-time fetch of profile, repos, contributions, LeetCode and practice commits; each source keeps
+scripts/github-snapshot.ts  build-time fetch of profile, repos, contributions and practice commits; each source keeps
                             its previous value if it fails (run by `npm run build`; uses GITHUB_TOKEN if set)
 scripts/og-images.ts        `npm run og`: renders public/og/og-<locale>.png (1200 × 630) with headless Chrome;
                             rerun after changing the name, role or position strings

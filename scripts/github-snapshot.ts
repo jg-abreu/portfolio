@@ -1,4 +1,4 @@
-// Build-time snapshot of public GitHub and LeetCode data, written to src/data/github-snapshot.json
+// Build-time snapshot of public GitHub data, written to src/data/github-snapshot.json
 // (git-ignored). Runs before every build. Each source is fetched independently: a source that
 // fails keeps its value from the previous snapshot, or stays null, so the site never invents data.
 import { existsSync, readFileSync } from 'node:fs';
@@ -6,14 +6,11 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { rioDate } from '../src/lib/calendar.ts';
 import {
 	ENDPOINTS,
-	LEETCODE_QUERY,
-	LEETCODE_USER,
 	GITHUB_USER,
 	fromContributionsApi,
 	fromGitHubCommits,
 	fromGitHubProfile,
 	fromGitHubRepos,
-	fromLeetCodeApi,
 	validDays,
 	validSnapshot,
 	type Snapshot,
@@ -53,17 +50,6 @@ const sources = {
 	profile: () => getJson(ENDPOINTS.profile, { headers: githubHeaders }).then(fromGitHubProfile),
 	repos: () => getJson(ENDPOINTS.repos, { headers: githubHeaders }).then(fromGitHubRepos),
 	contributions: () => getJson(ENDPOINTS.contributions).then(fromContributionsApi),
-	// LeetCode blocks browser requests, so this source only exists at build time.
-	leetcode: () =>
-		getJson(ENDPOINTS.leetcode, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				Referer: `https://leetcode.com/u/${LEETCODE_USER}/`,
-				'User-Agent': `${GITHUB_USER}-portfolio-build`,
-			},
-			body: JSON.stringify({ query: LEETCODE_QUERY, variables: { u: LEETCODE_USER } }),
-		}).then(fromLeetCodeApi),
 	practiceDays,
 };
 
@@ -75,7 +61,6 @@ const snapshot: Snapshot = {
 	profile: previous?.profile ?? null,
 	repos: previous?.repos ?? null,
 	contributions: previous?.contributions ?? null,
-	leetcode: previous?.leetcode ?? null,
 	practiceDays: previous?.practiceDays ?? null,
 };
 

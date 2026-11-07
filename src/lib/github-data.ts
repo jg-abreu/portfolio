@@ -1,5 +1,5 @@
 /**
- * Public data the site shows about João's GitHub and LeetCode activity: types, endpoints and
+ * Public data the site shows about João's GitHub activity: types, endpoints and
  * validators. Shared by the build-time snapshot (scripts/github-snapshot.ts), the build
  * (lib/github.ts) and the browser (scripts/github-live.ts), so the same rules apply everywhere:
  * https links only, YYYY-MM-DD dates, non-negative integers, plain-text strings (rendered with
@@ -8,7 +8,6 @@
 import { utcDate } from './calendar.ts';
 
 export const GITHUB_USER = 'jg-abreu';
-export const LEETCODE_USER = 'jg-abreu';
 /** Where all algorithm practice lands: a UTC day with a solution committed here is a day practiced. */
 export const PRACTICE_REPO = 'algorithms-and-data-structures';
 
@@ -16,12 +15,8 @@ export const ENDPOINTS = {
 	profile: `https://api.github.com/users/${GITHUB_USER}`,
 	repos: `https://api.github.com/users/${GITHUB_USER}/repos?per_page=100&sort=pushed`,
 	contributions: `https://github-contributions-api.jogruber.de/v4/${GITHUB_USER}?y=last`,
-	leetcode: 'https://leetcode.com/graphql',
 	practiceCommits: `https://api.github.com/repos/${GITHUB_USER}/${PRACTICE_REPO}/commits?per_page=100`,
 } as const;
-
-export const LEETCODE_QUERY =
-	'query($u:String!){matchedUser(username:$u){submitStatsGlobal{acSubmissionNum{difficulty count}}}}';
 
 export interface Profile {
 	publicRepos: number;
@@ -44,13 +39,6 @@ export interface Contributions {
 	days: { date: string; count: number }[];
 }
 
-export interface LeetCode {
-	solved: number;
-	easy: number;
-	medium: number;
-	hard: number;
-}
-
 export interface PracticeStats {
 	activeDays: number;
 	/** Consecutive days up to today; today may still be empty, so a run ending yesterday counts. */
@@ -65,8 +53,7 @@ export interface Snapshot {
 	profile: Profile | null;
 	repos: Repo[] | null;
 	contributions: Contributions | null;
-	leetcode: LeetCode | null;
-	/** Calendar days (Rio) with at least one commit in PRACTICE_REPO, sorted. */
+	/** UTC days with at least one solution commit in PRACTICE_REPO, sorted. */
 	practiceDays: string[] | null;
 }
 
@@ -133,18 +120,6 @@ export function validContributions(v: unknown): Contributions | null {
 	return { total: o.total, days };
 }
 
-export function validLeetCode(v: unknown): LeetCode | null {
-	const o = obj(v);
-	if (!o) return null;
-	if (![o.solved, o.easy, o.medium, o.hard].every(isCount)) return null;
-	return {
-		solved: o.solved as number,
-		easy: o.easy as number,
-		medium: o.medium as number,
-		hard: o.hard as number,
-	};
-}
-
 export function validDays(v: unknown): string[] | null {
 	return Array.isArray(v) ? [...new Set(v.filter(isDate))].sort() : null;
 }
@@ -157,7 +132,6 @@ export function validSnapshot(v: unknown): Snapshot | null {
 		profile: validProfile(o.profile),
 		repos: validRepos(o.repos),
 		contributions: validContributions(o.contributions),
-		leetcode: validLeetCode(o.leetcode),
 		practiceDays: validDays(o.practiceDays),
 	};
 }
@@ -191,19 +165,6 @@ export function fromGitHubRepos(raw: unknown): Repo[] | null {
 export function fromContributionsApi(raw: unknown): Contributions | null {
 	const o = obj(raw);
 	return validContributions({ total: obj(o?.total)?.lastYear, days: o?.contributions });
-}
-
-export function fromLeetCodeApi(raw: unknown): LeetCode | null {
-	const user = obj(obj(obj(raw)?.data)?.matchedUser);
-	const stats = obj(user?.submitStatsGlobal)?.acSubmissionNum;
-	if (!Array.isArray(stats)) return null;
-	const count = (difficulty: string) => obj(stats.find((s) => obj(s)?.difficulty === difficulty))?.count;
-	return validLeetCode({
-		solved: count('All'),
-		easy: count('Easy'),
-		medium: count('Medium'),
-		hard: count('Hard'),
-	});
 }
 
 /** Solution commits are titled with the run's stats, e.g. "Time: 2 ms (92.71%), Space: 71.53 MB (60.77%)". */

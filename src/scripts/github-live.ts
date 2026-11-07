@@ -6,7 +6,7 @@
  * - practice readings ([data-practice]), from the latest commits added to the days in the snapshot.
  * Responses are cached for 30 minutes (the anonymous API allows 60 requests/hour per IP), each
  * source loads independently, and anything that fails or does not validate leaves the snapshot
- * value in place. LeetCode is build-only: it blocks browser requests.
+ * value in place.
  */
 import {
 	ENDPOINTS,
