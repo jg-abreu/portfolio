@@ -29,6 +29,8 @@
       url: https://codeforces.com/profile/jg-abreu
     - label: AtCoder
       url: https://atcoder.jp/users/jgabreu
+    - label: CSES
+      url: https://cses.fi/user/522406
 
 - id: daily-learning-log
   repo: daily-learning-log
