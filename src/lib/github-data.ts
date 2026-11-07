@@ -53,6 +53,8 @@ export interface LeetCode {
 
 export interface PracticeStats {
 	activeDays: number;
+	/** Consecutive days up to today; today may still be empty, so a run ending yesterday counts. */
+	currentStreak: number;
 	longestStreak: number;
 	lastDay: string;
 }
@@ -219,8 +221,8 @@ export function daysBetween(from: string, to: string): number {
 	return Math.max(0, Math.round(ms / 86_400_000));
 }
 
-/** Active days, longest run of consecutive days and the latest day; null when there are no days. */
-export function practiceStats(days: string[]): PracticeStats | null {
+/** Active days, current and longest runs of consecutive days and the latest day; null when there are no days. */
+export function practiceStats(days: string[], today: string): PracticeStats | null {
 	const sorted = validDays(days) ?? [];
 	if (sorted.length === 0) return null;
 	let longestStreak = 0;
@@ -229,5 +231,8 @@ export function practiceStats(days: string[]): PracticeStats | null {
 		run = i > 0 && daysBetween(sorted[i - 1], day) === 1 ? run + 1 : 1;
 		longestStreak = Math.max(longestStreak, run);
 	});
-	return { activeDays: sorted.length, longestStreak, lastDay: sorted[sorted.length - 1] };
+	const lastDay = sorted[sorted.length - 1];
+	// `run` ends at the last day; it is still current only if that day is today or yesterday.
+	const currentStreak = daysBetween(lastDay, today) <= 1 ? run : 0;
+	return { activeDays: sorted.length, currentStreak, longestStreak, lastDay };
 }

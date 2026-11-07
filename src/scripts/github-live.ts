@@ -242,13 +242,14 @@ function updatePractice(latest: string[]) {
 	} catch {
 		built = [];
 	}
-	const stats = practiceStats([...built, ...latest]);
+	const stats = practiceStats([...built, ...latest], today());
 	if (!stats) return;
 	const set = (name: string, value: string) => {
 		const el = box.querySelector<HTMLElement>(`[data-stat="${name}"]`);
 		if (el) el.textContent = value;
 	};
 	set('practiceDays', numberFormat.format(stats.activeDays));
+	set('practiceCurrent', dayLabel(stats.currentStreak));
 	set('practiceStreak', dayLabel(stats.longestStreak));
 	set('practiceLast', dateFormat.format(at(stats.lastDay)));
 	box.querySelector<HTMLTimeElement>('[data-stat="practiceLast"]')?.setAttribute('datetime', stats.lastDay);

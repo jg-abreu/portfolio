@@ -18,12 +18,24 @@ test('a response that is not a list is no data', () => {
 });
 
 test('streaks only count consecutive days, including across months', () => {
-	const stats = practiceStats(['2026-11-02', '2026-09-30', '2026-10-01', '2026-11-01', '2026-11-03', '2026-10-15']);
-	assert.deepEqual(stats, { activeDays: 6, longestStreak: 3, lastDay: '2026-11-03' });
+	const stats = practiceStats(['2026-11-02', '2026-09-30', '2026-10-01', '2026-11-01', '2026-11-03', '2026-10-15'], '2026-11-03');
+	assert.deepEqual(stats, { activeDays: 6, currentStreak: 3, longestStreak: 3, lastDay: '2026-11-03' });
+});
+
+test('the current streak survives until today is over', () => {
+	const days = ['2026-11-01', '2026-11-02', '2026-11-03'];
+	assert.equal(practiceStats(days, '2026-11-04')?.currentStreak, 3);
+	assert.equal(practiceStats(days, '2026-11-05')?.currentStreak, 0);
+});
+
+test('the current streak can be shorter than the longest one', () => {
+	const stats = practiceStats(['2026-10-01', '2026-10-02', '2026-10-03', '2026-11-02', '2026-11-03'], '2026-11-03');
+	assert.equal(stats?.currentStreak, 2);
+	assert.equal(stats?.longestStreak, 3);
 });
 
 test('no days means no stats', () => {
-	assert.equal(practiceStats([]), null);
+	assert.equal(practiceStats([], '2026-11-03'), null);
 });
 
 test('a snapshot from before this source still loads, without practice days', () => {
