@@ -175,6 +175,23 @@ Astro.csp?.insertScriptHash(`sha256-${createHash('sha256').update(personJsonLd).
 			)
 		}
 
+		<!-- The site's flagship: how this page reached the visitor (pages/[locale]/pipeline.astro). -->
+		<section class="band" aria-labelledby="journey-heading">
+			<a class="card journey-teaser" href={getRelativeLocaleUrl(locale, 'pipeline/')} data-reveal>
+				<p class="journey-kicker">{t('journey.kicker')}</p>
+				<h2 id="journey-heading">{t('pipeline.heading')}</h2>
+				<p class="muted">{t('home.journeyBody')}</p>
+				<ol class="route" aria-hidden="true">
+					{
+						(['commit', 'build', 'ship', 'serve', 'edge', 'you'] as const).map((id) => (
+							<li>{t(`pipeline.${id}.name`)}</li>
+						))
+					}
+				</ol>
+				<span class="btn btn-primary">{t('home.journeyCta')} →</span>
+			</a>
+		</section>
+
 		{
 			repos.length > 0 && (
 				<section class="band" aria-labelledby="repos-heading">
@@ -226,6 +243,84 @@ Astro.csp?.insertScriptHash(`sha256-${createHash('sha256').update(personJsonLd).
 </script>
 
 <style>
+	/* Pipeline teaser: a card with the six stops of the journey, the whole card is the link. */
+	.journey-teaser {
+		display: block;
+		padding: clamp(1.5rem, 4vw, 2.5rem);
+		overflow: hidden;
+		background:
+			radial-gradient(80% 120% at 100% 0%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 60%),
+			color-mix(in srgb, var(--surface) 92%, transparent);
+		color: var(--fg);
+		text-decoration: none;
+	}
+
+	.journey-kicker {
+		margin: 0 0 0.5rem;
+		color: var(--brand);
+		font-size: 0.75rem;
+		font-weight: 700;
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+	}
+
+	.journey-teaser h2 {
+		margin: 0 0 0.5rem;
+		font-size: clamp(1.5rem, 3.5vw, 2.2rem);
+		letter-spacing: -0.03em;
+		line-height: 1.15;
+	}
+
+	.journey-teaser .muted {
+		margin: 0;
+		max-width: 55ch;
+	}
+
+	.route {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.5rem;
+		margin: 1.5rem 0;
+		padding: 0;
+		list-style: none;
+		font-size: 0.8rem;
+		font-weight: 600;
+	}
+
+	.route li {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.route li:not(:last-child)::after {
+		content: '→';
+		color: var(--brand);
+	}
+
+	.route li::before {
+		content: '';
+		width: 0.5rem;
+		height: 0.5rem;
+		border-radius: 50%;
+		background: var(--accent);
+		box-shadow: 0 0 8px var(--brand);
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		.journey-teaser {
+			transition:
+				transform 0.25s var(--ease),
+				border-color 0.2s;
+		}
+
+		.journey-teaser:hover {
+			border-color: var(--brand);
+			transform: translateY(-2px);
+		}
+	}
+
 	.hero {
 		display: grid;
 		align-content: center;
