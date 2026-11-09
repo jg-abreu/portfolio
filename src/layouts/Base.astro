@@ -117,6 +117,7 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 		<slot name="head" />
 	</head>
 	<body>
+		<div class="wallpaper" aria-hidden="true"><span></span><span></span><span></span></div>
 		<div class="progress" aria-hidden="true"></div>
 		<a class="skip-link" href="#main">{t('nav.skip')}</a>
 		<header class="site-header">
@@ -221,7 +222,7 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 
 <style is:global>
 	/*
-	 * v3 palettes. Dark: soft slate gray with a sky-blue, blue, indigo and pink glow across the top (Apple wallpaper style).
+	 * v3 palettes. Dark: soft slate gray under blue wallpapers at the top (.wallpaper below, in the spirit of developer.org.tr).
 	 * Light: plain white, near-black ink and hairline borders (in the spirit of augustogalego.com).
 	 * Kept in two places on purpose: [data-theme] is set by the head script, the media query covers
 	 * visitors without JavaScript. Change both together (and the bar colors in scripts/theme.ts).
@@ -237,10 +238,6 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 		--accent: #fafafa;
 		--on-accent: #11141b;
 		--heat: #4ade80;
-		--glow: radial-gradient(50% 65% at 8% 0%, rgb(56 189 248 / 0.45), transparent 70%),
-			radial-gradient(70% 80% at 40% 0%, rgb(37 99 235 / 0.6), transparent 72%),
-			radial-gradient(55% 70% at 75% 0%, rgb(99 102 241 / 0.5), transparent 70%),
-			radial-gradient(40% 55% at 98% 0%, rgb(236 72 153 / 0.35), transparent 70%);
 		--font-sans: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 		--font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
 		--header-height: 4rem;
@@ -261,7 +258,6 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 		--accent: #171717;
 		--on-accent: #ffffff;
 		--heat: #171717;
-		--glow: none;
 	}
 
 	@media (prefers-color-scheme: light) {
@@ -276,7 +272,6 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 			--accent: #171717;
 			--on-accent: #ffffff;
 			--heat: #171717;
-			--glow: none;
 		}
 	}
 
@@ -331,16 +326,81 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 		-webkit-font-smoothing: antialiased;
 	}
 
-	/* The dark theme's glow behind the hero; it scrolls away with the page. */
-	body::before {
-		content: '';
+	/*
+	 * The dark theme's wallpaper behind the top of the page (public/img/wallpapers, drawn for this
+	 * site). Three wallpapers cross-fade slowly, animating opacity only; with reduced motion the
+	 * first one stays. The mask fades it into the background; it scrolls away with the page.
+	 */
+	.wallpaper {
 		position: absolute;
 		inset: 0 0 auto;
 		z-index: -1;
-		height: 44rem;
-		background: var(--glow);
+		height: 60rem;
 		pointer-events: none;
-		mask-image: linear-gradient(to bottom, #000 60%, transparent);
+		mask-image: linear-gradient(to top, transparent 10%, rgb(0 0 0 / 0.15), rgb(0 0 0 / 0.75));
+	}
+
+	.wallpaper span {
+		position: absolute;
+		inset: 0;
+		background: center top / cover no-repeat;
+		opacity: 0;
+	}
+
+	.wallpaper span:nth-child(1) {
+		background-image: url('/img/wallpapers/1.svg');
+		opacity: 1;
+	}
+
+	.wallpaper span:nth-child(2) {
+		background-image: url('/img/wallpapers/2.svg');
+	}
+
+	.wallpaper span:nth-child(3) {
+		background-image: url('/img/wallpapers/3.svg');
+	}
+
+	:root[data-theme='light'] .wallpaper {
+		display: none;
+	}
+
+	@media (prefers-color-scheme: light) {
+		:root:not([data-theme]) .wallpaper {
+			display: none;
+		}
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		/* 30 s cycle: each wallpaper fades in over 3 s, stays 7 s, fades out while the next comes in. */
+		.wallpaper span {
+			animation: wallpaper 30s linear infinite;
+		}
+
+		.wallpaper span:nth-child(1) {
+			animation-delay: -3s;
+		}
+
+		.wallpaper span:nth-child(2) {
+			animation-delay: 7s;
+		}
+
+		.wallpaper span:nth-child(3) {
+			animation-delay: 17s;
+		}
+	}
+
+	@keyframes wallpaper {
+		0% {
+			opacity: 0;
+		}
+		10%,
+		33.3% {
+			opacity: 1;
+		}
+		43.3%,
+		100% {
+			opacity: 0;
+		}
 	}
 
 	a {
@@ -450,7 +510,7 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 		overflow-wrap: anywhere;
 	}
 
-	/* Page title over the glow: big title, one short line below. */
+	/* Page title over the wallpaper: big title, one short line below. */
 	.page-head {
 		padding-block: clamp(3.5rem, 10vw, 6rem) 2.5rem;
 	}
@@ -615,7 +675,7 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 		transform: none;
 	}
 
-	/* Translucent bar: the dark glow shows through it at the top of the page. */
+	/* Translucent bar: the dark wallpaper shows through it at the top of the page. */
 	.site-header {
 		position: sticky;
 		top: 0;
