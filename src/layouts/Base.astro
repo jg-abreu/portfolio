@@ -278,6 +278,28 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 		}
 	}
 
+	/*
+	 * Theme switch animation (scripts/theme.ts). With the View Transitions API the new theme grows
+	 * as a circle from the toggle; the default cross-fade is turned off so only the circle moves.
+	 * Browsers without it get a short color fade through the .theme-fading class instead.
+	 */
+	::view-transition-old(root),
+	::view-transition-new(root) {
+		animation: none;
+		mix-blend-mode: normal;
+	}
+
+	.theme-fading,
+	.theme-fading *,
+	.theme-fading *::before,
+	.theme-fading *::after {
+		transition:
+			background-color 0.45s var(--ease),
+			border-color 0.45s var(--ease),
+			color 0.45s var(--ease),
+			fill 0.45s var(--ease) !important;
+	}
+
 	*,
 	*::before,
 	*::after {

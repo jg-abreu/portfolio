@@ -24,6 +24,39 @@ function apply(theme: Theme) {
 	for (const toggle of toggles) toggle.setAttribute('aria-pressed', String(theme === 'light'));
 }
 
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+let fadeTimer: number | undefined;
+
+// The new theme grows as a circle from the toggle (View Transitions API). Without the API the
+// colors fade instead; with reduced motion the switch is instant.
+function switchTo(theme: Theme, from: HTMLElement) {
+	if (reducedMotion.matches) return apply(theme);
+
+	if (!document.startViewTransition) {
+		themeRoot.classList.add('theme-fading');
+		apply(theme);
+		clearTimeout(fadeTimer);
+		fadeTimer = window.setTimeout(() => themeRoot.classList.remove('theme-fading'), 500);
+		return;
+	}
+
+	const box = from.getBoundingClientRect();
+	const x = box.left + box.width / 2;
+	const y = box.top + box.height / 2;
+	const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+	const transition = document.startViewTransition(() => apply(theme));
+	transition.ready
+		.then(() => {
+			themeRoot.animate(
+				{ clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] },
+				{ duration: 700, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', pseudoElement: '::view-transition-new(root)' },
+			);
+		})
+		.catch(() => {
+			// The transition was skipped (another one started); the theme is already applied.
+		});
+}
+
 for (const toggle of toggles) {
 	toggle.hidden = false;
 	toggle.addEventListener('click', () => {
@@ -33,7 +66,7 @@ for (const toggle of toggles) {
 		} catch {
 			// Private mode or storage disabled: the switch still works for this page.
 		}
-		apply(next);
+		switchTo(next, toggle);
 	});
 }
 
