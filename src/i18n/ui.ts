@@ -220,6 +220,30 @@ const en = {
 	'journey.you.bytes': 'Transferred',
 	'journey.you.cached': 'from your cache',
 	'journey.replay': 'Ride again',
+	'journey.start': 'Starting point',
+	'journey.from': 'Comes from stage {n} · {name}',
+	'journey.to': 'Goes to stage {n} · {name}',
+	'journey.end': 'End of the journey',
+	'journey.used': 'How it is used here:',
+	'journey.commit.in': 'Code written on my machine and reviewed in a pull request',
+	'journey.commit.use':
+		'Merging the pull request puts the change on main. That push is what sets off every stage below.',
+	'journey.commit.out': 'Commit {sha} on main',
+	'journey.build.use':
+		'The push starts the workflow. actions/checkout downloads exactly this commit, and npm run build turns its source code into plain HTML, CSS and JavaScript.',
+	'journey.build.out': 'The dist/ folder: every page ready, in English and Portuguese',
+	'journey.ship.use':
+		'rsync compares dist/ with what is already on the server and sends only the difference, over an encrypted SSH connection.',
+	'journey.ship.out': 'The files in /var/www/portfolio on the server',
+	'journey.serve.use':
+		'When a request arrives, nginx finds the matching file in that folder and answers with it, adding the headers you see below.',
+	'journey.serve.out': 'An HTTP response: the headers below plus the HTML',
+	'journey.edge.use':
+		'Cloudflare fetches that response from the server over a verified certificate, keeps a copy close to you and delivers it over HTTPS.',
+	'journey.edge.out': 'The page, encrypted, leaving the data center nearest to you',
+	'journey.you.use':
+		'Your browser reads the HTML, applies the CSS and runs the little JavaScript there is, which then fetches the live GitHub numbers.',
+	'journey.you.out': 'This page, on your screen',
 	'home.journeyBody': 'From a commit on GitHub to your screen, step by step, with real numbers from your visit.',
 	'home.journeyCta': 'Follow the journey',
 	'og.alt': 'João Abreu, back-end developer (Java and Spring Boot), next to a radar scope',
@@ -436,6 +460,30 @@ const pt: Record<keyof typeof en, string> = {
 	'journey.you.bytes': 'Transferido',
 	'journey.you.cached': 'do seu cache',
 	'journey.replay': 'Ver de novo',
+	'journey.start': 'Ponto de partida',
+	'journey.from': 'Vem da etapa {n} · {name}',
+	'journey.to': 'Segue para a etapa {n} · {name}',
+	'journey.end': 'Fim do caminho',
+	'journey.used': 'Como é usado aqui:',
+	'journey.commit.in': 'Código escrito no meu computador e revisado num pull request',
+	'journey.commit.use':
+		'O merge do pull request coloca a mudança na main. Esse push é o que dispara todas as etapas abaixo.',
+	'journey.commit.out': 'O commit {sha} na main',
+	'journey.build.use':
+		'O push inicia o workflow. O actions/checkout baixa exatamente esse commit, e o npm run build transforma o código-fonte em HTML, CSS e JavaScript simples.',
+	'journey.build.out': 'A pasta dist/: todas as páginas prontas, em inglês e português',
+	'journey.ship.use':
+		'O rsync compara a dist/ com o que já está no servidor e envia só a diferença, por uma conexão SSH criptografada.',
+	'journey.ship.out': 'Os arquivos em /var/www/portfolio no servidor',
+	'journey.serve.use':
+		'Quando chega um pedido, o nginx encontra o arquivo correspondente nessa pasta e responde com ele, junto com os cabeçalhos que você vê abaixo.',
+	'journey.serve.out': 'Uma resposta HTTP: os cabeçalhos abaixo e o HTML',
+	'journey.edge.use':
+		'A Cloudflare busca essa resposta no servidor por um certificado verificado, guarda uma cópia perto de você e a entrega por HTTPS.',
+	'journey.edge.out': 'A página, criptografada, saindo do datacenter mais perto de você',
+	'journey.you.use':
+		'Seu navegador lê o HTML, aplica o CSS e roda o pouco de JavaScript que existe, que então busca os números do GitHub ao vivo.',
+	'journey.you.out': 'Esta página, na sua tela',
 	'home.journeyBody': 'De um commit no GitHub até a sua tela, passo a passo, com números reais da sua visita.',
 	'home.journeyCta': 'Acompanhar o caminho',
 	'og.alt': 'João Abreu, desenvolvedor back-end (Java e Spring Boot), ao lado de um radar',

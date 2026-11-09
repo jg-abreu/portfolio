@@ -5,6 +5,7 @@
 // Nothing is invented: a value that cannot be read stays hidden or says where it shows up.
 import { execFileSync } from 'node:child_process';
 import Base from '../../layouts/Base.astro';
+import Handoff from '../../components/Handoff.astro';
 import { localeTags, locales, useTranslations, type Locale } from '../../i18n/ui';
 import { GITHUB_USER } from '../../lib/github-data';
 
@@ -43,6 +44,21 @@ const dateTime = new Intl.DateTimeFormat(localeTag, {
 
 const total = 6;
 const stageLabel = (n: number) => t('journey.stage').replace('{n}', String(n)).replace('{total}', String(total));
+const ids = ['commit', 'build', 'ship', 'serve', 'edge', 'you'] as const;
+const names = ids.map((id) => t(`pipeline.${id}.name`));
+// What each stage delivers; the next stage opens by repeating it, so the page reads as one thread.
+const delivered = (i: number) =>
+	i === 0 ? t('journey.commit.out').replace('{sha}', commit?.short ?? 'HEAD') : t(`journey.${ids[i]}.out`);
+const handIn = (i: number) => ({
+	tag: i === 0 ? t('journey.start') : t('journey.from').replace('{n}', String(i)).replace('{name}', names[i - 1]),
+	artifact: i === 0 ? t('journey.commit.in') : delivered(i - 1),
+	use: t(`journey.${ids[i]}.use`),
+});
+const handOut = (i: number) => ({
+	tag: i === total - 1 ? t('journey.end') : t('journey.to').replace('{n}', String(i + 2)).replace('{name}', names[i + 1]),
+	artifact: delivered(i),
+	last: i === total - 1,
+});
 const phases = ['dns', 'connect', 'tls', 'wait', 'download', 'render'] as const;
 ---
 
@@ -95,6 +111,7 @@ const phases = ['dns', 'connect', 'tls', 'wait', 'download', 'render'] as const;
 				<li class="station" data-station>
 					<span class="node" aria-hidden="true">01</span>
 					<article class="card body">
+						<Handoff kind="in" useLabel={t('journey.used')} {...handIn(0)} />
 						<p class="step">{stageLabel(1)} · {t('pipeline.commit.name')}</p>
 						<h2>{t('journey.commit.title')}</h2>
 						<p class="muted">{t('pipeline.commit.body')}</p>
@@ -110,6 +127,7 @@ Date:   {dateTime.format(new Date(commit.date))}
 								</>
 							)
 						}
+						<Handoff kind="out" {...handOut(0)} />
 					</article>
 				</li>
 
@@ -117,6 +135,7 @@ Date:   {dateTime.format(new Date(commit.date))}
 				<li class="station" data-station>
 					<span class="node" aria-hidden="true">02</span>
 					<article class="card body">
+						<Handoff kind="in" useLabel={t('journey.used')} {...handIn(1)} />
 						<p class="step">{stageLabel(2)} · {t('pipeline.build.name')}</p>
 						<h2>{t('journey.build.title')}</h2>
 						<p class="muted">{t('pipeline.build.body')}</p>
@@ -136,6 +155,7 @@ Date:   {dateTime.format(new Date(commit.date))}
 								<a class="btn" href={runUrl}>{t('journey.build.thisRun')} ↗</a>
 							</p>
 						)}
+						<Handoff kind="out" {...handOut(1)} />
 					</article>
 				</li>
 
@@ -143,6 +163,7 @@ Date:   {dateTime.format(new Date(commit.date))}
 				<li class="station" data-station>
 					<span class="node" aria-hidden="true">03</span>
 					<article class="card body">
+						<Handoff kind="in" useLabel={t('journey.used')} {...handIn(2)} />
 						<p class="step">{stageLabel(3)} · {t('pipeline.ship.name')}</p>
 						<h2>{t('journey.ship.title')}</h2>
 						<p class="muted">{t('pipeline.ship.body')}</p>
@@ -166,6 +187,7 @@ Date:   {dateTime.format(new Date(commit.date))}
 							<div><dt class="mono">--delete-delay</dt><dd>{t('journey.ship.delete')}</dd></div>
 							<div><dt class="mono">StrictHostKeyChecking</dt><dd>{t('journey.ship.strict')}</dd></div>
 						</dl>
+						<Handoff kind="out" {...handOut(2)} />
 					</article>
 				</li>
 
@@ -173,11 +195,13 @@ Date:   {dateTime.format(new Date(commit.date))}
 				<li class="station" data-station>
 					<span class="node" aria-hidden="true">04</span>
 					<article class="card body">
+						<Handoff kind="in" useLabel={t('journey.used')} {...handIn(3)} />
 						<p class="step">{stageLabel(4)} · {t('pipeline.serve.name')}</p>
 						<h2>{t('journey.serve.title')}</h2>
 						<p class="muted">{t('pipeline.serve.body')}</p>
 						<p class="note">{t('journey.serve.headers')}</p>
 						<pre class="term headers" data-headers data-none={t('journey.serve.none')}><code><span class="dim">{t('journey.measuring')}</span></code></pre>
+						<Handoff kind="out" {...handOut(3)} />
 					</article>
 				</li>
 
@@ -185,6 +209,7 @@ Date:   {dateTime.format(new Date(commit.date))}
 				<li class="station" data-station>
 					<span class="node" aria-hidden="true">05</span>
 					<article class="card body">
+						<Handoff kind="in" useLabel={t('journey.used')} {...handIn(4)} />
 						<p class="step">{stageLabel(5)} · {t('pipeline.edge.name')}</p>
 						<h2>{t('journey.edge.title')}</h2>
 						<p class="muted">{t('pipeline.edge.body')}</p>
@@ -195,6 +220,7 @@ Date:   {dateTime.format(new Date(commit.date))}
 							<div><dt>{t('journey.edge.cache')}</dt><dd data-edge-value="cache">—</dd></div>
 						</dl>
 						<p class="note muted" data-edge-missing hidden>{t('journey.onlyLive')}</p>
+						<Handoff kind="out" {...handOut(4)} />
 					</article>
 				</li>
 
@@ -202,6 +228,7 @@ Date:   {dateTime.format(new Date(commit.date))}
 				<li class="station" data-station>
 					<span class="node" aria-hidden="true">06</span>
 					<article class="card body">
+						<Handoff kind="in" useLabel={t('journey.used')} {...handIn(5)} />
 						<p class="step">{stageLabel(6)} · {t('pipeline.you.name')}</p>
 						<h2>{t('journey.you.title')}</h2>
 						<p class="muted">{t('pipeline.you.body')}</p>
@@ -224,6 +251,7 @@ Date:   {dateTime.format(new Date(commit.date))}
 							<div><dt>{t('journey.you.bytes')}</dt><dd data-you="bytes">—</dd></div>
 							<div><dt>{t('journey.edge.protocol')}</dt><dd data-you="protocol">—</dd></div>
 						</dl>
+						<Handoff kind="out" {...handOut(5)} />
 					</article>
 				</li>
 			</ol>
