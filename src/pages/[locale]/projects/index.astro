@@ -9,6 +9,7 @@ import Base from '../../../layouts/Base.astro';
 import { localeTags, locales, useTranslations, type Locale } from '../../../i18n/ui';
 import { getProjects } from '../../../lib/content';
 import { getGitHubSnapshot } from '../../../lib/github';
+import { GITHUB_USER } from '../../../lib/github-data';
 
 export function getStaticPaths() {
 	return locales.map((locale) => ({ params: { locale } }));
@@ -19,7 +20,22 @@ const t = useTranslations(locale);
 const projects = (await getProjects(locale)).filter((p) => p.role !== 'signal');
 const covers = import.meta.glob<ImageMetadata>('../../../assets/case-studies/*', { eager: true, import: 'default' });
 // Last push per repository, from the build snapshot; no date is shown when it is missing.
-const pushed = new Map((getGitHubSnapshot()?.repos ?? []).map((r) => [r.name, r.pushedAt]));
+const snapshot = getGitHubSnapshot();
+const pushed = new Map((snapshot?.repos ?? []).map((r) => [r.name, r.pushedAt]));
+// Popup data: the repository card and its root folders and files (both from the snapshot).
+const repos = new Map((snapshot?.repos ?? []).map((r) => [r.name, r]));
+const trees = snapshot?.trees ?? null;
+const TREE_MAX = 8;
+// GitHub's language colors for the languages used in these repositories.
+const langColors: Record<string, string> = {
+	Java: '#b07219',
+	TypeScript: '#3178c6',
+	JavaScript: '#f1e05a',
+	Python: '#3572A5',
+	HTML: '#e34c26',
+	CSS: '#663399',
+	Astro: '#ff5a03',
+};
 const monthYear = new Intl.DateTimeFormat(localeTags[locale], { month: 'short', year: 'numeric', timeZone: 'UTC' });
 const repoName = (url: string) => url.split('/').pop() ?? '';
 ---
@@ -50,7 +66,9 @@ const repoName = (url: string) => url.split('/').pop() ?? '';
 										<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
 									</svg>
 									<h2>
-										<a href={details}>{p.title}</a>
+										<a href={details} data-pop={p.id} aria-haspopup="dialog">
+											{p.title}
+										</a>
 									</h2>
 									<a class="gh" href={p.repoUrl} aria-label={`${t('projects.repo')}: ${p.title}`}>
 										<svg viewBox="0 0 24 24" aria-hidden="true">
@@ -72,9 +90,9 @@ const repoName = (url: string) => url.split('/').pop() ?? '';
 									))}
 								</ul>
 								<p class="foot">
-									<span class="details" aria-hidden="true">
+									<a class="details" href={details}>
 										{t('projects.details')}
-									</span>
+									</a>
 									{last && (
 										<span class="date">
 											<svg viewBox="0 0 24 24" aria-hidden="true">
@@ -90,11 +108,117 @@ const repoName = (url: string) => url.split('/').pop() ?? '';
 				})
 			}
 		</ul>
+
+		<!-- One popup per project with its GitHub card and root files, like developer.org.tr. -->
+		{
+			projects.map((p) => {
+				const name = repoName(p.repoUrl);
+				const repo = repos.get(name);
+				const tree = trees?.[name] ?? null;
+				const details = getRelativeLocaleUrl(locale, `projects/${p.id}/`);
+				return (
+					<dialog class="pop" id={`pop-${p.id}`} aria-labelledby={`pop-${p.id}-title`}>
+						<div class="pop-inner">
+							<div class="pop-head">
+								<span class="pop-mark" aria-hidden="true">
+									JA
+								</span>
+								<h2 id={`pop-${p.id}-title`}>
+									<span class="owner">{GITHUB_USER}/</span>
+									<a href={p.repoUrl}>{name}</a>
+								</h2>
+								<span class="public">{t('projects.public')}</span>
+								<button class="pop-close" type="button" data-close aria-label={t('projects.close')}>
+									<svg viewBox="0 0 24 24" aria-hidden="true">
+										<path d="m6 6 12 12M18 6 6 18" />
+									</svg>
+								</button>
+							</div>
+							{repo && (
+								<p class="pop-meta">
+									{repo.language && (
+										<span>
+											<span class="lang" style={`--c: ${langColors[repo.language] ?? 'var(--fg-muted)'}`} aria-hidden="true" />
+											{repo.language}
+										</span>
+									)}
+									<span>
+										<svg viewBox="0 0 24 24" aria-hidden="true">
+											<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9Z" />
+										</svg>
+										{repo.stars}
+										<span class="visually-hidden">{t('projects.stars')}</span>
+									</span>
+									{repo.forks !== null && (
+										<span>
+											<svg viewBox="0 0 24 24" aria-hidden="true">
+												<path d="M7 5a2 2 0 1 0 0 .1M17 5a2 2 0 1 0 0 .1M12 19a2 2 0 1 0 0 .1M7 7v2a3 3 0 0 0 3 3h4a3 3 0 0 0 3-3V7m-5 5v5" />
+											</svg>
+											{repo.forks}
+											<span class="visually-hidden">{t('projects.forks')}</span>
+										</span>
+									)}
+								</p>
+							)}
+							<p class="pop-desc">{repo?.description ?? p.tagline}</p>
+							<p class="pop-links">
+								<a href={details}>{t('projects.details')} →</a>
+								<a href={p.repoUrl}>{t('projects.viewGitHub')} ↗</a>
+							</p>
+							{tree && tree.length > 0 && (
+								<ul class="tree" aria-label={t('projects.files')}>
+									{tree.slice(0, TREE_MAX).map((e) => (
+										<li>
+											<a href={e.url}>
+												<svg class:list={['kind', e.kind]} viewBox="0 0 24 24" aria-hidden="true">
+													<path
+														d={
+															e.kind === 'dir'
+																? 'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z'
+																: 'M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Zm0 0v6h6'
+														}
+													/>
+												</svg>
+												<span>{e.name}</span>
+												<svg class="ext" viewBox="0 0 24 24" aria-hidden="true">
+													<path d="M14 4h6v6m0-6-9 9M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5" />
+												</svg>
+											</a>
+										</li>
+									))}
+									{tree.length > TREE_MAX && (
+										<li class="more">
+											<a href={p.repoUrl}>{t('projects.moreFiles').replace('{n}', String(tree.length - TREE_MAX))}</a>
+										</li>
+									)}
+								</ul>
+							)}
+						</div>
+					</dialog>
+				);
+			})
+		}
 	</main>
 </Base>
 
 <script>
 	import '../../../scripts/card-glow';
+
+	// A click on a card opens its popup; without JavaScript (or with a modifier key) the link
+	// simply opens the project page. Esc, the close button and a click outside close it.
+	for (const link of document.querySelectorAll<HTMLAnchorElement>('[data-pop]')) {
+		const dialog = document.getElementById(`pop-${link.dataset.pop}`) as HTMLDialogElement | null;
+		if (!dialog || typeof dialog.showModal !== 'function') continue;
+		link.addEventListener('click', (event) => {
+			if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+			event.preventDefault();
+			dialog.showModal();
+		});
+		dialog.addEventListener('click', (event) => {
+			if (event.target === dialog) dialog.close();
+		});
+		dialog.querySelector('[data-close]')?.addEventListener('click', () => dialog.close());
+	}
 </script>
 
 <style>
@@ -274,6 +398,259 @@ const repoName = (url: string) => url.split('/').pop() ?? '';
 
 		.project:hover .cover :global(img) {
 			transform: scale(1.03);
+		}
+	}
+
+	/* "View details" sits above the card-wide link, so it opens the page instead of the popup. */
+	.details {
+		position: relative;
+		z-index: 1;
+		text-decoration: none;
+	}
+
+	.details:hover {
+		text-decoration: underline;
+	}
+
+	/* ---- Popup ---- */
+	.pop {
+		width: min(38rem, calc(100vw - 2rem));
+		max-height: calc(100dvh - 2rem);
+		padding: 0;
+		background: var(--surface);
+		border: 1px solid var(--line);
+		border-radius: 1.25rem;
+		box-shadow: 0 30px 80px rgb(0 0 0 / 0.45);
+		color: var(--fg);
+	}
+
+	.pop::backdrop {
+		background: rgb(2 6 23 / 0.55);
+		backdrop-filter: blur(6px);
+	}
+
+	.pop-inner {
+		padding: 1.5rem;
+	}
+
+	.pop-head {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.6rem;
+	}
+
+	.pop-mark {
+		display: grid;
+		flex-shrink: 0;
+		place-items: center;
+		width: 2rem;
+		height: 2rem;
+		background: linear-gradient(135deg, var(--brand-2), var(--accent) 55%, #6366f1);
+		border-radius: 50%;
+		color: #fff;
+		font-size: 0.7rem;
+		font-weight: 800;
+	}
+
+	.pop-head h2 {
+		flex: 0 1 auto;
+		min-width: 0;
+		margin: 0;
+		font-size: 1.05rem;
+		overflow-wrap: anywhere;
+	}
+
+	.owner {
+		color: var(--fg);
+	}
+
+	.pop-head h2 a {
+		color: var(--brand);
+		text-decoration: none;
+	}
+
+	.pop-head h2 a:hover {
+		text-decoration: underline;
+	}
+
+	.public {
+		padding: 0.05rem 0.5rem;
+		border: 1px solid var(--line);
+		border-radius: 999px;
+		color: var(--fg-muted);
+		font-size: 0.7rem;
+		font-weight: 600;
+	}
+
+	.pop-close {
+		display: grid;
+		place-items: center;
+		width: 2rem;
+		height: 2rem;
+		margin-left: auto;
+		padding: 0;
+		background: transparent;
+		border: 0;
+		border-radius: 0.5rem;
+		color: var(--fg-muted);
+		cursor: pointer;
+	}
+
+	.pop-close:hover {
+		background: var(--surface-2);
+		color: var(--fg);
+	}
+
+	.pop-close svg {
+		width: 1.1rem;
+		height: 1.1rem;
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 2;
+		stroke-linecap: round;
+	}
+
+	.pop-meta {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 1rem;
+		margin: 0.85rem 0 0;
+		color: var(--fg-muted);
+		font-size: 0.85rem;
+	}
+
+	.pop-meta > span {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+	}
+
+	.pop-meta svg {
+		width: 0.95rem;
+		height: 0.95rem;
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 1.75;
+		stroke-linejoin: round;
+		stroke-linecap: round;
+	}
+
+	.lang {
+		width: 0.65rem;
+		height: 0.65rem;
+		background: var(--c);
+		border-radius: 50%;
+	}
+
+	.pop-desc {
+		margin: 0.85rem 0 0;
+		color: var(--fg-muted);
+		font-size: 0.92rem;
+		line-height: 1.6;
+	}
+
+	.pop-links {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: flex-end;
+		gap: 1.25rem;
+		margin: 1rem 0 0.75rem;
+		font-size: 0.85rem;
+		font-weight: 600;
+	}
+
+	.pop-links a {
+		color: var(--fg);
+		text-decoration: none;
+	}
+
+	.pop-links a:hover {
+		color: var(--brand);
+	}
+
+	.tree {
+		margin: 0;
+		padding: 0;
+		overflow: hidden;
+		list-style: none;
+		border: 1px solid var(--line);
+		border-radius: 0.75rem;
+	}
+
+	.tree li + li {
+		border-top: 1px solid var(--line);
+	}
+
+	.tree a {
+		display: flex;
+		align-items: center;
+		gap: 0.7rem;
+		padding: 0.6rem 0.9rem;
+		color: var(--fg);
+		font-size: 0.88rem;
+		text-decoration: none;
+	}
+
+	.tree a:hover {
+		background: var(--surface-2);
+	}
+
+	.tree a span {
+		flex: 1;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.tree svg {
+		flex-shrink: 0;
+		width: 1rem;
+		height: 1rem;
+		fill: none;
+		stroke: var(--fg-muted);
+		stroke-width: 1.6;
+		stroke-linejoin: round;
+		stroke-linecap: round;
+	}
+
+	.tree .dir {
+		stroke: var(--brand);
+	}
+
+	.tree .ext {
+		width: 0.85rem;
+		height: 0.85rem;
+	}
+
+	.tree .more a {
+		justify-content: center;
+		background: var(--surface-2);
+		color: var(--fg-muted);
+		font-size: 0.8rem;
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		.pop[open] {
+			animation: pop-in 0.22s var(--ease);
+		}
+
+		.pop[open]::backdrop {
+			animation: fade-in 0.22s ease-out;
+		}
+	}
+
+	@keyframes pop-in {
+		from {
+			opacity: 0;
+			transform: translateY(0.75rem) scale(0.98);
+		}
+	}
+
+	@keyframes fade-in {
+		from {
+			opacity: 0;
 		}
 	}
 </style>

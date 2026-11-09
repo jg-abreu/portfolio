@@ -9,12 +9,14 @@ import {
 	GITHUB_USER,
 	fromContributionsApi,
 	fromDevArticles,
+	fromGitHubContents,
 	fromGitHubCommits,
 	fromGitHubProfile,
 	fromGitHubRepos,
 	validDays,
 	validSnapshot,
 	type Snapshot,
+	type TreeEntry,
 } from '../src/lib/github-data.ts';
 
 const OUT = new URL('../src/data/github-snapshot.json', import.meta.url);
@@ -47,6 +49,19 @@ async function practiceDays(): Promise<string[] | null> {
 	throw new Error('more commit pages than expected');
 }
 
+/** Root folders and files of every project repository listed in src/content/projects.yaml. */
+async function trees(): Promise<Record<string, TreeEntry[]> | null> {
+	const yaml = readFileSync(new URL('../src/content/projects.yaml', import.meta.url), 'utf8');
+	const repos = [...yaml.matchAll(/^\s+repo:\s*([A-Za-z0-9._-]+)\s*$/gm)].map((m) => m[1]);
+	const out: Record<string, TreeEntry[]> = {};
+	for (const repo of repos) {
+		const entries = fromGitHubContents(await getJson(ENDPOINTS.repoRoot(repo), { headers: githubHeaders }));
+		if (!entries) return null;
+		out[repo] = entries;
+	}
+	return out;
+}
+
 const sources = {
 	profile: () => getJson(ENDPOINTS.profile, { headers: githubHeaders }).then(fromGitHubProfile),
 	repos: () => getJson(ENDPOINTS.repos, { headers: githubHeaders }).then(fromGitHubRepos),
@@ -56,6 +71,7 @@ const sources = {
 		getJson(ENDPOINTS.articles, { headers: { Accept: 'application/json', 'User-Agent': `${GITHUB_USER}-portfolio-build` } }).then(
 			fromDevArticles,
 		),
+	trees,
 };
 
 const names = Object.keys(sources) as (keyof typeof sources)[];
@@ -68,6 +84,7 @@ const snapshot: Snapshot = {
 	contributions: previous?.contributions ?? null,
 	practiceDays: previous?.practiceDays ?? null,
 	articles: previous?.articles ?? null,
+	trees: previous?.trees ?? null,
 };
 
 names.forEach((name, i) => {

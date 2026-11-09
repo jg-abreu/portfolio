@@ -19,6 +19,8 @@ export const ENDPOINTS = {
 	contributions: `https://github-contributions-api.jogruber.de/v4/${GITHUB_USER}?y=last`,
 	practiceCommits: `https://api.github.com/repos/${GITHUB_USER}/${PRACTICE_REPO}/commits?per_page=100`,
 	articles: `https://dev.to/api/articles?username=${DEVTO_USER}&per_page=100`,
+	// Top level of a repository: folders and files, shown in the project popup.
+	repoRoot: (repo: string) => `https://api.github.com/repos/${GITHUB_USER}/${repo}/contents/`,
 } as const;
 
 export interface Profile {
@@ -31,6 +33,7 @@ export interface Repo {
 	description: string | null;
 	language: string | null;
 	stars: number;
+	forks: number | null;
 	pushedAt: string;
 	fork: boolean;
 	archived: boolean;
@@ -70,6 +73,15 @@ export interface Snapshot {
 	practiceDays: string[] | null;
 	/** Published DEV articles, newest first. */
 	articles: Article[] | null;
+	/** Top-level folders and files of each project repository, keyed by repository name. */
+	trees: Record<string, TreeEntry[]> | null;
+}
+
+/** One item at the root of a repository; folders first, then files, as GitHub lists them. */
+export interface TreeEntry {
+	name: string;
+	kind: 'dir' | 'file';
+	url: string;
 }
 
 type Unknown = Record<string, unknown> | undefined | null;
@@ -114,6 +126,7 @@ export function validRepo(v: unknown): Repo | null {
 		description: text(o.description),
 		language: text(o.language, 40),
 		stars: o.stars,
+		forks: isCount(o.forks) ? o.forks : null,
 		pushedAt: o.pushedAt,
 		fork: o.fork === true,
 		archived: o.archived === true,
@@ -175,6 +188,7 @@ export function validSnapshot(v: unknown): Snapshot | null {
 		contributions: validContributions(o.contributions),
 		practiceDays: validDays(o.practiceDays),
 		articles: validArticles(o.articles),
+		trees: validTrees(o.trees),
 	};
 }
 
@@ -195,6 +209,7 @@ export function fromGitHubRepos(raw: unknown): Repo[] | null {
 				description: o?.description,
 				language: o?.language,
 				stars: o?.stargazers_count,
+				forks: o?.forks_count,
 				pushedAt: typeof o?.pushed_at === 'string' ? o.pushed_at.slice(0, 10) : null,
 				fork: o?.fork,
 				archived: o?.archived,
@@ -264,4 +279,47 @@ export function practiceStats(days: string[], today: string): PracticeStats | nu
 	// `run` ends at the last day; it is still current only if that day is today or yesterday.
 	const currentStreak = daysBetween(lastDay, today) <= 1 ? run : 0;
 	return { activeDays: sorted.length, currentStreak, longestStreak, lastDay };
+}
+
+// ---- Repository roots (project popup) ----
+
+const ENTRY_NAME = /^[^/\<>"]{1,100}$/;
+
+export function validTreeEntry(v: unknown): TreeEntry | null {
+	const o = obj(v);
+	const url = httpsUrl(o?.url);
+	if (!o || typeof o.name !== 'string' || !ENTRY_NAME.test(o.name) || (o.kind !== 'dir' && o.kind !== 'file')) return null;
+	if (!url || !url.startsWith(`https://github.com/${GITHUB_USER}/`)) return null;
+	return { name: o.name, kind: o.kind, url };
+}
+
+/** Folders first, then files, each alphabetical without case, like the GitHub file list. */
+export function validTree(v: unknown): TreeEntry[] | null {
+	if (!Array.isArray(v)) return null;
+	const entries = v.map(validTreeEntry).filter((e): e is TreeEntry => e !== null);
+	return entries
+		.sort((a, b) => (a.kind === b.kind ? a.name.localeCompare(b.name, 'en', { sensitivity: 'base' }) : a.kind === 'dir' ? -1 : 1))
+		.slice(0, 200);
+}
+
+export function validTrees(v: unknown): Record<string, TreeEntry[]> | null {
+	const o = obj(v);
+	if (!o) return null;
+	const out: Record<string, TreeEntry[]> = {};
+	for (const [repo, tree] of Object.entries(o)) {
+		const entries = REPO_NAME.test(repo) ? validTree(tree) : null;
+		if (entries) out[repo] = entries;
+	}
+	return out;
+}
+
+/** Adapter for GET /repos/{owner}/{repo}/contents/ (the repository root). */
+export function fromGitHubContents(raw: unknown): TreeEntry[] | null {
+	if (!Array.isArray(raw)) return null;
+	return validTree(
+		raw.map((item) => {
+			const o = obj(item);
+			return { name: o?.name, kind: o?.type === 'dir' ? 'dir' : o?.type === 'file' ? 'file' : null, url: o?.html_url };
+		}),
+	);
 }
