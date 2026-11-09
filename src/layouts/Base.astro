@@ -682,15 +682,36 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 		transform: none;
 	}
 
-	/* Translucent bar: the dark wallpaper shows through it at the top of the page. */
+	/*
+	 * The bar is see-through while it sits over the wallpaper; scroll-fx sets data-clear there and
+	 * removes it once the page scrolls past. Its backdrop lives in ::before so only opacity animates.
+	 * Without JavaScript data-clear is never set and the bar keeps its translucent backdrop.
+	 */
 	.site-header {
 		position: sticky;
 		top: 0;
 		z-index: 5;
+		font-size: 0.875rem;
+	}
+
+	.site-header::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		z-index: -1;
 		background: color-mix(in srgb, var(--bg) 80%, transparent);
 		border-bottom: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
 		backdrop-filter: blur(12px);
-		font-size: 0.875rem;
+	}
+
+	.site-header[data-clear]::before {
+		opacity: 0;
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		.site-header[data-ready]::before {
+			transition: opacity 0.3s var(--ease);
+		}
 	}
 
 	.header-inner {
