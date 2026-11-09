@@ -6,17 +6,13 @@ import HeroContacts from '../../components/HeroContacts.astro';
 import ContactForm from '../../components/ContactForm.astro';
 import DeployPipeline from '../../components/DeployPipeline.astro';
 import Heatmap from '../../components/Heatmap.astro';
-import RadarScope from '../../components/RadarScope.astro';
 import RecentRepos from '../../components/RecentRepos.astro';
-import SonarDisplay from '../../components/SonarDisplay.astro';
-import SonarIcon from '../../components/SonarIcon.astro';
 import { localeTags, locales, useTranslations, type Locale, type UiKey } from '../../i18n/ui';
 import { activityStats, heatmapCells, recentRepos } from '../../lib/activity';
 import { utcDate } from '../../lib/calendar';
-import { getAbout, getContacts, getProjects, getStack } from '../../lib/content';
+import { getAbout, getContacts, getProjects, getResumePath, getStack } from '../../lib/content';
 import { getGitHubSnapshot } from '../../lib/github';
 import { practiceStats } from '../../lib/github-data';
-import { toRadarContacts } from '../../lib/radar';
 
 export function getStaticPaths() {
 	return locales.map((locale) => ({ params: { locale } }));
@@ -25,12 +21,11 @@ export function getStaticPaths() {
 const locale = Astro.params.locale as Locale;
 const t = useTranslations(locale);
 
-// Each section after the hero has its own sonar display, numbered in page order.
 const projects = await getProjects(locale);
 const workProjects = projects.filter((p) => p.role !== 'signal');
 const signals = projects.filter((p) => p.role === 'signal');
-const radarContacts = toRadarContacts(workProjects);
 const contacts = await getContacts();
+const resumePath = getResumePath(locale);
 
 // Build snapshot of GitHub data; the browser refreshes it live.
 const snapshot = getGitHubSnapshot();
@@ -47,7 +42,6 @@ const stack = (await getStack()).map((g) => {
 	if (!label) throw new Error(`Missing UI string stack.${g.id} for the stack group in src/content/stack.yaml`);
 	return { ...g, label };
 });
-const instrumentCount = stack.reduce((n, g) => n + g.items.length, 0);
 
 // Activity: statistics and heatmap as of the snapshot day; the browser recomputes them live.
 const today = snapshot?.generatedAt ?? '';
@@ -80,14 +74,21 @@ const pipelineStages = (['commit', 'build', 'ship', 'serve', 'edge', 'you'] as c
 	name: t(`pipeline.${id}.name`),
 	body: t(`pipeline.${id}.body`),
 }));
-// This page is rebuilt on every deploy, so the build date is the date of the last deploy.
-const builtOn = dateFormat.format(new Date());
 
-const SECTION_COUNT = 7;
 const count = (key: Parameters<typeof t>[0], n: number) => t(key).replace('{n}', String(n));
 const dayCount = (n: number) => (n === 1 ? t('leetcode.day') : count('leetcode.days', n));
-const age = (days: number | null) =>
-	days === null ? t('radar.noData') : days === 0 ? t('radar.today') : days === 1 ? t('radar.day') : count('radar.days', days);
+
+// Section headers: a small badge, the title and an id for the nav highlight.
+const sectionHead = (id: string, badge: UiKey, title: UiKey) => ({ id, badge: t(badge), title: t(title) });
+const heads = {
+	projects: sectionHead('projects', 'projects.heading', 'projects.title'),
+	about: sectionHead('about', 'about.heading', 'about.title'),
+	stack: sectionHead('stack', 'stack.heading', 'stack.title'),
+	activity: sectionHead('activity', 'activity.heading', 'activity.title'),
+	signals: sectionHead('signals', 'signals.heading', 'signals.title'),
+	pipeline: sectionHead('pipeline', 'pipeline.heading', 'pipeline.title'),
+	contact: sectionHead('contact', 'contact.heading', 'contact.title'),
+};
 ---
 
 <Base>
@@ -95,99 +96,90 @@ const age = (days: number | null) =>
 	<main id="main">
 		<section class="hero">
 			<div class="hero-text">
-				<p class="label" data-reveal>{t('home.status')}</p>
-				<h1 data-split>{t('home.heading')}</h1>
-				<HeroContacts locale={locale} />
-				<!-- Role and intro are visible from the first paint: the intro is the page's LCP element. -->
-				<p class="role">{t('home.role')}</p>
-				<p class="muted">{t('home.body')}</p>
-				<ul class="stats" data-reveal style="--d: 300ms">
-					<li data-live-block hidden={contributionsTotal === null}>
-						<strong data-live="contributions" data-value={contributionsTotal ?? 0}>
-							{contributionsTotal === null ? '' : numberFormat.format(contributionsTotal)}
-						</strong>
-						<span>{t('stats.contributions')}</span>
-					</li>
-					<li data-live-block hidden={publicRepos === null}>
-						<strong data-live="repos" data-value={publicRepos ?? 0}>
-							{publicRepos === null ? '' : numberFormat.format(publicRepos)}
-						</strong>
-						<span>{t('stats.repos')}</span>
-					</li>
-				</ul>
-			</div>
-			<div class="hero-scope" data-reveal style="--d: 200ms">
-				<RadarScope />
-				<p class="caption" aria-hidden="true">
-					<span class="accent">{t('radar.active')}</span>
-					<span>{t('panel.position')}</span>
-					<span data-clock-line hidden>{t('clock.label')} <time data-clock></time></span>
+				<p class="badges" data-reveal>
+					<span class="badge"><span class="dot" aria-hidden="true"></span>{t('home.status')}</span>
+					<span class="badge">{t('home.location')}</span>
 				</p>
+				<!-- Role and intro are visible from the first paint: the intro is the page's LCP element. -->
+				<p class="eyebrow">{t('home.role')}</p>
+				<h1 data-split>{t('home.heading')}</h1>
+				<p class="intro">{t('home.body')}</p>
+				<p class="ctas" data-reveal style="--d: 200ms">
+					<a class="btn btn-primary" href="#projects">{t('home.ctaProjects')} →</a>
+					{
+						resumePath ? (
+							<a class="btn" href={resumePath}>
+								{t('contact.resume')} ↗
+							</a>
+						) : (
+							<a class="btn" href="#contact">
+								{t('home.ctaContact')}
+							</a>
+						)
+					}
+				</p>
+				<HeroContacts locale={locale} />
 			</div>
+
+			<!-- Real numbers from the build snapshot, refreshed live; a card without data is hidden, never faked. -->
+			<ul class="tiles" data-reveal style="--d: 150ms">
+				<li class="tile" data-live-block hidden={contributionsTotal === null}>
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"></path></svg>
+					<strong data-live="contributions" data-value={contributionsTotal ?? 0}>
+						{contributionsTotal === null ? '' : numberFormat.format(contributionsTotal)}
+					</strong>
+					<span>{t('stats.contributions')}</span>
+				</li>
+				<li class="tile" data-live-block hidden={publicRepos === null}>
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h12v15H6a2 2 0 0 0-2 2V5Zm0 15a2 2 0 0 0 2 2h12v-4"></path></svg>
+					<strong data-live="repos" data-value={publicRepos ?? 0}>
+						{publicRepos === null ? '' : numberFormat.format(publicRepos)}
+					</strong>
+					<span>{t('stats.repos')}</span>
+				</li>
+				{
+					practice && (
+						<>
+							<li class="tile">
+								<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 7-5 5 5 5M16 7l5 5-5 5"></path></svg>
+								<strong>{numberFormat.format(practice.activeDays)}</strong>
+								<span>{t('stats.practiceDays')}</span>
+							</li>
+							<li class="tile">
+								<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3s5 4.5 5 10a5 5 0 0 1-10 0c0-2.5 1.5-4 1.5-4S9 12 11 12c0-4 1-9 1-9Z"></path></svg>
+								<strong>{dayCount(practice.currentStreak)}</strong>
+								<span>{t('stats.practiceStreak')}</span>
+							</li>
+						</>
+					)
+				}
+			</ul>
 		</section>
 
-		{
-			recent.length > 0 && (
-				<RecentRepos
-					variant="ticker"
-					repos={recent}
-					descriptions={descriptions}
-					localeTag={localeTag}
-					pushedLabel={t('activity.pushed')}
-					pauseLabel={t('ticker.pause')}
-					playLabel={t('ticker.play')}
-				/>
-			)
-		}
-
-		<section id="projects" class="split" aria-labelledby="projects-heading">
-			<div class="aside">
-				<SonarDisplay
-					index={1}
-					total={SECTION_COUNT}
-					sectionWord={t('display.section')}
-					label={t('nav.projects')}
-					detail={count(radarContacts.length === 1 ? 'display.project' : 'display.projects', radarContacts.length)}
-				>
-					<RadarScope contacts={radarContacts} />
-					<Fragment slot="readout">
-						<ol
-							class="contacts"
-							aria-hidden="true"
-							data-age-today={t('radar.today')}
-							data-age-day={t('radar.day')}
-							data-age-days={t('radar.days')}
-						>
-							{
-								radarContacts.map((c) => (
-									<li data-contact={c.id} data-repo={c.repo}>
-										<span class="title">
-											<span class="num">{c.number}</span> {c.title}
-										</span>
-										<span class="age">{age(c.days)}</span>
-									</li>
-								))
-							}
-						</ol>
-						<p class="meta">{t('radar.legend')}</p>
-						<p class="meta hint">{t('radar.hint')}</p>
-					</Fragment>
-				</SonarDisplay>
-			</div>
-			<div class="body">
-				<p class="label" data-reveal>01 · {t('projects.heading')}</p>
-				<h2 id="projects-heading" data-split>{t('projects.title')}</h2>
+		<section id={heads.projects.id} class="section" aria-labelledby="projects-heading">
+			<header class="section-head">
+				<p class="badge" data-reveal>{heads.projects.badge}</p>
+				<h2 id="projects-heading" data-split>{heads.projects.title}</h2>
+			</header>
+			<div class="project-grid">
 				{
 					workProjects.map((p) => (
-						<article class:list={['card', { featured: p.role === 'featured' }]} data-reveal data-project={p.id}>
-							{p.role === 'featured' && <p class="label">{t('projects.featured')}</p>}
-							{p.inProgress && <p class="label">{t('projects.inProgress')}</p>}
+						<article class:list={['card', 'project', { featured: p.role === 'featured' }]} data-reveal data-project={p.id}>
+							<p class="tags">
+								{p.role === 'featured' && <span class="badge">{t('projects.featured')}</span>}
+								{p.inProgress && (
+									<span class="badge">
+										<span class="dot" aria-hidden="true" />
+										{t('projects.inProgress')}
+									</span>
+								)}
+							</p>
 							<h3>{p.title}</h3>
 							<p class="muted">{p.tagline}</p>
 							<h4>{t('projects.problem')}</h4>
 							<p>{p.problem}</p>
 							<h4>{t('projects.decisions')}</h4>
-							<ul>
+							<ul class="decisions">
 								{p.decisions?.map((d) => (
 									<li>{d}</li>
 								))}
@@ -215,30 +207,23 @@ const age = (days: number | null) =>
 			</div>
 		</section>
 
-		<section id="about" class="split" aria-labelledby="about-heading">
-			<div class="aside">
-				<SonarDisplay
-					index={2}
-					total={SECTION_COUNT}
-					sectionWord={t('display.section')}
-					label={t('nav.about')}
-					detail={t('display.about')}
-				>
-					<SonarIcon name="anchor" />
-				</SonarDisplay>
-			</div>
-			<div class="body">
-				<p class="label" data-reveal>02 · {t('about.heading')}</p>
-				<h2 id="about-heading" data-split>{t('about.title')}</h2>
-				{
-					about.paragraphs.map((p) => (
-						<p class="lead" data-reveal>
-							{p}
-						</p>
-					))
-				}
+		<section id={heads.about.id} class="section" aria-labelledby="about-heading">
+			<header class="section-head">
+				<p class="badge" data-reveal>{heads.about.badge}</p>
+				<h2 id="about-heading" data-split>{heads.about.title}</h2>
+			</header>
+			<div class="about">
+				<div>
+					{
+						about.paragraphs.map((p) => (
+							<p class="lead" data-reveal>
+								{p}
+							</p>
+						))
+					}
+				</div>
 				<div class="card now" data-reveal>
-					<h3 class="label">{t('about.now')}</h3>
+					<h3>{t('about.now')}</h3>
 					<ul>
 						{about.now.map((item) => <li>{item}</li>)}
 					</ul>
@@ -246,266 +231,216 @@ const age = (days: number | null) =>
 			</div>
 		</section>
 
-		<section id="stack" class="split" aria-labelledby="stack-heading">
-			<div class="aside">
-				<SonarDisplay
-					index={3}
-					total={SECTION_COUNT}
-					sectionWord={t('display.section')}
-					label={t('nav.stack')}
-					detail={count('display.stack', instrumentCount)}
-				>
-					<SonarIcon name="bars" />
-				</SonarDisplay>
-			</div>
-			<div class="body">
-				<p class="label" data-reveal>03 · {t('stack.heading')}</p>
-				<h2 id="stack-heading" data-split>{t('stack.title')}</h2>
-				<div class="stack-groups">
-					{
-						stack.map((g, i) => (
-							<div class="card" data-reveal style={`--d: ${(i % 2) * 120}ms`}>
-								<h3>{g.label}</h3>
-								<ul class="stack">
-									{g.items.map((item) => (
-										<li>{item}</li>
-									))}
-								</ul>
-							</div>
-						))
-					}
-				</div>
+		<section id={heads.stack.id} class="section" aria-labelledby="stack-heading">
+			<header class="section-head">
+				<p class="badge" data-reveal>{heads.stack.badge}</p>
+				<h2 id="stack-heading" data-split>{heads.stack.title}</h2>
+			</header>
+			<div class="stack-groups">
+				{
+					stack.map((g, i) => (
+						<div class="card" data-reveal style={`--d: ${(i % 3) * 100}ms`}>
+							<h3>{g.label}</h3>
+							<ul class="stack">
+								{g.items.map((item) => (
+									<li>{item}</li>
+								))}
+							</ul>
+						</div>
+					))
+				}
 			</div>
 		</section>
 
-		<section id="activity" class="split" aria-labelledby="activity-heading">
-			<div class="aside">
-				<SonarDisplay
-					index={4}
-					total={SECTION_COUNT}
-					sectionWord={t('display.section')}
-					label={t('nav.activity')}
-					detail={stats ? count('display.activity', stats.activeDays) : t('radar.noData')}
-				>
-					<SonarIcon name="pulse" />
-				</SonarDisplay>
-			</div>
-			<div class="body">
-				<p class="label" data-reveal>04 · {t('activity.heading')}</p>
-				<h2 id="activity-heading" data-split>{t('activity.title')}</h2>
-				{
-					stats ? (
-						<>
-							<dl
-								class="readings activity-stats"
-								data-reveal
-								data-activity-stats
-								data-day-one={t('leetcode.day')}
-								data-day-many={t('leetcode.days')}
+		<section id={heads.activity.id} class="section" aria-labelledby="activity-heading">
+			<header class="section-head">
+				<p class="badge" data-reveal>{heads.activity.badge}</p>
+				<h2 id="activity-heading" data-split>{heads.activity.title}</h2>
+			</header>
+			{
+				stats ? (
+					<>
+						<dl
+							class="readings activity-stats"
+							data-reveal
+							data-activity-stats
+							data-day-one={t('leetcode.day')}
+							data-day-many={t('leetcode.days')}
+						>
+							<div class="card">
+								<dt>{t('activity.total')}</dt>
+								<dd>
+									<strong data-stat="total">{numberFormat.format(stats.total)}</strong>
+								</dd>
+							</div>
+							<div class="card">
+								<dt>{t('activity.activeDays')}</dt>
+								<dd>
+									<strong data-stat="activeDays">{numberFormat.format(stats.activeDays)}</strong>
+								</dd>
+							</div>
+							<div class="card">
+								<dt>{t('activity.currentStreak')}</dt>
+								<dd>
+									<strong data-stat="currentStreak">{dayCount(stats.currentStreak)}</strong>
+								</dd>
+							</div>
+							<div class="card">
+								<dt>{t('activity.longestStreak')}</dt>
+								<dd>
+									<strong data-stat="longestStreak">{dayCount(stats.longestStreak)}</strong>
+								</dd>
+							</div>
+							{stats.bestDay && (
+								<div class="card">
+									<dt>{t('activity.bestDay')}</dt>
+									<dd>
+										<strong data-stat="bestCount">{numberFormat.format(stats.bestDay.count)}</strong>
+										<span data-stat="bestDate">
+											{dateFormat.format(new Date(`${stats.bestDay.date}T00:00:00Z`))}
+										</span>
+									</dd>
+								</div>
+							)}
+						</dl>
+						<div class="card heat-card" data-reveal>
+							<Heatmap
+								cells={cells}
+								today={today}
+								localeTag={localeTag}
+								labelOne={t('activity.cellOne')}
+								labelMany={t('activity.cellMany')}
+								summary={t('activity.summary')}
 							>
-								<div>
-									<dt>{t('activity.total')}</dt>
-									<dd>
-										<strong data-stat="total">{numberFormat.format(stats.total)}</strong>
-									</dd>
-								</div>
-								<div>
-									<dt>{t('activity.activeDays')}</dt>
-									<dd>
-										<strong data-stat="activeDays">{numberFormat.format(stats.activeDays)}</strong>
-									</dd>
-								</div>
-								<div>
-									<dt>{t('activity.currentStreak')}</dt>
-									<dd>
-										<strong data-stat="currentStreak">{dayCount(stats.currentStreak)}</strong>
-									</dd>
-								</div>
-								<div>
-									<dt>{t('activity.longestStreak')}</dt>
-									<dd>
-										<strong data-stat="longestStreak">{dayCount(stats.longestStreak)}</strong>
-									</dd>
-								</div>
-								{stats.bestDay && (
-									<div>
-										<dt>{t('activity.bestDay')}</dt>
-										<dd>
-											<strong data-stat="bestCount">{numberFormat.format(stats.bestDay.count)}</strong>
-											<span data-stat="bestDate">
-												{dateFormat.format(new Date(`${stats.bestDay.date}T00:00:00Z`))}
-											</span>
-										</dd>
-									</div>
-								)}
-							</dl>
-							<div class="card heat-card" data-reveal>
-								<Heatmap
-									cells={cells}
-									today={today}
-									localeTag={localeTag}
-									labelOne={t('activity.cellOne')}
-									labelMany={t('activity.cellMany')}
-									summary={t('activity.summary')}
-								>
-									{t('activity.legend')}
-								</Heatmap>
-							</div>
-						</>
-					) : (
-						<p class="muted">{t('activity.noData')}</p>
-					)
-				}
+								{t('activity.legend')}
+							</Heatmap>
+						</div>
+					</>
+				) : (
+					<p class="muted">{t('activity.noData')}</p>
+				)
+			}
+			{
+				recent.length > 0 && (
+					<>
+						<h3 class="subhead" data-reveal>
+							{t('activity.recent')}
+						</h3>
+						<div data-reveal>
+							<RecentRepos
+								variant="cards"
+								repos={recent.slice(0, 4)}
+								descriptions={descriptions}
+								localeTag={localeTag}
+								pushedLabel={t('activity.pushed')}
+							/>
+						</div>
+					</>
+				)
+			}
+		</section>
+
+		<section id={heads.signals.id} class="section" aria-labelledby="signals-heading">
+			<header class="section-head">
+				<p class="badge" data-reveal>{heads.signals.badge}</p>
+				<h2 id="signals-heading" data-split>{heads.signals.title}</h2>
+			</header>
+			<ul class="signals">
 				{
-					recent.length > 0 && (
-						<>
-							<h3 class="label recent-title" data-reveal>
-								{t('activity.recent')}
-							</h3>
-							<div data-reveal>
-								<RecentRepos
-									variant="cards"
-									repos={recent.slice(0, 4)}
-									descriptions={descriptions}
-									localeTag={localeTag}
-									pushedLabel={t('activity.pushed')}
-								/>
-							</div>
-						</>
-					)
+					signals.map((s, i) => (
+						<li class="card" data-reveal style={`--d: ${i * 120}ms`}>
+							<a class="signal-title" href={s.repoUrl}>
+								{s.title} ↗
+							</a>
+							<p class="muted">{s.tagline}</p>
+							{s.id === 'leetcode' && practice && (
+								<>
+									<dl
+										class="readings"
+										data-practice={JSON.stringify(practiceDays)}
+										data-day-one={t('leetcode.day')}
+										data-day-many={t('leetcode.days')}
+									>
+										<div>
+											<dt>{t('practice.activeDays')}</dt>
+											<dd>
+												<strong data-stat="practiceDays">{numberFormat.format(practice.activeDays)}</strong>
+											</dd>
+										</div>
+										<div>
+											<dt>{t('practice.currentStreak')}</dt>
+											<dd>
+												<strong data-stat="practiceCurrent">{dayCount(practice.currentStreak)}</strong>
+											</dd>
+										</div>
+										<div>
+											<dt>{t('practice.longestStreak')}</dt>
+											<dd>
+												<strong data-stat="practiceStreak">{dayCount(practice.longestStreak)}</strong>
+											</dd>
+										</div>
+										<div>
+											<dt>{t('practice.last')}</dt>
+											<dd>
+												<strong>
+													<time data-stat="practiceLast" datetime={practice.lastDay}>
+														{dateFormat.format(new Date(`${practice.lastDay}T00:00:00Z`))}
+													</time>
+												</strong>
+											</dd>
+										</div>
+									</dl>
+									<p class="note">{t('practice.note')}</p>
+								</>
+							)}
+							{s.profiles && (
+								<div class="profiles">
+									<span id={`profiles-${s.id}`}>{t('practice.profiles')}</span>
+									<ul aria-labelledby={`profiles-${s.id}`}>
+										{s.profiles.map((p) => (
+											<li>
+												<a class="btn" href={p.url}>
+													{p.label} ↗
+												</a>
+											</li>
+										))}
+									</ul>
+								</div>
+							)}
+						</li>
+					))
 				}
+			</ul>
+		</section>
+
+		<section id={heads.pipeline.id} class="section" aria-labelledby="pipeline-heading">
+			<header class="section-head">
+				<p class="badge" data-reveal>{heads.pipeline.badge}</p>
+				<h2 id="pipeline-heading" data-split>{heads.pipeline.title}</h2>
+			</header>
+			<div data-reveal>
+				<DeployPipeline stages={pipelineStages} />
+			</div>
+			<div class="card pipeline-note" data-reveal style="--d: 150ms">
+				<p>{t('pipeline.when')}</p>
+				<p class="card-links">
+					<a class="btn" href="https://github.com/jg-abreu/portfolio/blob/main/.github/workflows/deploy.yml">
+						{t('pipeline.workflow')} ↗
+					</a>
+					<a class="btn" href="https://github.com/jg-abreu/portfolio/blob/main/deploy/README.md">
+						{t('pipeline.server')} ↗
+					</a>
+				</p>
 			</div>
 		</section>
 
-		<section id="signals" class="split" aria-labelledby="signals-heading">
-			<div class="aside">
-				<SonarDisplay
-					index={5}
-					total={SECTION_COUNT}
-					sectionWord={t('display.section')}
-					label={t('nav.signals')}
-					detail={count('display.signals', signals.length)}
-				>
-					<SonarIcon name="dial" />
-				</SonarDisplay>
-			</div>
-			<div class="body">
-				<p class="label" data-reveal>05 · {t('signals.heading')}</p>
-				<h2 id="signals-heading" data-split>{t('signals.title')}</h2>
-				<ul class="signals">
-					{
-						signals.map((s, i) => (
-							<li class="card" data-reveal style={`--d: ${i * 120}ms`}>
-								<a href={s.repoUrl}>{s.title} ↗</a>
-								<p class="muted">{s.tagline}</p>
-								{s.id === 'leetcode' && practice && (
-									<>
-										<dl
-											class="readings"
-											data-practice={JSON.stringify(practiceDays)}
-											data-day-one={t('leetcode.day')}
-											data-day-many={t('leetcode.days')}
-										>
-											<div>
-												<dt>{t('practice.activeDays')}</dt>
-												<dd>
-													<strong data-stat="practiceDays">{numberFormat.format(practice.activeDays)}</strong>
-												</dd>
-											</div>
-											<div>
-												<dt>{t('practice.currentStreak')}</dt>
-												<dd>
-													<strong data-stat="practiceCurrent">{dayCount(practice.currentStreak)}</strong>
-												</dd>
-											</div>
-											<div>
-												<dt>{t('practice.longestStreak')}</dt>
-												<dd>
-													<strong data-stat="practiceStreak">{dayCount(practice.longestStreak)}</strong>
-												</dd>
-											</div>
-											<div>
-												<dt>{t('practice.last')}</dt>
-												<dd>
-													<strong>
-														<time data-stat="practiceLast" datetime={practice.lastDay}>
-															{dateFormat.format(new Date(`${practice.lastDay}T00:00:00Z`))}
-														</time>
-													</strong>
-												</dd>
-											</div>
-										</dl>
-										<p class="note">
-											<span>{t('practice.note')}</span>
-										</p>
-									</>
-								)}
-								{s.profiles && (
-									<div class="profiles">
-										<span id={`profiles-${s.id}`}>{t('practice.profiles')}</span>
-										<ul aria-labelledby={`profiles-${s.id}`}>
-											{s.profiles.map((p) => (
-												<li>
-													<a class="btn" href={p.url}>
-														{p.label} ↗
-													</a>
-												</li>
-											))}
-										</ul>
-									</div>
-								)}
-							</li>
-						))
-					}
-				</ul>
-			</div>
-		</section>
-
-		<section id="pipeline" class="split" aria-labelledby="pipeline-heading">
-			<div class="aside">
-				<SonarDisplay
-					index={6}
-					total={SECTION_COUNT}
-					sectionWord={t('display.section')}
-					label={t('nav.pipeline')}
-					detail={count('display.pipeline', pipelineStages.length).replace('{date}', builtOn)}
-				>
-					<SonarIcon name="route" />
-				</SonarDisplay>
-			</div>
-			<div class="body">
-				<p class="label" data-reveal>06 · {t('pipeline.heading')}</p>
-				<h2 id="pipeline-heading" data-split>{t('pipeline.title')}</h2>
-				<div data-reveal>
-					<DeployPipeline stages={pipelineStages} />
-				</div>
-				<div class="card pipeline-note" data-reveal style="--d: 150ms">
-					<p>{t('pipeline.when')}</p>
-					<p class="card-links">
-						<a class="btn" href="https://github.com/jg-abreu/portfolio/blob/main/.github/workflows/deploy.yml">
-							{t('pipeline.workflow')} ↗
-						</a>
-						<a class="btn" href="https://github.com/jg-abreu/portfolio/blob/main/deploy/README.md">
-							{t('pipeline.server')} ↗
-						</a>
-					</p>
-				</div>
-			</div>
-		</section>
-
-
-		<section id="contact" class="split" aria-labelledby="contact-heading">
-			<div class="aside">
-				<SonarDisplay index={7} total={SECTION_COUNT} sectionWord={t('display.section')} label={t('nav.contact')} detail={t('contact.direct')}>
-					<SonarIcon name="antenna" />
-				</SonarDisplay>
-			</div>
-			<div class="body">
-				<p class="label" data-reveal>07 · {t('contact.heading')}</p>
-				<h2 id="contact-heading" data-split>{t('contact.title')}</h2>
+		<section id={heads.contact.id} class="section contact" aria-labelledby="contact-heading">
+			<header class="section-head">
+				<p class="badge" data-reveal>{heads.contact.badge}</p>
+				<h2 id="contact-heading" data-split>{heads.contact.title}</h2>
 				<p class="muted">{t('contact.intro')}</p>
-				<ContactForm locale={locale} />
-			</div>
+			</header>
+			<ContactForm locale={locale} />
 		</section>
 	</main>
 </Base>
@@ -523,7 +458,7 @@ const age = (days: number | null) =>
 		overflow-wrap: anywhere;
 	}
 
-	/* Hero: text and a live scope side by side on wide screens. */
+	/* Hero: text on the left, number tiles on the right on wide screens. */
 	.hero {
 		display: grid;
 		align-items: center;
@@ -531,51 +466,19 @@ const age = (days: number | null) =>
 		padding-block: 4rem 3rem;
 	}
 
-	.hero-scope {
-		width: min(100%, 22rem);
-		justify-self: center;
+	.badges {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		margin: 0 0 1.5rem;
 	}
 
-	.caption {
-		display: grid;
-		gap: 0.25rem;
-		margin: 1rem 0 0;
+	.eyebrow {
+		margin: 0 0 0.75rem;
 		color: var(--fg-muted);
-		font-family: var(--font-mono);
-		font-size: 0.7rem;
-		letter-spacing: 0.15em;
-		text-align: center;
-	}
-
-	.accent {
-		color: var(--accent);
-	}
-
-	/* Section: sticky sonar display on the left that leaves with its section, content on the right. */
-	/* minmax(0, …): wide content (the year heatmap) scrolls inside its card instead of widening the page. */
-	.split {
-		display: grid;
-		grid-template-columns: minmax(0, 1fr);
-		gap: 2rem;
-		padding-block: 5rem;
-		/* The browser skips style and layout for sections far from the screen (hundreds of SVG dots
-		   and heatmap cells) until they approach; `auto` remembers each section's real height. */
-		content-visibility: auto;
-		contain-intrinsic-size: auto 60rem;
-	}
-
-	.aside {
-		width: min(100%, 22rem);
-		justify-self: center;
-	}
-
-	.label {
-		margin: 0 0 1rem;
-		color: var(--accent);
-		font-family: var(--font-mono);
-		font-size: 0.75rem;
-		font-weight: 400;
-		letter-spacing: 0.15em;
+		font-size: 0.8rem;
+		font-weight: 500;
+		letter-spacing: 0.14em;
 		text-transform: uppercase;
 	}
 
@@ -583,22 +486,107 @@ const age = (days: number | null) =>
 	h2 {
 		margin: 0;
 		font-weight: 700;
-		letter-spacing: -0.02em;
-		line-height: 1.1;
+		letter-spacing: -0.035em;
+		line-height: 1.05;
 	}
 
 	h1 {
-		font-size: clamp(2.5rem, 8vw, 4.5rem);
+		font-size: clamp(2.75rem, 8vw, 4.5rem);
+	}
+
+	.intro {
+		max-width: 34rem;
+		margin: 1.25rem 0 0;
+		color: var(--fg-muted);
+		font-size: 1.1rem;
+		line-height: 1.65;
+	}
+
+	.ctas {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.75rem;
+		margin: 2rem 0 0;
+	}
+
+	.tiles {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 0.75rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.tile {
+		display: grid;
+		gap: 0.15rem;
+		padding: 1.25rem;
+		background: var(--surface);
+		border: 1px solid var(--line);
+		border-radius: var(--radius);
+	}
+
+	.tile[hidden] {
+		display: none;
+	}
+
+	.tile svg {
+		width: 2.25rem;
+		height: 2.25rem;
+		margin-bottom: 0.75rem;
+		padding: 0.5rem;
+		background: var(--surface-2);
+		border-radius: 0.6rem;
+		fill: none;
+		stroke: var(--fg);
+		stroke-width: 1.75;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+	}
+
+	.tile strong {
+		font-size: clamp(1.5rem, 4vw, 2rem);
+		font-variant-numeric: tabular-nums;
+		letter-spacing: -0.03em;
+		line-height: 1.1;
+	}
+
+	.tile span {
+		color: var(--fg-muted);
+		font-size: 0.8rem;
+		line-height: 1.4;
+	}
+
+	/* Sections: centered header (badge, title), content below. */
+	.section {
+		padding-block: 5rem;
+		border-top: 1px solid var(--line);
+		/* The browser skips style and layout for sections far from the screen (hundreds of heatmap
+		   cells) until they approach; `auto` remembers each section's real height. */
+		content-visibility: auto;
+		contain-intrinsic-size: auto 50rem;
+	}
+
+	.section-head {
+		display: grid;
+		justify-items: center;
+		gap: 1rem;
+		margin-bottom: 3rem;
+		text-align: center;
+	}
+
+	.section-head .badge {
+		margin: 0;
+	}
+
+	.section-head .muted {
+		max-width: 36rem;
+		margin: 0;
 	}
 
 	h2 {
-		margin-bottom: 2rem;
-		font-size: clamp(2rem, 5vw, 3rem);
-	}
-
-	.role {
-		margin: 1rem 0 0;
-		font-size: 1.2rem;
+		font-size: clamp(2rem, 5vw, 2.75rem);
 	}
 
 	.muted {
@@ -608,11 +596,10 @@ const age = (days: number | null) =>
 	.card {
 		position: relative;
 		isolation: isolate;
-		margin-block: 1.25rem;
 		padding: 1.5rem;
 		background: var(--surface);
 		border: 1px solid var(--line);
-		border-radius: 0.75rem;
+		border-radius: var(--radius);
 	}
 
 	.card :global(.card-glow) {
@@ -624,7 +611,7 @@ const age = (days: number | null) =>
 		z-index: -1;
 		pointer-events: none;
 		opacity: 0;
-		background: radial-gradient(circle, color-mix(in srgb, var(--accent) 12%, transparent), transparent 70%);
+		background: radial-gradient(circle, color-mix(in srgb, var(--fg) 6%, transparent), transparent 70%);
 	}
 
 	@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
@@ -640,21 +627,41 @@ const age = (days: number | null) =>
 		}
 	}
 
+	.project-grid {
+		display: grid;
+		gap: 1.25rem;
+	}
+
+	.project {
+		padding: clamp(1.5rem, 3vw, 2.25rem);
+	}
+
 	.featured {
-		border-color: var(--accent);
+		border-color: color-mix(in srgb, var(--fg) 35%, var(--line));
+	}
+
+	.tags {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		margin: 0 0 1rem;
+	}
+
+	.tags:empty {
+		display: none;
 	}
 
 	h3 {
 		margin: 0;
 		font-size: 1.35rem;
+		letter-spacing: -0.02em;
 	}
 
 	h4 {
-		margin: 1.25rem 0 0.25rem;
+		margin: 1.5rem 0 0.35rem;
 		color: var(--fg-muted);
-		font-family: var(--font-mono);
 		font-size: 0.75rem;
-		font-weight: 400;
+		font-weight: 600;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
 	}
@@ -663,22 +670,30 @@ const age = (days: number | null) =>
 		margin-top: 0;
 	}
 
+	.decisions {
+		display: grid;
+		gap: 0.35rem;
+		margin: 0;
+		padding-left: 1.1rem;
+	}
+
 	.stack {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.5rem;
-		margin: 1.25rem 0;
+		margin: 1.5rem 0;
 		padding: 0;
 		list-style: none;
-		font-family: var(--font-mono);
-		font-size: 0.75rem;
+		font-size: 0.8rem;
 	}
 
 	.stack li {
-		padding: 0.15rem 0.5rem;
+		padding: 0.15rem 0.65rem;
+		background: var(--surface-2);
 		border: 1px solid var(--line);
 		border-radius: 999px;
-		color: var(--fg-muted);
+		color: var(--fg);
+		font-weight: 500;
 	}
 
 	.card-links {
@@ -688,41 +703,35 @@ const age = (days: number | null) =>
 		margin: 0;
 	}
 
-	.signals {
-		margin: 0;
-		padding: 0;
-		list-style: none;
-	}
-
-	.signals .muted {
-		margin: 0.25rem 0 0;
+	.about {
+		display: grid;
+		gap: 1.5rem;
+		align-items: start;
 	}
 
 	.lead {
 		margin: 0 0 1.25rem;
 		font-size: 1.1rem;
-		line-height: 1.7;
+		line-height: 1.75;
+	}
+
+	.now h3 {
+		margin-bottom: 1rem;
+		font-size: 1rem;
 	}
 
 	.now ul {
 		display: grid;
-		gap: 0.5rem;
+		gap: 0.6rem;
 		margin: 0;
 		padding-left: 1.1rem;
-	}
-
-	.now li::marker {
-		color: var(--accent);
+		color: var(--fg-muted);
 	}
 
 	.stack-groups {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+		grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
 		gap: 1rem;
-	}
-
-	.stack-groups .card {
-		margin: 0;
 	}
 
 	.stack-groups h3 {
@@ -733,64 +742,26 @@ const age = (days: number | null) =>
 		margin-bottom: 0;
 	}
 
-	.activity-stats {
-		margin: 0 0 1.25rem;
-	}
-
-	.heat-card {
-		margin-top: 0;
-	}
-
-	.recent-title {
-		margin-top: 2rem;
-	}
-
-	/* Hero counters: real numbers from the snapshot, refreshed live. */
-	.stats {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 1rem 2.5rem;
-		margin: 2rem 0 0;
-		padding: 0;
-		list-style: none;
-	}
-
-	.stats li {
-		display: grid;
-	}
-
-	.stats li[hidden] {
-		display: none;
-	}
-
-	.stats strong {
-		color: var(--fg);
-		font-size: clamp(1.75rem, 4vw, 2.25rem);
-		font-variant-numeric: tabular-nums;
-		line-height: 1.1;
-	}
-
-	.stats span {
-		color: var(--fg-muted);
-		font-family: var(--font-mono);
-		font-size: 0.75rem;
-		letter-spacing: 0.08em;
-	}
-
-	/* Practice readings inside the consistency card. */
+	/* Number readings: cards in the activity section, plain inside the practice card. */
 	.readings {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
+		grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
 		gap: 1rem;
 		margin: 1.25rem 0 0;
 	}
 
+	.activity-stats {
+		gap: 0.75rem;
+		margin: 0 0 1rem;
+	}
+
+	.activity-stats .card {
+		padding: 1.1rem 1.25rem;
+	}
+
 	.readings dt {
 		color: var(--fg-muted);
-		font-family: var(--font-mono);
-		font-size: 0.7rem;
-		letter-spacing: 0.1em;
-		text-transform: uppercase;
+		font-size: 0.8rem;
 	}
 
 	.readings dd {
@@ -799,37 +770,60 @@ const age = (days: number | null) =>
 	}
 
 	.readings strong {
-		font-size: 1.25rem;
+		font-size: 1.5rem;
 		font-variant-numeric: tabular-nums;
+		letter-spacing: -0.02em;
 	}
 
-	.readings span,
-	.note span {
+	.readings span {
 		color: var(--fg-muted);
 		font-size: 0.85rem;
 	}
 
+	.subhead {
+		margin: 2.5rem 0 1rem;
+		font-size: 1.1rem;
+	}
+
+	.signals {
+		display: grid;
+		gap: 1.25rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.signal-title {
+		font-size: 1.2rem;
+		font-weight: 600;
+		text-decoration: none;
+	}
+
+	.signal-title:hover {
+		text-decoration: underline;
+	}
+
+	.signals .muted {
+		margin: 0.35rem 0 0;
+	}
+
 	.note {
-		display: flex;
-		flex-wrap: wrap;
-		justify-content: space-between;
-		gap: 0.5rem 1rem;
 		margin: 1.25rem 0 0;
-		font-family: var(--font-mono);
-		font-size: 0.8rem;
+		color: var(--fg-muted);
+		font-size: 0.85rem;
 	}
 
 	/* Profiles on the platforms where the practice repo's solutions are submitted. */
 	.profiles {
 		display: grid;
 		gap: 0.6rem;
-		margin: 1.25rem 0 0;
+		margin: 1.5rem 0 0;
 	}
 
 	.profiles > span {
 		color: var(--fg-muted);
-		font-family: var(--font-mono);
-		font-size: 0.7rem;
+		font-size: 0.75rem;
+		font-weight: 600;
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
 	}
@@ -843,58 +837,6 @@ const age = (days: number | null) =>
 		list-style: none;
 	}
 
-	/* Radar readout inside the projects display. */
-	.contacts {
-		display: grid;
-		grid-template-columns: minmax(0, 1fr);
-		gap: 0.35rem;
-		letter-spacing: 0.02em;
-		margin: 0.25rem 0 0;
-		padding: 0;
-		list-style: none;
-		color: var(--fg-muted);
-	}
-
-	/* One line per contact: number and name on the left, time since the last push on the right. */
-	.contacts li {
-		display: flex;
-		justify-content: space-between;
-		gap: 1rem;
-		padding-left: 0.75rem;
-		border-left: 1px solid var(--line);
-		white-space: nowrap;
-	}
-
-	.contacts .title {
-		min-width: 0;
-		overflow: hidden;
-		color: var(--fg);
-		text-overflow: ellipsis;
-		text-transform: uppercase;
-	}
-
-	.contacts .num,
-	.contacts .age {
-		color: var(--fg-muted);
-	}
-
-	.contacts .age {
-		flex-shrink: 0;
-	}
-
-	.contacts li:global(.is-focus) {
-		border-left-color: var(--accent);
-	}
-
-	.contacts li:global(.is-focus) .num,
-	.contacts li:global(.is-focus) .age {
-		color: var(--accent);
-	}
-
-	.meta {
-		color: var(--fg-muted);
-	}
-
 	.pipeline-note {
 		margin-top: 2rem;
 	}
@@ -903,60 +845,26 @@ const age = (days: number | null) =>
 		margin: 0 0 1rem;
 	}
 
-	@media (prefers-reduced-motion: reduce) {
-		.hint {
-			display: none;
-		}
-	}
-
-	/* Phones: a smaller display above the section, without the contact list (the cards follow). */
-	@media (max-width: 59.99rem) {
-		.aside {
-			width: min(100%, 17rem);
-		}
-
-		.contacts,
-		.meta {
-			display: none;
-		}
+	.contact {
+		max-width: 44rem;
+		margin-inline: auto;
 	}
 
 	@media (min-width: 60rem) {
 		.hero {
-			grid-template-columns: 3fr 2fr;
-			min-height: calc(100vh - var(--header-height));
-			padding-block: 2rem;
-		}
-
-		.hero-scope {
-			width: min(100%, 26rem);
-		}
-
-		.split {
-			grid-template-columns: minmax(18rem, 5fr) minmax(0, 7fr);
+			grid-template-columns: 7fr 5fr;
 			gap: 4rem;
-			align-items: start;
+			min-height: calc(100vh - var(--header-height));
+			padding-block: 3rem;
 		}
 
-		.aside {
-			width: 100%;
-			max-width: 25rem;
+		.project-grid {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
 		}
 
-		/* The screen's drawing shrinks on shorter screens so the whole display fits while sticky;
-		   the readout keeps the full column width so project names stay readable. */
-		.aside :global([data-scope]),
-		.aside :global(.icon) {
-			max-width: clamp(12rem, calc(100vh - 28rem), 100%);
-			margin-inline: auto;
-		}
-	}
-
-	/* Only stick when the display fits on screen; otherwise it simply scrolls with its section. */
-	@media (min-width: 60rem) and (min-height: 43rem) {
-		.aside {
-			position: sticky;
-			top: calc(var(--header-height) + 1.5rem);
+		.about {
+			grid-template-columns: 3fr 2fr;
+			gap: 3rem;
 		}
 	}
 </style>

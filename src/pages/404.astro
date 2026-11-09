@@ -1,7 +1,6 @@
 ---
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import Base from '../layouts/Base.astro';
-import RadarScope from '../components/RadarScope.astro';
 import { defaultLocale, localeTags, locales, useTranslations } from '../i18n/ui';
 
 // One 404 for every URL, so it speaks both languages: English first, Portuguese below.
@@ -13,7 +12,7 @@ const t = useTranslations(defaultLocale);
 	<main id="main">
 		<section class="lost">
 			<div class="scope">
-				<RadarScope />
+				<span aria-hidden="true">404</span>
 			</div>
 			<div class="texts">
 				{
@@ -48,9 +47,12 @@ const t = useTranslations(defaultLocale);
 	}
 
 	.scope {
-		width: min(100%, 20rem);
 		justify-self: center;
-		opacity: 0.8;
+		color: var(--line);
+		font-size: clamp(6rem, 22vw, 12rem);
+		font-weight: 800;
+		letter-spacing: -0.06em;
+		line-height: 1;
 	}
 
 	.texts {
@@ -66,7 +68,7 @@ const t = useTranslations(defaultLocale);
 	.label {
 		margin: 0 0 1rem;
 		color: var(--accent);
-		font-family: var(--font-mono);
+		font-family: var(--font-sans);
 		font-size: 0.75rem;
 		letter-spacing: 0.15em;
 	}

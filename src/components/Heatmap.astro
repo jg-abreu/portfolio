@@ -78,7 +78,7 @@ const months = cells
 		border: 1px solid var(--line);
 		border-radius: 0.35rem;
 		color: var(--fg);
-		font-family: var(--font-mono);
+		font-family: var(--font-sans);
 		font-size: 0.7rem;
 		white-space: nowrap;
 		pointer-events: none;
@@ -94,7 +94,7 @@ const months = cells
 
 	.month {
 		fill: var(--fg-muted);
-		font-family: var(--font-mono);
+		font-family: var(--font-sans);
 		font-size: 10px;
 	}
 
@@ -109,19 +109,19 @@ const months = cells
 	}
 
 	.l1 {
-		fill: color-mix(in srgb, var(--accent) 30%, var(--bg));
+		fill: color-mix(in srgb, var(--heat) 30%, var(--bg));
 	}
 
 	.l2 {
-		fill: color-mix(in srgb, var(--accent) 55%, var(--bg));
+		fill: color-mix(in srgb, var(--heat) 55%, var(--bg));
 	}
 
 	.l3 {
-		fill: color-mix(in srgb, var(--accent) 78%, var(--bg));
+		fill: color-mix(in srgb, var(--heat) 78%, var(--bg));
 	}
 
 	.l4 {
-		fill: var(--accent);
+		fill: var(--heat);
 	}
 
 	.today {
@@ -132,7 +132,7 @@ const months = cells
 	figcaption {
 		margin-top: 0.5rem;
 		color: var(--fg-muted);
-		font-family: var(--font-mono);
+		font-family: var(--font-sans);
 		font-size: 0.7rem;
 		letter-spacing: 0.08em;
 	}
