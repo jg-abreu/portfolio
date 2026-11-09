@@ -44,7 +44,10 @@ function switchTo(theme: Theme, from: HTMLElement) {
 	const x = box.left + box.width / 2;
 	const y = box.top + box.height / 2;
 	const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+	// Keeps the header and wallpaper inside the page snapshot (see Base.astro) during the circle.
+	themeRoot.classList.add('theme-switching');
 	const transition = document.startViewTransition(() => apply(theme));
+	transition.finished.finally(() => themeRoot.classList.remove('theme-switching'));
 	transition.ready
 		.then(() => {
 			themeRoot.animate(

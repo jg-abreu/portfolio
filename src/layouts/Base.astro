@@ -289,11 +289,63 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 	 * Theme switch animation (scripts/theme.ts). With the View Transitions API the new theme grows
 	 * as a circle from the toggle; the default cross-fade is turned off so only the circle moves.
 	 * Browsers without it get a short color fade through the .theme-fading class instead.
+	 * While it runs, .theme-switching keeps the whole page in one snapshot so the circle covers all.
 	 */
-	::view-transition-old(root),
-	::view-transition-new(root) {
+	:root.theme-switching::view-transition-old(root),
+	:root.theme-switching::view-transition-new(root) {
 		animation: none;
 		mix-blend-mode: normal;
+	}
+
+	:root.theme-switching .site-header,
+	:root.theme-switching .wallpaper {
+		view-transition-name: none;
+	}
+
+	/*
+	 * Page changes: the browser swaps pages with a short fade-and-rise instead of a blank flash
+	 * (cross-document View Transitions; Chrome, Edge and Safari 18.2+, others just load normally).
+	 * The header and the wallpaper are their own layers, so they stay still while the content moves.
+	 */
+	@view-transition {
+		navigation: auto;
+	}
+
+	.site-header {
+		view-transition-name: site-header;
+	}
+
+	.wallpaper {
+		view-transition-name: wallpaper;
+	}
+
+	::view-transition-old(root) {
+		animation: 0.18s ease-in both page-out;
+	}
+
+	::view-transition-new(root) {
+		animation: 0.32s var(--ease) 0.06s both page-in;
+	}
+
+	@keyframes page-out {
+		to {
+			opacity: 0;
+		}
+	}
+
+	@keyframes page-in {
+		from {
+			opacity: 0;
+			transform: translateY(0.75rem);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		::view-transition-group(*),
+		::view-transition-old(*),
+		::view-transition-new(*) {
+			animation: none !important;
+		}
 	}
 
 	.theme-fading,
