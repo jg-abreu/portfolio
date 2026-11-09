@@ -35,6 +35,27 @@ const resumePath = getResumePath(locale);
 			}
 		</header>
 
+		<!--
+			The PDF right under the buttons, as on developer.org.tr. Its src is set by the script below
+			once the page has loaded, so the PDF never holds up the page (or the intro loader).
+		-->
+		{
+			resumePath && (
+				<section class="viewer" data-reveal style="--d: 250ms" aria-label={t('resume.pdf')}>
+					<iframe data-src={resumePath} title={t('resume.pdf')} />
+					<noscript>
+						<iframe src={resumePath} title={t('resume.pdf')} />
+					</noscript>
+					<p class="fallback muted">
+						{t('resume.fallback')}{' '}
+						<a href={resumePath} target="_blank" rel="noopener">
+							{t('resume.open')} ↗
+						</a>
+					</p>
+				</section>
+			)
+		}
+
 		<section class="about" aria-labelledby="about-heading">
 			<div data-reveal>
 				<h2 id="about-heading">{t('about.title')}</h2>
@@ -47,22 +68,36 @@ const resumePath = getResumePath(locale);
 				</ul>
 			</div>
 		</section>
-
-		{
-			resumePath && (
-				<section class="viewer card" data-reveal aria-label={t('resume.pdf')}>
-					<iframe src={resumePath} title={t('resume.pdf')} loading="lazy" />
-					<p class="fallback muted">
-						{t('resume.fallback')}{' '}
-						<a href={resumePath} target="_blank" rel="noopener">
-							{t('resume.open')} ↗
-						</a>
-					</p>
-				</section>
-			)
-		}
 	</main>
 </Base>
+
+<script>
+	// Loads the PDF after the page itself, keeping the reader where they are: Chrome's PDF viewer
+	// scrolls the page to itself while it starts up, so for a few seconds any scroll the reader did
+	// not make (wheel, touch, keys, scrollbar) is undone.
+	const frame = document.querySelector<HTMLIFrameElement>('iframe[data-src]');
+	const start = () => {
+		if (!frame?.dataset.src) return;
+		const x = scrollX;
+		const y = scrollY;
+		let guarding = true;
+		const release = () => {
+			guarding = false;
+			removeEventListener('scroll', hold);
+		};
+		const hold = () => {
+			if (guarding && (scrollX !== x || scrollY !== y)) scrollTo(x, y);
+		};
+		for (const type of ['wheel', 'touchstart', 'keydown', 'pointerdown']) {
+			addEventListener(type, release, { once: true, passive: true });
+		}
+		addEventListener('scroll', hold, { passive: true });
+		setTimeout(release, 4000);
+		frame.src = frame.dataset.src;
+	};
+	if (document.readyState === 'complete') start();
+	else addEventListener('load', start, { once: true });
+</script>
 
 <style>
 	.actions {
@@ -104,17 +139,16 @@ const resumePath = getResumePath(locale);
 	}
 
 	.viewer {
-		padding: 0.5rem;
-		margin-bottom: 2rem;
+		margin: 0.5rem 0 3.5rem;
 	}
 
 	iframe {
 		display: block;
 		width: 100%;
-		height: min(85vh, 60rem);
-		border: 0;
-		border-radius: calc(var(--radius) - 0.4rem);
-		background: #fff;
+		height: min(85vh, 62rem);
+		background: var(--surface-2);
+		border: 1px solid var(--line);
+		border-radius: 0.75rem;
 	}
 
 	.fallback {
