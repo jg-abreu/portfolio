@@ -57,7 +57,7 @@ const fontFaces = `
 @font-face{font-family:'JetBrains Mono';font-style:normal;font-display:swap;font-weight:400;src:url(${monoLatin}) format('woff2');unicode-range:${latinRange}}
 `;
 // Runs before the first paint so the page never flashes the wrong theme: stored choice, else the system.
-const themeBootstrap = `(function(){var d=document.documentElement,t=null;try{t=localStorage.getItem('theme')}catch(e){}if(t!=='light'&&t!=='dark')t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';d.setAttribute('data-theme',t);var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',t==='light'?'#FFFFFF':'#020617')})();`;
+const themeBootstrap = `(function(){var d=document.documentElement,t=null;try{t=localStorage.getItem('theme')}catch(e){}if(t!=='light'&&t!=='dark')t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';d.setAttribute('data-theme',t);var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',t==='light'?'#FFFFFF':'#03111a')})();`;
 // Hash the exact inline payloads; changing any of them automatically changes its CSP allowance.
 const revealBootstrap = `(function(){var d=document.documentElement;if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;d.classList.add('fx');setTimeout(function(){if(!d.hasAttribute('data-fx-ready'))d.classList.remove('fx')},2500)})();`;
 Astro.csp?.insertScriptHash(`sha256-${createHash('sha256').update(themeBootstrap).digest('base64')}`);
@@ -71,7 +71,7 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="generator" content={Astro.generator} />
-		<meta name="theme-color" content="#020617" />
+		<meta name="theme-color" content="#03111a" />
 		<title>{title}</title>
 		<meta name="description" content={description} />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -221,24 +221,24 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 
 <style is:global>
 	/*
-	 * v3 palettes. Dark: deep navy with a wine-to-violet glow at the top (in the spirit of developer.org.tr).
+	 * v3 palettes. Dark: petrol black with a cyan-to-blue glow at the top (ocean, a nod to the v1 sonar theme).
 	 * Light: plain white, near-black ink and hairline borders (in the spirit of augustogalego.com).
 	 * Kept in two places on purpose: [data-theme] is set by the head script, the media query covers
 	 * visitors without JavaScript. Change both together (and the bar colors in scripts/theme.ts).
 	 */
 	:root {
 		color-scheme: dark;
-		--bg: #020617;
-		--surface: #0b1224;
-		--surface-2: #111a2e;
-		--line: #1e293b;
+		--bg: #03111a;
+		--surface: #071c28;
+		--surface-2: #0b2533;
+		--line: #16303f;
 		--fg: #fafafa;
 		--fg-muted: #a1a1aa;
 		--accent: #fafafa;
-		--on-accent: #020617;
+		--on-accent: #03111a;
 		--heat: #4ade80;
-		--glow: radial-gradient(60% 75% at 12% 0%, rgb(127 29 61 / 0.6), transparent 70%),
-			radial-gradient(55% 70% at 88% 0%, rgb(91 33 182 / 0.5), transparent 70%);
+		--glow: radial-gradient(60% 75% at 12% 0%, rgb(14 116 144 / 0.55), transparent 70%),
+			radial-gradient(55% 70% at 88% 0%, rgb(29 78 216 / 0.45), transparent 70%);
 		--font-sans: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 		--font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
 		--header-height: 4rem;

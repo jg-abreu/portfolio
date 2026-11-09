@@ -7,7 +7,7 @@ const meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
 const prefersLight = matchMedia('(prefers-color-scheme: light)');
 const toggles = document.querySelectorAll<HTMLButtonElement>('[data-theme-toggle]');
 // Same values as --bg in Base.astro.
-const barColors: Record<Theme, string> = { light: '#FFFFFF', dark: '#020617' };
+const barColors: Record<Theme, string> = { light: '#FFFFFF', dark: '#03111a' };
 
 function storedTheme(): Theme | null {
 	try {
