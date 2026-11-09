@@ -169,18 +169,6 @@ const pagePath = `/${locale}/pipeline/`;
 								<text class="g-sha" x="236" y="86">{commit?.short ?? 'merge'}</text>
 							</svg>
 						</div>
-						{
-							commit && (
-								<>
-									<p class="note">{t('journey.commit.note')}</p>
-									<pre class="term"><code><span class="prompt">$</span> git log -1
-<span class="hl">commit {commit.sha}</span>
-Date:   {dateTime.format(new Date(commit.date))}
-
-    {commit.subject}</code></pre>
-								</>
-							)
-						}
 						<Handoff kind="out" {...handOut(0)} />
 					</article>
 				</li>
@@ -211,12 +199,6 @@ Date:   {dateTime.format(new Date(commit.date))}
 								<span class="b-files mono"><span>en/index.html</span><span>pt/index.html</span><span>_astro/*.css</span></span>
 							</div>
 						</div>
-						<pre class="term log"><code><span class="line"><span class="ok">✓</span> actions/checkout</span>
-<span class="line"><span class="ok">✓</span> actions/setup-node <span class="dim">· Node 24</span></span>
-<span class="line"><span class="ok">✓</span> npm ci</span>
-<span class="line"><span class="ok">✓</span> npm run build</span>
-<span class="line"><span class="dim">  ↳ {t('journey.build.log')}</span></span>
-<span class="line"><span class="ok">✓</span> rsync dist/ → server</span></code></pre>
 						<p class="run" data-run hidden data-ok={t('journey.build.ok')} data-fail={t('journey.build.fail')} data-running={t('journey.build.running')} data-took={t('journey.build.took')}>
 							<span class="run-dot" aria-hidden="true"></span>
 							<span>{t('journey.build.last')}:</span>
@@ -250,9 +232,6 @@ Date:   {dateTime.format(new Date(commit.date))}
 							</span>
 							<span class="host">{t('journey.ship.server')}</span>
 						</div>
-						<pre class="term"><code><span class="prompt">$</span> rsync <span class="hl">-az --delete-delay --delay-updates</span> \
-    -e "ssh -o <span class="hl">StrictHostKeyChecking=yes</span>" \
-    dist/ deploy@server:/var/www/portfolio/</code></pre>
 						<dl class="flags">
 							<div><dt class="mono">-az</dt><dd>{t('journey.ship.az')}</dd></div>
 							<div><dt class="mono">--delay-updates</dt><dd>{t('journey.ship.delay')}</dd></div>
@@ -539,21 +518,12 @@ Date:   {dateTime.format(new Date(commit.date))}
 		margin-top: 0;
 	}
 
-	.term .prompt,
-	.term .ok {
-		color: #4ade80;
-	}
-
 	.term .hl {
 		color: #7dd3fc;
 	}
 
 	.term .dim {
 		color: #9ca3af;
-	}
-
-	.log .line {
-		display: inline-block;
 	}
 
 	.run {
@@ -833,26 +803,6 @@ Date:   {dateTime.format(new Date(commit.date))}
 		opacity: 1;
 		transform: none;
 	}
-
-	/* The build log prints line by line once its station is reached. */
-	:global(.fx) .journey[data-ready] .log .line {
-		opacity: 0;
-		transform: translateX(-0.5rem);
-	}
-
-	:global(.fx) .journey[data-ready] .station.on .log .line {
-		opacity: 1;
-		transform: none;
-		transition:
-			opacity 0.3s,
-			transform 0.3s;
-	}
-
-	:global(.fx) .journey[data-ready] .station.on .log .line:nth-child(2) { transition-delay: 0.35s; }
-	:global(.fx) .journey[data-ready] .station.on .log .line:nth-child(3) { transition-delay: 0.7s; }
-	:global(.fx) .journey[data-ready] .station.on .log .line:nth-child(4) { transition-delay: 1.05s; }
-	:global(.fx) .journey[data-ready] .station.on .log .line:nth-child(5) { transition-delay: 1.4s; }
-	:global(.fx) .journey[data-ready] .station.on .log .line:nth-child(6) { transition-delay: 1.75s; }
 
 	:global(.fx) .journey[data-ready] .station.on .file {
 		animation: ship 2.4s linear infinite;
