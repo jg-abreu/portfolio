@@ -267,7 +267,7 @@ const pt: Record<keyof typeof en, string> = {
 	'nav.language': 'Idioma',
 	'nav.sections': 'Seções',
 	'nav.skip': 'Pular para o conteúdo',
-	'loader.label': 'CARREGANDO',
+	'loader.label': 'LOADING',
 	'nav.theme': 'Modo claro',
 	'nav.projects': 'Projetos',
 	'nav.signals': 'Constância',

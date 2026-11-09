@@ -66,10 +66,13 @@ const themeBootstrap = `(function(){var d=document.documentElement,t=null;try{t=
 const revealBootstrap = `(function(){var d=document.documentElement;if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;d.classList.add('fx');setTimeout(function(){if(!d.hasAttribute('data-fx-ready'))d.classList.remove('fx')},2500)})();`;
 Astro.csp?.insertScriptHash(`sha256-${createHash('sha256').update(themeBootstrap).digest('base64')}`);
 Astro.csp?.insertScriptHash(`sha256-${createHash('sha256').update(revealBootstrap).digest('base64')}`);
-// Intro loader: once per browser session, only with JavaScript and motion allowed (scripts/loader.ts).
-const introBootstrap = `(function(){var d=document.documentElement;if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;try{if(sessionStorage.getItem('intro'))return;sessionStorage.setItem('intro','1')}catch(e){return}d.classList.add('intro')})();`;
+// Intro loader (scripts/loader.ts), like augustogalego.com: shown when the site is entered from
+// outside (a link, a search, the address bar) or reloaded, not when moving between its own pages.
+// Only with JavaScript and motion allowed.
+const introBootstrap = `(function(){var d=document.documentElement;if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;var n=performance.getEntriesByType('navigation')[0];var reload=n&&n.type==='reload';var inside=false;try{inside=!!document.referrer&&new URL(document.referrer).origin===location.origin}catch(e){}if(n&&n.type==='back_forward')return;if(reload||!inside)d.classList.add('intro')})();`;
+
 Astro.csp?.insertScriptHash(`sha256-${createHash('sha256').update(introBootstrap).digest('base64')}`);
-const loaderUrl = canonical.replace(/^https?:\/\//, '').toUpperCase();
+const loaderUrl = canonical.toUpperCase();
 Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).digest('base64')}`);
 ---
 
@@ -129,7 +132,7 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 		<div class="loader" aria-hidden="true" data-loader>
 			<div class="loader-box">
 				<span class="loader-mark">JA</span>
-				<p class="loader-line"><span>»</span> {t('loader.label')} <span>—</span> <span class="loader-pct"><span data-loader-pct>0</span>%</span></p>
+				<p class="loader-line"><span>»</span> <span>{t('loader.label')}</span> <span>-</span> <span class="loader-pct"><span data-loader-pct>0</span>%</span></p>
 				<span class="loader-bar"><i data-loader-bar></i></span>
 			</div>
 			<p class="loader-url">{loaderUrl}</p>
@@ -736,11 +739,10 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 	}
 
 	/*
-	 * Intro loader (scripts/loader.ts), in the spirit of augustogalego.com: the monogram, a
-	 * "LOADING — n%" line and a thin bar, the page URL in a corner. The percentage follows real
-	 * milestones (page parsed, fonts ready, page loaded), never a random count. Shown only while
-	 * <html> has .intro (first page of a session, JavaScript on, motion allowed); a CSS timer
-	 * lifts it anyway after 4 s in case the script never runs.
+	 * Intro loader (scripts/loader.ts), modeled on augustogalego.com: a plain screen, the monogram
+	 * pulsing, a "» LOADING - n%" line, a thin bar and the page URL in a corner. The percentage is
+	 * capped by real milestones (page parsed, fonts ready, page loaded), never a random count. Shown
+	 * only while <html> has .intro (see the head script); a CSS timer lifts it anyway after 4 s.
 	 */
 	.loader {
 		display: none;
@@ -758,7 +760,7 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 
 	:root.intro .loader.done {
 		opacity: 0;
-		transition: opacity 0.4s var(--ease);
+		transition: opacity 0.3s ease-out;
 	}
 
 	.loader-box {
@@ -772,19 +774,19 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 		place-items: center;
 		width: 3.25rem;
 		height: 3.25rem;
-		background: linear-gradient(135deg, var(--brand-2), var(--accent) 55%, #6366f1);
+		background: var(--fg);
 		border-radius: 0.9rem;
-		color: #fff;
+		color: var(--bg);
 		font-size: 1.2rem;
 		font-weight: 800;
 		letter-spacing: -0.04em;
-		box-shadow: 0 0 40px color-mix(in srgb, var(--brand) 45%, transparent);
-		animation: loader-pulse 1.4s ease-in-out infinite;
+		animation: loader-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 	}
 
 	.loader-line {
 		display: flex;
 		gap: 0.5rem;
+		align-items: center;
 		margin: 0;
 		color: var(--fg-muted);
 		font-family: var(--font-mono);
@@ -800,7 +802,7 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 	.loader-bar {
 		display: block;
 		width: 12rem;
-		height: 3px;
+		height: 4px;
 		overflow: hidden;
 		background: var(--surface-2);
 		border-radius: 999px;
@@ -809,22 +811,22 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 	.loader-bar i {
 		display: block;
 		height: 100%;
-		background: linear-gradient(90deg, var(--brand-2), var(--accent), #6366f1);
+		background: var(--fg);
 		transform: scaleX(0);
 		transform-origin: left;
 	}
 
 	.loader-url {
 		position: absolute;
-		right: 1.5rem;
-		bottom: 1.5rem;
-		left: 1.5rem;
+		right: 2rem;
+		bottom: 2rem;
+		left: 2rem;
 		margin: 0;
 		overflow: hidden;
-		color: color-mix(in srgb, var(--fg-muted) 50%, transparent);
+		color: color-mix(in srgb, var(--fg-muted) 40%, transparent);
 		font-family: var(--font-mono);
 		font-size: 0.7rem;
-		letter-spacing: 0.1em;
+		letter-spacing: 0.05em;
 		text-align: right;
 		text-overflow: ellipsis;
 		white-space: nowrap;
@@ -832,8 +834,7 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 
 	@keyframes loader-pulse {
 		50% {
-			opacity: 0.7;
-			transform: scale(0.94);
+			opacity: 0.5;
 		}
 	}
 
