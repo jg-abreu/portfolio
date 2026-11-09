@@ -47,6 +47,8 @@ export interface Article {
 	title: string;
 	url: string;
 	description: string | null;
+	/** Cover, or the share image DEV builds for the post; only from media2.dev.to (allowed by the CSP). */
+	image: string | null;
 	publishedAt: string;
 	tags: string[];
 	readingMinutes: number;
@@ -168,6 +170,7 @@ export function validArticle(v: unknown): Article | null {
 		title,
 		url,
 		description: text(o.description),
+		image: httpsUrl(o.image)?.startsWith('https://media2.dev.to/') ? (o.image as string) : null,
 		publishedAt: o.publishedAt,
 		tags,
 		readingMinutes: isCount(o.readingMinutes) ? o.readingMinutes : 0,
@@ -233,6 +236,7 @@ export function fromDevArticles(raw: unknown): Article[] | null {
 				title: o?.title,
 				url: o?.url,
 				description: o?.description,
+				image: o?.cover_image ?? o?.social_image,
 				publishedAt: typeof o?.published_at === 'string' ? o.published_at.slice(0, 10) : null,
 				tags: o?.tag_list,
 				readingMinutes: o?.reading_time_minutes,
