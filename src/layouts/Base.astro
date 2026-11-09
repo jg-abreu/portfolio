@@ -221,7 +221,7 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 
 <style is:global>
 	/*
-	 * v3 palettes. Dark: soft slate gray with a wide blue glow across the top.
+	 * v3 palettes. Dark: soft slate gray with a sky-blue, blue, indigo and pink glow across the top (Apple wallpaper style).
 	 * Light: plain white, near-black ink and hairline borders (in the spirit of augustogalego.com).
 	 * Kept in two places on purpose: [data-theme] is set by the head script, the media query covers
 	 * visitors without JavaScript. Change both together (and the bar colors in scripts/theme.ts).
@@ -237,9 +237,10 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 		--accent: #fafafa;
 		--on-accent: #11141b;
 		--heat: #4ade80;
-		--glow: radial-gradient(120% 85% at 50% 0%, rgb(37 99 235 / 0.55), transparent 75%),
-			radial-gradient(45% 60% at 10% 0%, rgb(59 130 246 / 0.35), transparent 70%),
-			radial-gradient(45% 60% at 90% 0%, rgb(29 78 216 / 0.35), transparent 70%);
+		--glow: radial-gradient(50% 65% at 8% 0%, rgb(56 189 248 / 0.45), transparent 70%),
+			radial-gradient(70% 80% at 40% 0%, rgb(37 99 235 / 0.6), transparent 72%),
+			radial-gradient(55% 70% at 75% 0%, rgb(99 102 241 / 0.5), transparent 70%),
+			radial-gradient(40% 55% at 98% 0%, rgb(236 72 153 / 0.35), transparent 70%);
 		--font-sans: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 		--font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
 		--header-height: 4rem;
