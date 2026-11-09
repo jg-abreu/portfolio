@@ -10,12 +10,15 @@ import { utcDate } from './calendar.ts';
 export const GITHUB_USER = 'jg-abreu';
 /** Where all algorithm practice lands: a UTC day with a solution committed here is a day practiced. */
 export const PRACTICE_REPO = 'algorithms-and-data-structures';
+/** Articles on the blog page come from this DEV (dev.to) account. */
+export const DEVTO_USER = 'joao_abreu';
 
 export const ENDPOINTS = {
 	profile: `https://api.github.com/users/${GITHUB_USER}`,
 	repos: `https://api.github.com/users/${GITHUB_USER}/repos?per_page=100&sort=pushed`,
 	contributions: `https://github-contributions-api.jogruber.de/v4/${GITHUB_USER}?y=last`,
 	practiceCommits: `https://api.github.com/repos/${GITHUB_USER}/${PRACTICE_REPO}/commits?per_page=100`,
+	articles: `https://dev.to/api/articles?username=${DEVTO_USER}&per_page=100`,
 } as const;
 
 export interface Profile {
@@ -32,6 +35,16 @@ export interface Repo {
 	fork: boolean;
 	archived: boolean;
 	homepage: string | null;
+}
+
+/** A published DEV article; the site links to it and never copies its body. */
+export interface Article {
+	title: string;
+	url: string;
+	description: string | null;
+	publishedAt: string;
+	tags: string[];
+	readingMinutes: number;
 }
 
 export interface Contributions {
@@ -55,6 +68,8 @@ export interface Snapshot {
 	contributions: Contributions | null;
 	/** UTC days with at least one solution commit in PRACTICE_REPO, sorted. */
 	practiceDays: string[] | null;
+	/** Published DEV articles, newest first. */
+	articles: Article[] | null;
 }
 
 type Unknown = Record<string, unknown> | undefined | null;
@@ -124,6 +139,32 @@ export function validDays(v: unknown): string[] | null {
 	return Array.isArray(v) ? [...new Set(v.filter(isDate))].sort() : null;
 }
 
+const TAG = /^[a-z0-9]+$/;
+
+export function validArticle(v: unknown): Article | null {
+	const o = obj(v);
+	const url = httpsUrl(o?.url);
+	const title = text(o?.title, 200);
+	if (!o || !url || !title || !isDate(o.publishedAt)) return null;
+	const tags = Array.isArray(o.tags) ? o.tags.filter((t): t is string => typeof t === 'string' && TAG.test(t)).slice(0, 4) : [];
+	return {
+		title,
+		url,
+		description: text(o.description),
+		publishedAt: o.publishedAt,
+		tags,
+		readingMinutes: isCount(o.readingMinutes) ? o.readingMinutes : 0,
+	};
+}
+
+export function validArticles(v: unknown): Article[] | null {
+	if (!Array.isArray(v)) return null;
+	return v
+		.map(validArticle)
+		.filter((a): a is Article => a !== null)
+		.sort((a, b) => b.publishedAt.localeCompare(a.publishedAt));
+}
+
 export function validSnapshot(v: unknown): Snapshot | null {
 	const o = obj(v);
 	if (!o || !isDate(o.generatedAt)) return null;
@@ -133,6 +174,7 @@ export function validSnapshot(v: unknown): Snapshot | null {
 		repos: validRepos(o.repos),
 		contributions: validContributions(o.contributions),
 		practiceDays: validDays(o.practiceDays),
+		articles: validArticles(o.articles),
 	};
 }
 
@@ -157,6 +199,23 @@ export function fromGitHubRepos(raw: unknown): Repo[] | null {
 				fork: o?.fork,
 				archived: o?.archived,
 				homepage: o?.homepage,
+			};
+		}),
+	);
+}
+
+export function fromDevArticles(raw: unknown): Article[] | null {
+	if (!Array.isArray(raw)) return null;
+	return validArticles(
+		raw.map((a) => {
+			const o = obj(a);
+			return {
+				title: o?.title,
+				url: o?.url,
+				description: o?.description,
+				publishedAt: typeof o?.published_at === 'string' ? o.published_at.slice(0, 10) : null,
+				tags: o?.tag_list,
+				readingMinutes: o?.reading_time_minutes,
 			};
 		}),
 	);

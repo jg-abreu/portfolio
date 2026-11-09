@@ -3,16 +3,15 @@ import { getRelativeLocaleUrl } from 'astro:i18n';
 import { createHash } from 'node:crypto';
 import Base from '../../layouts/Base.astro';
 import HeroContacts from '../../components/HeroContacts.astro';
-import ContactForm from '../../components/ContactForm.astro';
-import DeployPipeline from '../../components/DeployPipeline.astro';
 import Heatmap from '../../components/Heatmap.astro';
-import RecentRepos from '../../components/RecentRepos.astro';
-import { localeTags, locales, useTranslations, type Locale, type UiKey } from '../../i18n/ui';
-import { activityStats, heatmapCells, recentRepos } from '../../lib/activity';
+import RepoGrid from '../../components/RepoGrid.astro';
+import TechGrid from '../../components/TechGrid.astro';
+import { localeTags, locales, useTranslations, type Locale } from '../../i18n/ui';
+import { heatmapCells, recentRepos } from '../../lib/activity';
 import { utcDate } from '../../lib/calendar';
-import { getAbout, getContacts, getProjects, getResumePath, getStack } from '../../lib/content';
+import { getContacts, getProjects, getStack } from '../../lib/content';
 import { getGitHubSnapshot } from '../../lib/github';
-import { practiceStats } from '../../lib/github-data';
+import { GITHUB_USER, practiceStats } from '../../lib/github-data';
 
 export function getStaticPaths() {
 	return locales.map((locale) => ({ params: { locale } }));
@@ -20,39 +19,28 @@ export function getStaticPaths() {
 
 const locale = Astro.params.locale as Locale;
 const t = useTranslations(locale);
+const localeTag = localeTags[locale];
+const numberFormat = new Intl.NumberFormat(localeTag);
+const dateFormat = new Intl.DateTimeFormat(localeTag, { dateStyle: 'medium', timeZone: 'UTC' });
 
 const projects = await getProjects(locale);
-const workProjects = projects.filter((p) => p.role !== 'signal');
-const signals = projects.filter((p) => p.role === 'signal');
+const practiceProject = projects.find((p) => p.id === 'leetcode');
 const contacts = await getContacts();
-const resumePath = getResumePath(locale);
+const stackItems = (await getStack()).flatMap((g) => g.items);
 
-// Build snapshot of GitHub data; the browser refreshes it live.
+// Build snapshot of GitHub data; the browser refreshes the contributions live.
 const snapshot = getGitHubSnapshot();
-const numberFormat = new Intl.NumberFormat(localeTags[locale]);
-const dateFormat = new Intl.DateTimeFormat(localeTags[locale], { dateStyle: 'medium', timeZone: 'UTC' });
-const contributionsTotal = snapshot?.contributions?.total ?? null;
-const publicRepos = snapshot?.profile?.publicRepos ?? null;
-const practiceDays = snapshot?.practiceDays ?? [];
-const localeTag = localeTags[locale];
-
-const about = await getAbout(locale);
-const stack = (await getStack()).map((g) => {
-	const label = t(`stack.${g.id}` as UiKey);
-	if (!label) throw new Error(`Missing UI string stack.${g.id} for the stack group in src/content/stack.yaml`);
-	return { ...g, label };
-});
-
-// Activity: statistics and heatmap as of the snapshot day; the browser recomputes them live.
 const today = snapshot?.generatedAt ?? '';
 const contributions = snapshot?.contributions ?? null;
-const stats = contributions ? activityStats(contributions, today) : null;
+const cells = contributions ? heatmapCells(contributions, today) : [];
+const practiceDays = snapshot?.practiceDays ?? [];
 // Practice days are UTC days, like LeetCode's, so the streak is measured against today in UTC.
 const practice = practiceStats(practiceDays, utcDate());
-const cells = contributions ? heatmapCells(contributions, today) : [];
-const recent = snapshot?.repos ? recentRepos(snapshot.repos, 8) : [];
-// Repo descriptions in the page's language where the project has its own text.
+const repos = snapshot?.repos ? recentRepos(snapshot.repos, 6) : [];
 const descriptions = Object.fromEntries(projects.map((p) => [p.repo, p.tagline]));
+
+const count = (key: Parameters<typeof t>[0], n: number) => t(key).replace('{n}', String(n));
+const dayCount = (n: number) => (n === 1 ? t('leetcode.day') : count('leetcode.days', n));
 
 // Structured data for search engines: who this page is about, with the public profiles.
 const personJsonLd = JSON.stringify({
@@ -62,385 +50,176 @@ const personJsonLd = JSON.stringify({
 	url: new URL(getRelativeLocaleUrl(locale), Astro.site).href,
 	jobTitle: t('home.role'),
 	address: { '@type': 'PostalAddress', addressLocality: 'Rio de Janeiro', addressCountry: 'BR' },
-	knowsAbout: stack.flatMap((g) => g.items),
+	knowsAbout: stackItems,
 	sameAs: contacts.filter((c) => c.kind !== 'email').map((c) => c.url),
 }).replace(/</g, '\\u003c');
 
 Astro.csp?.insertScriptHash(`sha256-${createHash('sha256').update(personJsonLd).digest('base64')}`);
-
-// The real path a commit takes to the visitor (see deploy/README.md and .github/workflows/deploy.yml).
-const pipelineStages = (['commit', 'build', 'ship', 'serve', 'edge', 'you'] as const).map((id) => ({
-	id,
-	name: t(`pipeline.${id}.name`),
-	body: t(`pipeline.${id}.body`),
-}));
-
-const count = (key: Parameters<typeof t>[0], n: number) => t(key).replace('{n}', String(n));
-const dayCount = (n: number) => (n === 1 ? t('leetcode.day') : count('leetcode.days', n));
-
-// Section headers: a small badge, the title and an id for the nav highlight.
-const sectionHead = (id: string, badge: UiKey, title: UiKey) => ({ id, badge: t(badge), title: t(title) });
-const heads = {
-	projects: sectionHead('projects', 'projects.heading', 'projects.title'),
-	about: sectionHead('about', 'about.heading', 'about.title'),
-	stack: sectionHead('stack', 'stack.heading', 'stack.title'),
-	activity: sectionHead('activity', 'activity.heading', 'activity.title'),
-	signals: sectionHead('signals', 'signals.heading', 'signals.title'),
-	pipeline: sectionHead('pipeline', 'pipeline.heading', 'pipeline.title'),
-	contact: sectionHead('contact', 'contact.heading', 'contact.title'),
-};
 ---
 
 <Base>
 	<script slot="head" type="application/ld+json" is:inline set:html={personJsonLd} />
-	<main id="main">
+	<main id="main" class="page">
+		<!-- Clean entry: who, what, where to find me. The headline is the page's LCP element. -->
 		<section class="hero">
-			<div class="hero-text">
-				<p class="badges" data-reveal>
-					<span class="badge"><span class="dot" aria-hidden="true"></span>{t('home.status')}</span>
-					<span class="badge">{t('home.location')}</span>
-				</p>
-				<!-- Role and intro are visible from the first paint: the intro is the page's LCP element. -->
-				<p class="eyebrow">{t('home.role')}</p>
-				<h1 data-split>{t('home.heading')}</h1>
-				<p class="intro">{t('home.body')}</p>
-				<p class="ctas" data-reveal style="--d: 200ms">
-					<a class="btn btn-primary" href="#projects">{t('home.ctaProjects')} →</a>
-					{
-						resumePath ? (
-							<a class="btn" href={resumePath}>
-								{t('contact.resume')} ↗
-							</a>
-						) : (
-							<a class="btn" href="#contact">
-								{t('home.ctaContact')}
-							</a>
-						)
-					}
-				</p>
+			<p class="greeting" data-reveal>{t('home.greeting')}</p>
+			<h1>{t('home.headline')}</h1>
+			<p class="badges" data-reveal style="--d: 150ms">
+				<span class="badge"><span class="dot" aria-hidden="true"></span>{t('home.status')}</span>
+				<span class="badge">{t('home.location')}</span>
+			</p>
+			<div data-reveal style="--d: 250ms">
 				<HeroContacts locale={locale} />
 			</div>
-
-			<!-- Real numbers from the build snapshot, refreshed live; a card without data is hidden, never faked. -->
-			<ul class="tiles" data-reveal style="--d: 150ms">
-				<li class="tile" data-live-block hidden={contributionsTotal === null}>
-					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"></path></svg>
-					<strong data-live="contributions" data-value={contributionsTotal ?? 0}>
-						{contributionsTotal === null ? '' : numberFormat.format(contributionsTotal)}
-					</strong>
-					<span>{t('stats.contributions')}</span>
-				</li>
-				<li class="tile" data-live-block hidden={publicRepos === null}>
-					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h12v15H6a2 2 0 0 0-2 2V5Zm0 15a2 2 0 0 0 2 2h12v-4"></path></svg>
-					<strong data-live="repos" data-value={publicRepos ?? 0}>
-						{publicRepos === null ? '' : numberFormat.format(publicRepos)}
-					</strong>
-					<span>{t('stats.repos')}</span>
-				</li>
-				{
-					practice && (
-						<>
-							<li class="tile">
-								<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 7-5 5 5 5M16 7l5 5-5 5"></path></svg>
-								<strong>{numberFormat.format(practice.activeDays)}</strong>
-								<span>{t('stats.practiceDays')}</span>
-							</li>
-							<li class="tile">
-								<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3s5 4.5 5 10a5 5 0 0 1-10 0c0-2.5 1.5-4 1.5-4S9 12 11 12c0-4 1-9 1-9Z"></path></svg>
-								<strong>{dayCount(practice.currentStreak)}</strong>
-								<span>{t('stats.practiceStreak')}</span>
-							</li>
-						</>
-					)
-				}
-			</ul>
 		</section>
 
-		<section id={heads.projects.id} class="section" aria-labelledby="projects-heading">
-			<header class="section-head">
-				<p class="badge" data-reveal>{heads.projects.badge}</p>
-				<h2 id="projects-heading" data-split>{heads.projects.title}</h2>
-			</header>
-			<div class="project-grid">
-				{
-					workProjects.map((p) => (
-						<article class:list={['card', 'project', { featured: p.role === 'featured' }]} data-reveal data-project={p.id}>
-							<p class="tags">
-								{p.role === 'featured' && <span class="badge">{t('projects.featured')}</span>}
-								{p.inProgress && (
-									<span class="badge">
-										<span class="dot" aria-hidden="true" />
-										{t('projects.inProgress')}
-									</span>
-								)}
-							</p>
-							<h3>{p.title}</h3>
-							<p class="muted">{p.tagline}</p>
-							<h4>{t('projects.problem')}</h4>
-							<p>{p.problem}</p>
-							<h4>{t('projects.decisions')}</h4>
-							<ul class="decisions">
-								{p.decisions?.map((d) => (
-									<li>{d}</li>
-								))}
-							</ul>
-							<h4>{t('projects.result')}</h4>
-							<p>{p.result}</p>
-							<ul class="stack" aria-label={t('projects.stack')}>
-								{p.stack.map((s) => (
-									<li>{s}</li>
-								))}
-							</ul>
-							<p class="card-links">
-								{p.caseStudy && (
-									<a class="btn btn-primary" href={getRelativeLocaleUrl(locale, `projects/${p.id}/`)}>
-										{t('caseStudy.read')} →
-									</a>
-								)}
-								<a class="btn" href={p.repoUrl}>
-									{t('projects.repo')} ↗
-								</a>
-							</p>
-						</article>
-					))
-				}
-			</div>
-		</section>
-
-		<section id={heads.about.id} class="section" aria-labelledby="about-heading">
-			<header class="section-head">
-				<p class="badge" data-reveal>{heads.about.badge}</p>
-				<h2 id="about-heading" data-split>{heads.about.title}</h2>
-			</header>
-			<div class="about">
-				<div>
+		<section class="band" aria-labelledby="contrib-heading">
+			<div class="card contrib" data-reveal>
+				<div class="card-head">
+					<h2 id="contrib-heading">
+						<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"></path></svg>
+						{t('home.contribTitle')}
+					</h2>
 					{
-						about.paragraphs.map((p) => (
-							<p class="lead" data-reveal>
-								{p}
+						contributions && (
+							<p class="pill" data-live-block>
+								<strong data-live="contributions" data-value={contributions.total}>
+									{numberFormat.format(contributions.total)}
+								</strong>{' '}
+								{t('stats.contributions')}
 							</p>
-						))
+						)
 					}
 				</div>
-				<div class="card now" data-reveal>
-					<h3>{t('about.now')}</h3>
-					<ul>
-						{about.now.map((item) => <li>{item}</li>)}
-					</ul>
-				</div>
-			</div>
-		</section>
-
-		<section id={heads.stack.id} class="section" aria-labelledby="stack-heading">
-			<header class="section-head">
-				<p class="badge" data-reveal>{heads.stack.badge}</p>
-				<h2 id="stack-heading" data-split>{heads.stack.title}</h2>
-			</header>
-			<div class="stack-groups">
 				{
-					stack.map((g, i) => (
-						<div class="card" data-reveal style={`--d: ${(i % 3) * 100}ms`}>
-							<h3>{g.label}</h3>
-							<ul class="stack">
-								{g.items.map((item) => (
-									<li>{item}</li>
-								))}
-							</ul>
-						</div>
-					))
+					contributions ? (
+						<Heatmap
+							cells={cells}
+							today={today}
+							localeTag={localeTag}
+							labelOne={t('activity.cellOne')}
+							labelMany={t('activity.cellMany')}
+							summary={t('activity.summary')}
+						>
+							{t('activity.legend')}
+						</Heatmap>
+					) : (
+						<p class="muted">{t('activity.noData')}</p>
+					)
 				}
 			</div>
 		</section>
 
-		<section id={heads.activity.id} class="section" aria-labelledby="activity-heading">
-			<header class="section-head">
-				<p class="badge" data-reveal>{heads.activity.badge}</p>
-				<h2 id="activity-heading" data-split>{heads.activity.title}</h2>
-			</header>
-			{
-				stats ? (
-					<>
+		{
+			practiceProject && practice && (
+				<section class="band" aria-labelledby="practice-heading">
+					<div class="card practice" data-reveal>
+						<div class="card-head">
+							<h2 id="practice-heading">
+								<svg viewBox="0 0 24 24" aria-hidden="true">
+									<path d="m8 7-5 5 5 5M16 7l5 5-5 5" />
+								</svg>
+								{t('home.practiceTitle')}
+							</h2>
+							<a class="btn btn-ghost" href={practiceProject.repoUrl}>
+								{practiceProject.title} ↗
+							</a>
+						</div>
 						<dl
-							class="readings activity-stats"
-							data-reveal
-							data-activity-stats
+							class="readings"
+							data-practice={JSON.stringify(practiceDays)}
 							data-day-one={t('leetcode.day')}
 							data-day-many={t('leetcode.days')}
 						>
-							<div class="card">
-								<dt>{t('activity.total')}</dt>
+							<div>
+								<dt>{t('practice.activeDays')}</dt>
 								<dd>
-									<strong data-stat="total">{numberFormat.format(stats.total)}</strong>
+									<strong data-stat="practiceDays">{numberFormat.format(practice.activeDays)}</strong>
 								</dd>
 							</div>
-							<div class="card">
-								<dt>{t('activity.activeDays')}</dt>
+							<div>
+								<dt>{t('practice.currentStreak')}</dt>
 								<dd>
-									<strong data-stat="activeDays">{numberFormat.format(stats.activeDays)}</strong>
+									<strong data-stat="practiceCurrent">{dayCount(practice.currentStreak)}</strong>
 								</dd>
 							</div>
-							<div class="card">
-								<dt>{t('activity.currentStreak')}</dt>
+							<div>
+								<dt>{t('practice.longestStreak')}</dt>
 								<dd>
-									<strong data-stat="currentStreak">{dayCount(stats.currentStreak)}</strong>
+									<strong data-stat="practiceStreak">{dayCount(practice.longestStreak)}</strong>
 								</dd>
 							</div>
-							<div class="card">
-								<dt>{t('activity.longestStreak')}</dt>
+							<div>
+								<dt>{t('practice.last')}</dt>
 								<dd>
-									<strong data-stat="longestStreak">{dayCount(stats.longestStreak)}</strong>
+									<strong>
+										<time data-stat="practiceLast" datetime={practice.lastDay}>
+											{dateFormat.format(new Date(`${practice.lastDay}T00:00:00Z`))}
+										</time>
+									</strong>
 								</dd>
 							</div>
-							{stats.bestDay && (
-								<div class="card">
-									<dt>{t('activity.bestDay')}</dt>
-									<dd>
-										<strong data-stat="bestCount">{numberFormat.format(stats.bestDay.count)}</strong>
-										<span data-stat="bestDate">
-											{dateFormat.format(new Date(`${stats.bestDay.date}T00:00:00Z`))}
-										</span>
-									</dd>
-								</div>
-							)}
 						</dl>
-						<div class="card heat-card" data-reveal>
-							<Heatmap
-								cells={cells}
-								today={today}
-								localeTag={localeTag}
-								labelOne={t('activity.cellOne')}
-								labelMany={t('activity.cellMany')}
-								summary={t('activity.summary')}
-							>
-								{t('activity.legend')}
-							</Heatmap>
-						</div>
-					</>
-				) : (
-					<p class="muted">{t('activity.noData')}</p>
-				)
-			}
-			{
-				recent.length > 0 && (
-					<>
-						<h3 class="subhead" data-reveal>
-							{t('activity.recent')}
-						</h3>
-						<div data-reveal>
-							<RecentRepos
-								variant="cards"
-								repos={recent.slice(0, 4)}
-								descriptions={descriptions}
-								localeTag={localeTag}
-								pushedLabel={t('activity.pushed')}
-							/>
-						</div>
-					</>
-				)
-			}
-		</section>
+						<p class="note">{t('practice.note')}</p>
+						{
+							practiceProject.profiles && (
+								<ul class="profiles" aria-label={t('practice.profiles')}>
+									{practiceProject.profiles.map((p) => (
+										<li>
+											<a class="btn" href={p.url}>
+												{p.label} ↗
+											</a>
+										</li>
+									))}
+								</ul>
+							)
+						}
+					</div>
+				</section>
+			)
+		}
 
-		<section id={heads.signals.id} class="section" aria-labelledby="signals-heading">
-			<header class="section-head">
-				<p class="badge" data-reveal>{heads.signals.badge}</p>
-				<h2 id="signals-heading" data-split>{heads.signals.title}</h2>
-			</header>
-			<ul class="signals">
-				{
-					signals.map((s, i) => (
-						<li class="card" data-reveal style={`--d: ${i * 120}ms`}>
-							<a class="signal-title" href={s.repoUrl}>
-								{s.title} ↗
-							</a>
-							<p class="muted">{s.tagline}</p>
-							{s.id === 'leetcode' && practice && (
-								<>
-									<dl
-										class="readings"
-										data-practice={JSON.stringify(practiceDays)}
-										data-day-one={t('leetcode.day')}
-										data-day-many={t('leetcode.days')}
-									>
-										<div>
-											<dt>{t('practice.activeDays')}</dt>
-											<dd>
-												<strong data-stat="practiceDays">{numberFormat.format(practice.activeDays)}</strong>
-											</dd>
-										</div>
-										<div>
-											<dt>{t('practice.currentStreak')}</dt>
-											<dd>
-												<strong data-stat="practiceCurrent">{dayCount(practice.currentStreak)}</strong>
-											</dd>
-										</div>
-										<div>
-											<dt>{t('practice.longestStreak')}</dt>
-											<dd>
-												<strong data-stat="practiceStreak">{dayCount(practice.longestStreak)}</strong>
-											</dd>
-										</div>
-										<div>
-											<dt>{t('practice.last')}</dt>
-											<dd>
-												<strong>
-													<time data-stat="practiceLast" datetime={practice.lastDay}>
-														{dateFormat.format(new Date(`${practice.lastDay}T00:00:00Z`))}
-													</time>
-												</strong>
-											</dd>
-										</div>
-									</dl>
-									<p class="note">{t('practice.note')}</p>
-								</>
-							)}
-							{s.profiles && (
-								<div class="profiles">
-									<span id={`profiles-${s.id}`}>{t('practice.profiles')}</span>
-									<ul aria-labelledby={`profiles-${s.id}`}>
-										{s.profiles.map((p) => (
-											<li>
-												<a class="btn" href={p.url}>
-													{p.label} ↗
-												</a>
-											</li>
-										))}
-									</ul>
-								</div>
-							)}
-						</li>
-					))
-				}
-			</ul>
-		</section>
+		{
+			repos.length > 0 && (
+				<section class="band" aria-labelledby="repos-heading">
+					<header class="band-head split-head" data-reveal>
+						<div>
+							<h2 id="repos-heading">
+								<svg viewBox="0 0 24 24" aria-hidden="true">
+									<path d="M9 21v-3c-4 1-4-2-6-2m12 5v-4c0-1-.3-1.5-1-2 3-.4 6-1.5 6-6a5 5 0 0 0-1-3c.2-1 .2-2-.2-3-1.4-.1-2.8.7-3.8 1.3a12 12 0 0 0-6 0C8 3.7 6.6 2.9 5.2 3c-.4 1-.4 2-.2 3a5 5 0 0 0-1 3c0 4.5 3 5.6 6 6-.7.5-1 1-1 2" />
+								</svg>
+								{t('home.reposTitle')}
+							</h2>
+							<p>{t('home.reposBody')}</p>
+						</div>
+						<a class="btn" href={`https://github.com/${GITHUB_USER}?tab=repositories`}>
+							{t('home.reposAll')} ↗
+						</a>
+					</header>
+					<div data-reveal>
+						<RepoGrid
+							repos={repos}
+							descriptions={descriptions}
+							localeTag={localeTag}
+							pushedLabel={t('activity.pushed')}
+							starsLabel={t('home.stars')}
+						/>
+					</div>
+				</section>
+			)
+		}
 
-		<section id={heads.pipeline.id} class="section" aria-labelledby="pipeline-heading">
-			<header class="section-head">
-				<p class="badge" data-reveal>{heads.pipeline.badge}</p>
-				<h2 id="pipeline-heading" data-split>{heads.pipeline.title}</h2>
+		<section class="band" aria-labelledby="tech-heading">
+			<header class="band-head" data-reveal>
+				<h2 id="tech-heading">
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4Z"></path></svg>
+					{t('home.techTitle')}
+				</h2>
+				<p>{t('home.techBody')}</p>
 			</header>
 			<div data-reveal>
-				<DeployPipeline stages={pipelineStages} />
+				<TechGrid items={stackItems} />
 			</div>
-			<div class="card pipeline-note" data-reveal style="--d: 150ms">
-				<p>{t('pipeline.when')}</p>
-				<p class="card-links">
-					<a class="btn" href="https://github.com/jg-abreu/portfolio/blob/main/.github/workflows/deploy.yml">
-						{t('pipeline.workflow')} ↗
-					</a>
-					<a class="btn" href="https://github.com/jg-abreu/portfolio/blob/main/deploy/README.md">
-						{t('pipeline.server')} ↗
-					</a>
-				</p>
-			</div>
-		</section>
-
-		<section id={heads.contact.id} class="section contact" aria-labelledby="contact-heading">
-			<header class="section-head">
-				<p class="badge" data-reveal>{heads.contact.badge}</p>
-				<h2 id="contact-heading" data-split>{heads.contact.title}</h2>
-				<p class="muted">{t('contact.intro')}</p>
-			</header>
-			<ContactForm locale={locale} />
 		</section>
 	</main>
 </Base>
@@ -451,312 +230,85 @@ const heads = {
 </script>
 
 <style>
-	main {
-		max-width: var(--page-width);
-		margin: 0 auto;
-		padding: 0 var(--gutter) 6rem;
-		overflow-wrap: anywhere;
-	}
-
-	/* Hero: text on the left, number tiles on the right on wide screens. */
 	.hero {
 		display: grid;
-		align-items: center;
-		gap: 2.5rem;
+		align-content: center;
+		min-height: min(70vh, 40rem);
 		padding-block: 4rem 3rem;
+	}
+
+	.greeting {
+		margin: 0 0 0.5rem;
+		color: var(--fg-muted);
+		font-size: clamp(1.1rem, 2.5vw, 1.35rem);
+	}
+
+	h1 {
+		max-width: 16ch;
+		margin: 0;
+		font-size: clamp(2.6rem, 7.5vw, 4.25rem);
+		font-weight: 800;
+		letter-spacing: -0.04em;
+		line-height: 1.05;
 	}
 
 	.badges {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.5rem;
-		margin: 0 0 1.5rem;
+		margin: 1.75rem 0 0;
 	}
 
-	.eyebrow {
-		margin: 0 0 0.75rem;
-		color: var(--fg-muted);
-		font-size: 0.8rem;
-		font-weight: 500;
-		letter-spacing: 0.14em;
-		text-transform: uppercase;
-	}
-
-	h1,
-	h2 {
-		margin: 0;
-		font-weight: 700;
-		letter-spacing: -0.035em;
-		line-height: 1.05;
-	}
-
-	h1 {
-		font-size: clamp(2.75rem, 8vw, 4.5rem);
-	}
-
-	.intro {
-		max-width: 34rem;
-		margin: 1.25rem 0 0;
-		color: var(--fg-muted);
-		font-size: 1.1rem;
-		line-height: 1.65;
-	}
-
-	.ctas {
+	.card-head,
+	.split-head {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 0.75rem;
-		margin: 2rem 0 0;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem 1rem;
 	}
 
-	.tiles {
-		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 0.75rem;
+	.card-head {
+		margin-bottom: 1.25rem;
+	}
+
+	.card-head h2 {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
 		margin: 0;
-		padding: 0;
-		list-style: none;
+		font-size: 1.1rem;
 	}
 
-	.tile {
-		display: grid;
-		gap: 0.15rem;
-		padding: 1.25rem;
-		background: var(--surface);
-		border: 1px solid var(--line);
-		border-radius: var(--radius);
-	}
-
-	.tile[hidden] {
-		display: none;
-	}
-
-	.tile svg {
-		width: 2.25rem;
-		height: 2.25rem;
-		margin-bottom: 0.75rem;
-		padding: 0.5rem;
-		background: var(--surface-2);
-		border-radius: 0.6rem;
+	.card-head h2 svg {
+		width: 1.15rem;
+		height: 1.15rem;
 		fill: none;
-		stroke: var(--fg);
+		stroke: currentColor;
 		stroke-width: 1.75;
 		stroke-linecap: round;
 		stroke-linejoin: round;
 	}
 
-	.tile strong {
-		font-size: clamp(1.5rem, 4vw, 2rem);
-		font-variant-numeric: tabular-nums;
-		letter-spacing: -0.03em;
-		line-height: 1.1;
-	}
-
-	.tile span {
-		color: var(--fg-muted);
-		font-size: 0.8rem;
-		line-height: 1.4;
-	}
-
-	/* Sections: centered header (badge, title), content below. */
-	.section {
-		padding-block: 5rem;
-		border-top: 1px solid var(--line);
-		/* The browser skips style and layout for sections far from the screen (hundreds of heatmap
-		   cells) until they approach; `auto` remembers each section's real height. */
-		content-visibility: auto;
-		contain-intrinsic-size: auto 50rem;
-	}
-
-	.section-head {
-		display: grid;
-		justify-items: center;
-		gap: 1rem;
-		margin-bottom: 3rem;
-		text-align: center;
-	}
-
-	.section-head .badge {
+	.pill {
 		margin: 0;
-	}
-
-	.section-head .muted {
-		max-width: 36rem;
-		margin: 0;
-	}
-
-	h2 {
-		font-size: clamp(2rem, 5vw, 2.75rem);
-	}
-
-	.muted {
-		color: var(--fg-muted);
-	}
-
-	.card {
-		position: relative;
-		isolation: isolate;
-		padding: 1.5rem;
-		background: var(--surface);
-		border: 1px solid var(--line);
-		border-radius: var(--radius);
-	}
-
-	.card :global(.card-glow) {
-		display: none;
-		position: absolute;
-		inset: 0 auto auto 0;
-		width: 320px;
-		height: 320px;
-		z-index: -1;
-		pointer-events: none;
-		opacity: 0;
-		background: radial-gradient(circle, color-mix(in srgb, var(--fg) 6%, transparent), transparent 70%);
-	}
-
-	@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-		.card {
-			overflow: clip;
-		}
-		.card :global(.card-glow) {
-			display: block;
-			transition: opacity 180ms ease;
-		}
-		.card :global(.card-glow.is-active) {
-			opacity: 1;
-		}
-	}
-
-	.project-grid {
-		display: grid;
-		gap: 1.25rem;
-	}
-
-	.project {
-		padding: clamp(1.5rem, 3vw, 2.25rem);
-	}
-
-	.featured {
-		border-color: color-mix(in srgb, var(--fg) 35%, var(--line));
-	}
-
-	.tags {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.5rem;
-		margin: 0 0 1rem;
-	}
-
-	.tags:empty {
-		display: none;
-	}
-
-	h3 {
-		margin: 0;
-		font-size: 1.35rem;
-		letter-spacing: -0.02em;
-	}
-
-	h4 {
-		margin: 1.5rem 0 0.35rem;
-		color: var(--fg-muted);
-		font-size: 0.75rem;
-		font-weight: 600;
-		letter-spacing: 0.1em;
-		text-transform: uppercase;
-	}
-
-	h4 + p {
-		margin-top: 0;
-	}
-
-	.decisions {
-		display: grid;
-		gap: 0.35rem;
-		margin: 0;
-		padding-left: 1.1rem;
-	}
-
-	.stack {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.5rem;
-		margin: 1.5rem 0;
-		padding: 0;
-		list-style: none;
-		font-size: 0.8rem;
-	}
-
-	.stack li {
-		padding: 0.15rem 0.65rem;
+		padding: 0.2rem 0.75rem;
 		background: var(--surface-2);
 		border: 1px solid var(--line);
-		border-radius: 999px;
-		color: var(--fg);
-		font-weight: 500;
-	}
-
-	.card-links {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.75rem;
-		margin: 0;
-	}
-
-	.about {
-		display: grid;
-		gap: 1.5rem;
-		align-items: start;
-	}
-
-	.lead {
-		margin: 0 0 1.25rem;
-		font-size: 1.1rem;
-		line-height: 1.75;
-	}
-
-	.now h3 {
-		margin-bottom: 1rem;
-		font-size: 1rem;
-	}
-
-	.now ul {
-		display: grid;
-		gap: 0.6rem;
-		margin: 0;
-		padding-left: 1.1rem;
+		border-radius: 0.5rem;
 		color: var(--fg-muted);
+		font-size: 0.8rem;
 	}
 
-	.stack-groups {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
-		gap: 1rem;
+	.pill strong {
+		color: var(--fg);
 	}
 
-	.stack-groups h3 {
-		font-size: 1rem;
-	}
-
-	.stack-groups .stack {
-		margin-bottom: 0;
-	}
-
-	/* Number readings: cards in the activity section, plain inside the practice card. */
 	.readings {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+		grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
 		gap: 1rem;
-		margin: 1.25rem 0 0;
-	}
-
-	.activity-stats {
-		gap: 0.75rem;
-		margin: 0 0 1rem;
-	}
-
-	.activity-stats .card {
-		padding: 1.1rem 1.25rem;
+		margin: 0;
 	}
 
 	.readings dt {
@@ -765,46 +317,13 @@ const heads = {
 	}
 
 	.readings dd {
-		display: grid;
-		margin: 0.2rem 0 0;
+		margin: 0.15rem 0 0;
 	}
 
 	.readings strong {
-		font-size: 1.5rem;
+		font-size: 1.4rem;
 		font-variant-numeric: tabular-nums;
 		letter-spacing: -0.02em;
-	}
-
-	.readings span {
-		color: var(--fg-muted);
-		font-size: 0.85rem;
-	}
-
-	.subhead {
-		margin: 2.5rem 0 1rem;
-		font-size: 1.1rem;
-	}
-
-	.signals {
-		display: grid;
-		gap: 1.25rem;
-		margin: 0;
-		padding: 0;
-		list-style: none;
-	}
-
-	.signal-title {
-		font-size: 1.2rem;
-		font-weight: 600;
-		text-decoration: none;
-	}
-
-	.signal-title:hover {
-		text-decoration: underline;
-	}
-
-	.signals .muted {
-		margin: 0.35rem 0 0;
 	}
 
 	.note {
@@ -813,58 +332,12 @@ const heads = {
 		font-size: 0.85rem;
 	}
 
-	/* Profiles on the platforms where the practice repo's solutions are submitted. */
 	.profiles {
-		display: grid;
-		gap: 0.6rem;
-		margin: 1.5rem 0 0;
-	}
-
-	.profiles > span {
-		color: var(--fg-muted);
-		font-size: 0.75rem;
-		font-weight: 600;
-		letter-spacing: 0.1em;
-		text-transform: uppercase;
-	}
-
-	.profiles ul {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.6rem;
-		margin: 0;
+		margin: 1.25rem 0 0;
 		padding: 0;
 		list-style: none;
-	}
-
-	.pipeline-note {
-		margin-top: 2rem;
-	}
-
-	.pipeline-note > p:first-child {
-		margin: 0 0 1rem;
-	}
-
-	.contact {
-		max-width: 44rem;
-		margin-inline: auto;
-	}
-
-	@media (min-width: 60rem) {
-		.hero {
-			grid-template-columns: 7fr 5fr;
-			gap: 4rem;
-			min-height: calc(100vh - var(--header-height));
-			padding-block: 3rem;
-		}
-
-		.project-grid {
-			grid-template-columns: repeat(2, minmax(0, 1fr));
-		}
-
-		.about {
-			grid-template-columns: 3fr 2fr;
-			gap: 3rem;
-		}
 	}
 </style>

@@ -1,0 +1,118 @@
+---
+import Base from '../../layouts/Base.astro';
+import ContactForm from '../../components/ContactForm.astro';
+import ContactIcon from '../../components/ContactIcon.astro';
+import { locales, useTranslations, type Locale } from '../../i18n/ui';
+import { getContacts, obfuscatedMailto } from '../../lib/content';
+
+export function getStaticPaths() {
+	return locales.map((locale) => ({ params: { locale } }));
+}
+
+const locale = Astro.params.locale as Locale;
+const t = useTranslations(locale);
+const contacts = await getContacts();
+---
+
+<Base title={`${t('nav.contact')} — João Abreu`} description={t('contact.body')}>
+	<main id="main" class="page">
+		<header class="page-head">
+			<h1 data-split>{t('nav.contact')}</h1>
+			<p data-reveal>{t('contact.body')}</p>
+		</header>
+
+		<div class="layout">
+			<section data-reveal aria-labelledby="contact-heading">
+				<h2 id="contact-heading">{t('contact.form')}</h2>
+				<ContactForm locale={locale} />
+			</section>
+
+			<section data-reveal style="--d: 120ms" aria-labelledby="connect-heading">
+				<h2 id="connect-heading">{t('contact.connect')}</h2>
+				<ul class="connect">
+					{
+						contacts.map((c) => (
+							<li>
+								{c.kind === 'email' ? (
+									<span class="row">
+										<ContactIcon name="email" />
+										<Fragment set:html={obfuscatedMailto(c.address)} />
+									</span>
+								) : (
+									<a class="row" href={c.url}>
+										<ContactIcon name={c.kind} />
+										<span>{c.label}</span>
+										<span class="arrow" aria-hidden="true">
+											↗
+										</span>
+									</a>
+								)}
+							</li>
+						))
+					}
+				</ul>
+			</section>
+		</div>
+	</main>
+</Base>
+
+<style>
+	.layout {
+		display: grid;
+		gap: 3rem;
+		padding-bottom: 2rem;
+	}
+
+	h2 {
+		margin: 0 0 1.25rem;
+		font-size: 1.15rem;
+	}
+
+	.connect {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.connect li {
+		border-bottom: 1px solid var(--line);
+	}
+
+	.row {
+		display: flex;
+		align-items: center;
+		gap: 0.85rem;
+		padding: 0.9rem 0.25rem;
+		color: var(--fg);
+		text-decoration: none;
+	}
+
+	.row :global(svg) {
+		flex-shrink: 0;
+		width: 1.15rem;
+		height: 1.15rem;
+		color: var(--fg-muted);
+	}
+
+	.row :global(a) {
+		color: var(--fg);
+		text-decoration: none;
+	}
+
+	.arrow {
+		margin-left: auto;
+		color: var(--fg-muted);
+	}
+
+	a.row:hover .arrow,
+	a.row:hover :global(svg) {
+		color: var(--fg);
+	}
+
+	@media (min-width: 60rem) {
+		.layout {
+			grid-template-columns: 3fr 2fr;
+			gap: 4rem;
+		}
+	}
+</style>

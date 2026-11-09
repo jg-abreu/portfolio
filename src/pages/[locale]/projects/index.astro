@@ -1,0 +1,169 @@
+---
+import { getRelativeLocaleUrl } from 'astro:i18n';
+import Base from '../../../layouts/Base.astro';
+import { locales, useTranslations, type Locale } from '../../../i18n/ui';
+import { getProjects } from '../../../lib/content';
+
+export function getStaticPaths() {
+	return locales.map((locale) => ({ params: { locale } }));
+}
+
+const locale = Astro.params.locale as Locale;
+const t = useTranslations(locale);
+const projects = (await getProjects(locale)).filter((p) => p.role !== 'signal');
+---
+
+<Base title={`${t('nav.projects')} — João Abreu`} description={t('projectsPage.body')}>
+	<main id="main" class="page">
+		<header class="page-head">
+			<h1 data-split>{t('nav.projects')}</h1>
+			<p data-reveal>{t('projectsPage.body')}</p>
+		</header>
+
+		<div class="projects">
+			{
+				projects.map((p, i) => (
+					<article class:list={['card', 'project', { featured: p.role === 'featured' }]} data-reveal style={`--d: ${i * 100}ms`}>
+						<div class="top">
+							<svg viewBox="0 0 24 24" aria-hidden="true">
+								<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
+							</svg>
+							<p class="tags">
+								{p.role === 'featured' && <span class="badge">{t('projects.featured')}</span>}
+								{p.inProgress && (
+									<span class="badge">
+										<span class="dot" aria-hidden="true" />
+										{t('projects.inProgress')}
+									</span>
+								)}
+							</p>
+						</div>
+						<h2>{p.title}</h2>
+						<p class="muted tagline">{p.tagline}</p>
+						<h3>{t('projects.problem')}</h3>
+						<p>{p.problem}</p>
+						<h3>{t('projects.decisions')}</h3>
+						<ul class="decisions">
+							{p.decisions?.map((d) => (
+								<li>{d}</li>
+							))}
+						</ul>
+						<h3>{t('projects.result')}</h3>
+						<p>{p.result}</p>
+						<ul class="chips" aria-label={t('projects.stack')}>
+							{p.stack.map((s) => (
+								<li>{s}</li>
+							))}
+						</ul>
+						<p class="links">
+							{p.caseStudy && (
+								<a class="btn btn-primary" href={getRelativeLocaleUrl(locale, `projects/${p.id}/`)}>
+									{t('caseStudy.read')} →
+								</a>
+							)}
+							<a class="btn" href={p.repoUrl}>
+								{t('projects.repo')} ↗
+							</a>
+						</p>
+					</article>
+				))
+			}
+		</div>
+	</main>
+</Base>
+
+<script>
+	import '../../../scripts/card-glow';
+</script>
+
+<style>
+	.projects {
+		display: grid;
+		gap: 1.25rem;
+		padding-bottom: 2rem;
+	}
+
+	.project {
+		display: flex;
+		flex-direction: column;
+		padding: clamp(1.5rem, 3vw, 2rem);
+	}
+
+	.featured {
+		border-color: color-mix(in srgb, var(--fg) 30%, var(--line));
+	}
+
+	.top {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem;
+		margin-bottom: 1rem;
+	}
+
+	.top svg {
+		width: 1.4rem;
+		height: 1.4rem;
+		fill: none;
+		stroke: var(--fg-muted);
+		stroke-width: 1.75;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+	}
+
+	.tags {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		margin: 0;
+	}
+
+	h2 {
+		margin: 0;
+		font-size: 1.4rem;
+		letter-spacing: -0.02em;
+	}
+
+	.tagline {
+		margin: 0.4rem 0 0;
+	}
+
+	h3 {
+		margin: 1.5rem 0 0.35rem;
+		color: var(--fg-muted);
+		font-size: 0.75rem;
+		font-weight: 600;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+	}
+
+	h3 + p {
+		margin-top: 0;
+	}
+
+	.decisions {
+		display: grid;
+		gap: 0.35rem;
+		margin: 0;
+		padding-left: 1.1rem;
+	}
+
+	.chips {
+		margin-block: 1.5rem;
+	}
+
+	/* Buttons stay at the bottom so cards of different lengths line up. */
+	.links {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.75rem;
+		margin: auto 0 0;
+	}
+
+	@media (min-width: 60rem) {
+		.projects {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+	}
+</style>

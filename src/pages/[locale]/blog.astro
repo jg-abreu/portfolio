@@ -1,0 +1,141 @@
+---
+// Blog: João's published DEV articles from the build snapshot. Each card links to DEV; the body is
+// never copied here. A new article shows up on the next build (every push and once a day).
+import Base from '../../layouts/Base.astro';
+import { localeTags, locales, useTranslations, type Locale } from '../../i18n/ui';
+import { getGitHubSnapshot } from '../../lib/github';
+import { DEVTO_USER } from '../../lib/github-data';
+
+export function getStaticPaths() {
+	return locales.map((locale) => ({ params: { locale } }));
+}
+
+const locale = Astro.params.locale as Locale;
+const t = useTranslations(locale);
+const dateFormat = new Intl.DateTimeFormat(localeTags[locale], { dateStyle: 'medium', timeZone: 'UTC' });
+// Flag emojis (pairs of regional indicators) show up as letters on Windows, so they are dropped.
+const articles = (getGitHubSnapshot()?.articles ?? []).map((a) => ({
+	...a,
+	description: a.description?.replace(/[\u{1F1E6}-\u{1F1FF}]/gu, '').replace(/\s{2,}/g, ' ').replace(/\(\s+/g, '(').trim() || null,
+}));
+---
+
+<Base title={`${t('nav.blog')} — João Abreu`} description={t('blog.body')}>
+	<main id="main" class="page">
+		<header class="page-head">
+			<h1 data-split>{t('nav.blog')}</h1>
+			<p data-reveal>{t('blog.body')}</p>
+		</header>
+
+		{
+			articles.length > 0 ? (
+				<ul class="grid articles">
+					{articles.map((a, i) => (
+						<li class="card" data-reveal style={`--d: ${i * 100}ms`}>
+							<p class="meta">
+								<time datetime={a.publishedAt}>{dateFormat.format(new Date(`${a.publishedAt}T00:00:00Z`))}</time>
+								{a.readingMinutes > 0 && <span>· {t('blog.minutes').replace('{n}', String(a.readingMinutes))}</span>}
+							</p>
+							<h2>
+								<a href={a.url}>{a.title}</a>
+							</h2>
+							{a.description && <p class="muted description">{a.description}</p>}
+							{a.tags.length > 0 && (
+								<ul class="chips">
+									{a.tags.map((tag) => (
+										<li>#{tag}</li>
+									))}
+								</ul>
+							)}
+							<p class="read" aria-hidden="true">
+								{t('blog.read')} ↗
+							</p>
+						</li>
+					))}
+				</ul>
+			) : (
+				<p class="muted">{t('blog.empty')}</p>
+			)
+		}
+
+		<p class="all" data-reveal>
+			<a class="btn" href={`https://dev.to/${DEVTO_USER}`}>{t('blog.all')} ↗</a>
+		</p>
+	</main>
+</Base>
+
+<script>
+	import '../../scripts/card-glow';
+</script>
+
+<style>
+	.articles {
+		grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
+	}
+
+	.articles li {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+	}
+
+	.meta {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem;
+		margin: 0;
+		color: var(--fg-muted);
+		font-size: 0.8rem;
+	}
+
+	h2 {
+		margin: 0;
+		font-size: 1.15rem;
+		letter-spacing: -0.015em;
+		line-height: 1.35;
+	}
+
+	h2 a {
+		text-decoration: none;
+	}
+
+	/* The whole card is the link's target. */
+	h2 a::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+	}
+
+	.articles li:hover h2 a {
+		text-decoration: underline;
+	}
+
+	.description {
+		margin: 0;
+		font-size: 0.9rem;
+	}
+
+	.read {
+		margin: auto 0 0;
+		padding-top: 0.5rem;
+		font-size: 0.85rem;
+		font-weight: 600;
+	}
+
+	.all {
+		margin: 2rem 0;
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		.articles li {
+			transition:
+				transform 0.25s var(--ease),
+				border-color 0.2s;
+		}
+
+		.articles li:hover {
+			border-color: var(--fg-muted);
+			transform: translateY(-2px);
+		}
+	}
+</style>

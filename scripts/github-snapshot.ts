@@ -8,6 +8,7 @@ import {
 	ENDPOINTS,
 	GITHUB_USER,
 	fromContributionsApi,
+	fromDevArticles,
 	fromGitHubCommits,
 	fromGitHubProfile,
 	fromGitHubRepos,
@@ -51,6 +52,10 @@ const sources = {
 	repos: () => getJson(ENDPOINTS.repos, { headers: githubHeaders }).then(fromGitHubRepos),
 	contributions: () => getJson(ENDPOINTS.contributions).then(fromContributionsApi),
 	practiceDays,
+	articles: () =>
+		getJson(ENDPOINTS.articles, { headers: { Accept: 'application/json', 'User-Agent': `${GITHUB_USER}-portfolio-build` } }).then(
+			fromDevArticles,
+		),
 };
 
 const names = Object.keys(sources) as (keyof typeof sources)[];
@@ -62,6 +67,7 @@ const snapshot: Snapshot = {
 	repos: previous?.repos ?? null,
 	contributions: previous?.contributions ?? null,
 	practiceDays: previous?.practiceDays ?? null,
+	articles: previous?.articles ?? null,
 };
 
 names.forEach((name, i) => {

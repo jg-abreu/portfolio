@@ -1,0 +1,131 @@
+---
+// Résumé: a short "about", what João is working on now, and the PDF in the page's language.
+// The PDF is shown in an iframe from the same site; production must allow same-origin framing
+// (nginx sends X-Frame-Options: DENY today, see the PR notes), otherwise the fallback link remains.
+import Base from '../../layouts/Base.astro';
+import { locales, useTranslations, type Locale } from '../../i18n/ui';
+import { getAbout, getResumePath } from '../../lib/content';
+
+export function getStaticPaths() {
+	return locales.map((locale) => ({ params: { locale } }));
+}
+
+const locale = Astro.params.locale as Locale;
+const t = useTranslations(locale);
+const about = await getAbout(locale);
+const resumePath = getResumePath(locale);
+---
+
+<Base title={`${t('nav.resume')} — João Abreu`} description={t('resume.body')}>
+	<main id="main" class="page">
+		<header class="page-head">
+			<h1 data-split>{t('nav.resume')}</h1>
+			<p data-reveal>{t('resume.body')}</p>
+			{
+				resumePath && (
+					<p class="actions" data-reveal style="--d: 150ms">
+						<a class="btn btn-primary" href={resumePath} download>
+							{t('resume.download')}
+						</a>
+						<a class="btn" href={resumePath} target="_blank" rel="noopener">
+							{t('resume.open')} ↗
+						</a>
+					</p>
+				)
+			}
+		</header>
+
+		<section class="about" aria-labelledby="about-heading">
+			<div data-reveal>
+				<h2 id="about-heading">{t('about.title')}</h2>
+				{about.paragraphs.map((p) => <p class="lead">{p}</p>)}
+			</div>
+			<div class="card now" data-reveal style="--d: 100ms">
+				<h2>{t('about.now')}</h2>
+				<ul>
+					{about.now.map((item) => <li>{item}</li>)}
+				</ul>
+			</div>
+		</section>
+
+		{
+			resumePath && (
+				<section class="viewer card" data-reveal aria-label={t('resume.pdf')}>
+					<iframe src={resumePath} title={t('resume.pdf')} loading="lazy" />
+					<p class="fallback muted">
+						{t('resume.fallback')}{' '}
+						<a href={resumePath} target="_blank" rel="noopener">
+							{t('resume.open')} ↗
+						</a>
+					</p>
+				</section>
+			)
+		}
+	</main>
+</Base>
+
+<style>
+	.actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.75rem;
+		margin: 1.5rem 0 0;
+	}
+
+	.about {
+		display: grid;
+		gap: 1.5rem;
+		align-items: start;
+		padding-block: 1rem 2.5rem;
+	}
+
+	h2 {
+		margin: 0 0 1rem;
+		font-size: 1.35rem;
+		letter-spacing: -0.02em;
+	}
+
+	.lead {
+		margin: 0 0 1.1rem;
+		color: var(--fg-muted);
+		line-height: 1.75;
+	}
+
+	.now h2 {
+		font-size: 1rem;
+	}
+
+	.now ul {
+		display: grid;
+		gap: 0.6rem;
+		margin: 0;
+		padding-left: 1.1rem;
+		color: var(--fg-muted);
+	}
+
+	.viewer {
+		padding: 0.5rem;
+		margin-bottom: 2rem;
+	}
+
+	iframe {
+		display: block;
+		width: 100%;
+		height: min(85vh, 60rem);
+		border: 0;
+		border-radius: calc(var(--radius) - 0.4rem);
+		background: #fff;
+	}
+
+	.fallback {
+		margin: 0.75rem 0.5rem 0.25rem;
+		font-size: 0.85rem;
+	}
+
+	@media (min-width: 60rem) {
+		.about {
+			grid-template-columns: 3fr 2fr;
+			gap: 3rem;
+		}
+	}
+</style>

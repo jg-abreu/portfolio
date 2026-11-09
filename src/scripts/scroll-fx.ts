@@ -8,7 +8,8 @@
 const root = document.documentElement;
 
 const bar = document.querySelector<HTMLElement>('.progress');
-const links = [...document.querySelectorAll<HTMLAnchorElement>('.sections a')];
+// Only in-page section links; links to other pages get aria-current from the layout instead.
+const links = [...document.querySelectorAll<HTMLAnchorElement>('.sections a[href*="#"]')];
 const targets = links.map((a) => document.getElementById(a.hash.slice(1)));
 
 let ticking = false;
