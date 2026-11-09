@@ -9,7 +9,7 @@ decisions:
   - The PostgreSQL schema came before any Java code, with native enums, CHECK constraints and a partial unique index that blocks duplicate live bonds.
   - Waitlist promotion runs in one transaction that promotes the next student, renumbers the queue without gaps and sends a notification.
 result: A Spring Boot REST API, a React front end and a PostgreSQL database that start with a single docker compose command, with unit tests in JUnit 5 and Mockito and CI on GitHub Actions.
-coverAlt: A Calculus I session with capacity 2, two students confirmed and a third on the waitlist at position 1.
+coverAlt: Illustration of a Calculus I session where one student cancels and the first on the waitlist is promoted and confirmed, with the steps of that single transaction alongside.
 ---
 
 ## The problem

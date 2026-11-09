@@ -8,7 +8,7 @@
   stack: [Java 21, Spring Boot 4.1, PostgreSQL 17, React 19, TypeScript, Docker, GitHub Actions]
   # Case study page: the Markdown body in each locale, with this cover from src/assets/case-studies/.
   caseStudy: true
-  cover: tutoring-waitlist.png
+  cover: tutoring-cover.svg
 
 - id: portfolio-api
   repo: portfolio-api

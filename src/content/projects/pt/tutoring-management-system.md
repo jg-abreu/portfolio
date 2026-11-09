@@ -9,7 +9,7 @@ decisions:
   - O esquema PostgreSQL veio antes de qualquer código Java, com enums nativos, restrições CHECK e um índice único parcial que impede vínculos ativos duplicados.
   - A promoção da lista de espera acontece numa única transação, que promove o próximo aluno, renumera a fila sem buracos e envia uma notificação.
 result: Uma API REST em Spring Boot, um front-end em React e um banco PostgreSQL que sobem com um único docker compose, com testes unitários em JUnit 5 e Mockito e CI no GitHub Actions.
-coverAlt: Uma sessão de Cálculo I com capacidade 2, dois alunos confirmados e um terceiro na lista de espera, na posição 1.
+coverAlt: Ilustração de uma sessão de Cálculo I em que um aluno cancela e o primeiro da lista de espera é promovido e confirmado, com os passos dessa única transação ao lado.
 ---
 
 ## O problema
