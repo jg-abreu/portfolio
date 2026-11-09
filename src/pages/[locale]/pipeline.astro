@@ -232,12 +232,6 @@ const pagePath = `/${locale}/pipeline/`;
 							</span>
 							<span class="host">{t('journey.ship.server')}</span>
 						</div>
-						<dl class="flags">
-							<div><dt class="mono">-az</dt><dd>{t('journey.ship.az')}</dd></div>
-							<div><dt class="mono">--delay-updates</dt><dd>{t('journey.ship.delay')}</dd></div>
-							<div><dt class="mono">--delete-delay</dt><dd>{t('journey.ship.delete')}</dd></div>
-							<div><dt class="mono">StrictHostKeyChecking</dt><dd>{t('journey.ship.strict')}</dd></div>
-						</dl>
 						<Handoff kind="out" {...handOut(2)} />
 					</article>
 				</li>
@@ -623,30 +617,6 @@ const pagePath = `/${locale}/pipeline/`;
 		transform: translate(-50%, -50%);
 	}
 
-	.flags {
-		display: grid;
-		gap: 0.5rem;
-		margin: 1.25rem 0 0;
-		font-size: 0.85rem;
-	}
-
-	.flags div {
-		display: grid;
-		grid-template-columns: minmax(0, 12rem) minmax(0, 1fr);
-		gap: 1rem;
-	}
-
-	.flags dt {
-		color: var(--brand);
-		font-size: 0.78rem;
-		overflow-wrap: anywhere;
-	}
-
-	.flags dd {
-		margin: 0;
-		color: var(--fg-muted);
-	}
-
 	.headers {
 		white-space: pre;
 	}
@@ -734,11 +704,6 @@ const pagePath = `/${locale}/pipeline/`;
 
 		.wire {
 			height: 1.5rem;
-		}
-
-		.flags div {
-			grid-template-columns: 1fr;
-			gap: 0.1rem;
 		}
 
 		.waterfall li {
