@@ -15,6 +15,8 @@ import {
 import { getContacts } from '../lib/content';
 
 interface Props {
+	/** Title for link previews (Open Graph); defaults to the tab title. */
+	shareTitle?: string;
 	title?: string;
 	description?: string;
 	/** Pages outside the locale tree (the 404): no canonical/hreflang, not indexed, language links go home. */
@@ -27,6 +29,7 @@ const { standalone = false } = Astro.props;
 const locale: Locale = Astro.props.locale ?? (isLocale(Astro.currentLocale) ? Astro.currentLocale : defaultLocale);
 const t = useTranslations(locale);
 const { title = t('site.title'), description = t('site.description') } = Astro.props;
+const shareTitle = Astro.props.shareTitle ?? title;
 
 // Path after the locale segment, so the language switch keeps the same page.
 const pathInLocale = standalone ? '' : Astro.url.pathname.replace(/^\/(en|pt)(\/|$)/, '');
@@ -99,7 +102,7 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content="João Abreu" />
-		<meta property="og:title" content={title} />
+		<meta property="og:title" content={shareTitle} />
 		<meta property="og:description" content={description} />
 		<meta property="og:url" content={canonical} />
 		<meta property="og:image" content={ogImage} />
