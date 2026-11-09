@@ -14,7 +14,7 @@ export default defineConfig({
 				"base-uri 'none'",
 				"object-src 'none'",
 				"form-action 'none'",
-				"img-src 'self'",
+				"img-src 'self' https://avatars.githubusercontent.com",
 				"font-src 'self'",
 				"connect-src 'self' https://api.github.com https://github-contributions-api.jogruber.de",
 			],

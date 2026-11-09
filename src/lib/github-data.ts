@@ -25,6 +25,8 @@ export const ENDPOINTS = {
 
 export interface Profile {
 	publicRepos: number;
+	/** GitHub avatar, only from avatars.githubusercontent.com (allowed by the CSP img-src). */
+	avatarUrl: string | null;
 }
 
 export interface Repo {
@@ -112,7 +114,9 @@ function text(v: unknown, max = 300): string | null {
 
 export function validProfile(v: unknown): Profile | null {
 	const o = obj(v);
-	return o && isCount(o.publicRepos) ? { publicRepos: o.publicRepos } : null;
+	if (!o || !isCount(o.publicRepos)) return null;
+	const avatar = httpsUrl(o.avatarUrl);
+	return { publicRepos: o.publicRepos, avatarUrl: avatar?.startsWith('https://avatars.githubusercontent.com/') ? avatar : null };
 }
 
 export function validRepo(v: unknown): Repo | null {
@@ -195,7 +199,8 @@ export function validSnapshot(v: unknown): Snapshot | null {
 // ---- Adapters from each service's raw response to the normalized shapes ----
 
 export function fromGitHubProfile(raw: unknown): Profile | null {
-	return validProfile({ publicRepos: obj(raw)?.public_repos });
+	const o = obj(raw);
+	return validProfile({ publicRepos: o?.public_repos, avatarUrl: o?.avatar_url });
 }
 
 export function fromGitHubRepos(raw: unknown): Repo[] | null {
