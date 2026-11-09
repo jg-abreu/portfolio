@@ -198,9 +198,10 @@ async function showEdge(headers: Headers | null) {
 	if (cache && /^[A-Z]+$/.test(cache)) set('cache', cache);
 
 	let colo = '';
+	// Only behind Cloudflare (the response carries cf-ray); elsewhere the trace URL does not exist.
 	try {
-		const response = await fetch('/cdn-cgi/trace', { cache: 'no-store' });
-		const text = response.ok ? await response.text() : '';
+		const response = headers?.has('cf-ray') ? await fetch('/cdn-cgi/trace', { cache: 'no-store' }) : null;
+		const text = response?.ok ? await response.text() : '';
 		const trace = Object.fromEntries(
 			text
 				.split('\n')

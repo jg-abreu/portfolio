@@ -747,10 +747,8 @@ const pagePath = `/${locale}/pipeline/`;
 	}
 
 	:global(.fx) .journey[data-ready] .station .body {
-		opacity: 0.35;
 		transform: translateY(1.5rem) scale(0.98);
 		transition:
-			opacity 0.6s var(--ease),
 			transform 0.6s var(--ease);
 	}
 
@@ -765,7 +763,6 @@ const pagePath = `/${locale}/pipeline/`;
 	}
 
 	:global(.fx) .journey[data-ready] .station.on .body {
-		opacity: 1;
 		transform: none;
 	}
 
