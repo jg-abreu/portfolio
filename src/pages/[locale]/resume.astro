@@ -35,9 +35,22 @@ const resumePath = getResumePath(locale);
 			}
 		</header>
 
+		<section class="about" aria-labelledby="about-heading">
+			<div data-reveal>
+				<h2 id="about-heading">{t('about.title')}</h2>
+				{about.paragraphs.map((p) => <p class="lead">{p}</p>)}
+			</div>
+			<div class="card now" data-reveal style="--d: 100ms">
+				<h2>{t('about.now')}</h2>
+				<ul>
+					{about.now.map((item) => <li>{item}</li>)}
+				</ul>
+			</div>
+		</section>
+
 		<!--
-			The PDF right under the buttons, as on developer.org.tr. Its src is set by the script below
-			once the page has loaded, so the PDF never holds up the page (or the intro loader).
+			The PDF after the about text. Its src is set by the script below once the page has loaded,
+			so the PDF never holds up the page (or the intro loader).
 		-->
 		{
 			resumePath && (
@@ -55,19 +68,6 @@ const resumePath = getResumePath(locale);
 				</section>
 			)
 		}
-
-		<section class="about" aria-labelledby="about-heading">
-			<div data-reveal>
-				<h2 id="about-heading">{t('about.title')}</h2>
-				{about.paragraphs.map((p) => <p class="lead">{p}</p>)}
-			</div>
-			<div class="card now" data-reveal style="--d: 100ms">
-				<h2>{t('about.now')}</h2>
-				<ul>
-					{about.now.map((item) => <li>{item}</li>)}
-				</ul>
-			</div>
-		</section>
 	</main>
 </Base>
 
