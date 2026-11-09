@@ -66,6 +66,10 @@ const themeBootstrap = `(function(){var d=document.documentElement,t=null;try{t=
 const revealBootstrap = `(function(){var d=document.documentElement;if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;d.classList.add('fx');setTimeout(function(){if(!d.hasAttribute('data-fx-ready'))d.classList.remove('fx')},2500)})();`;
 Astro.csp?.insertScriptHash(`sha256-${createHash('sha256').update(themeBootstrap).digest('base64')}`);
 Astro.csp?.insertScriptHash(`sha256-${createHash('sha256').update(revealBootstrap).digest('base64')}`);
+// Intro loader: once per browser session, only with JavaScript and motion allowed (scripts/loader.ts).
+const introBootstrap = `(function(){var d=document.documentElement;if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;try{if(sessionStorage.getItem('intro'))return;sessionStorage.setItem('intro','1')}catch(e){return}d.classList.add('intro')})();`;
+Astro.csp?.insertScriptHash(`sha256-${createHash('sha256').update(introBootstrap).digest('base64')}`);
+const loaderUrl = canonical.replace(/^https?:\/\//, '').toUpperCase();
 Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).digest('base64')}`);
 ---
 
@@ -86,6 +90,7 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 		<style is:inline set:html={fontFaces} />
 		<script is:inline set:html={themeBootstrap} />
 		<script is:inline set:html={revealBootstrap} />
+		<script is:inline set:html={introBootstrap} />
 
 		{
 			standalone ? (
@@ -121,6 +126,14 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 		<slot name="head" />
 	</head>
 	<body>
+		<div class="loader" aria-hidden="true" data-loader>
+			<div class="loader-box">
+				<span class="loader-mark">JA</span>
+				<p class="loader-line"><span>»</span> {t('loader.label')} <span>—</span> <span class="loader-pct"><span data-loader-pct>0</span>%</span></p>
+				<span class="loader-bar"><i data-loader-bar></i></span>
+			</div>
+			<p class="loader-url">{loaderUrl}</p>
+		</div>
 		<div class="wallpaper" aria-hidden="true"><span></span><span></span><span></span></div>
 		<div class="progress" aria-hidden="true"></div>
 		<a class="skip-link" href="#main">{t('nav.skip')}</a>
@@ -219,6 +232,7 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 		</footer>
 		<script>
 			import '../scripts/theme';
+			import '../scripts/loader';
 			import '../scripts/scroll-fx';
 		</script>
 	</body>
@@ -709,6 +723,125 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 		transform: none;
 		transition: transform 0.9s var(--ease);
 		transition-delay: calc(var(--i) * 70ms + var(--d, 0ms));
+	}
+
+	/* While the intro loader covers the page, reveals wait so they play as it lifts. */
+	:root.intro.fx [data-reveal].in {
+		opacity: 0;
+		transform: translateY(1.5rem);
+	}
+
+	:root.intro.fx [data-split].in .w > span {
+		transform: translateY(115%);
+	}
+
+	/*
+	 * Intro loader (scripts/loader.ts), in the spirit of augustogalego.com: the monogram, a
+	 * "LOADING — n%" line and a thin bar, the page URL in a corner. The percentage follows real
+	 * milestones (page parsed, fonts ready, page loaded), never a random count. Shown only while
+	 * <html> has .intro (first page of a session, JavaScript on, motion allowed); a CSS timer
+	 * lifts it anyway after 4 s in case the script never runs.
+	 */
+	.loader {
+		display: none;
+	}
+
+	:root.intro .loader {
+		position: fixed;
+		inset: 0;
+		z-index: 100;
+		display: grid;
+		place-items: center;
+		background: var(--bg);
+		animation: loader-out 0.4s 4s forwards;
+	}
+
+	:root.intro .loader.done {
+		opacity: 0;
+		transition: opacity 0.4s var(--ease);
+	}
+
+	.loader-box {
+		display: grid;
+		justify-items: center;
+		gap: 1.25rem;
+	}
+
+	.loader-mark {
+		display: grid;
+		place-items: center;
+		width: 3.25rem;
+		height: 3.25rem;
+		background: linear-gradient(135deg, var(--brand-2), var(--accent) 55%, #6366f1);
+		border-radius: 0.9rem;
+		color: #fff;
+		font-size: 1.2rem;
+		font-weight: 800;
+		letter-spacing: -0.04em;
+		box-shadow: 0 0 40px color-mix(in srgb, var(--brand) 45%, transparent);
+		animation: loader-pulse 1.4s ease-in-out infinite;
+	}
+
+	.loader-line {
+		display: flex;
+		gap: 0.5rem;
+		margin: 0;
+		color: var(--fg-muted);
+		font-family: var(--font-mono);
+		font-size: 0.8rem;
+		letter-spacing: 0.08em;
+	}
+
+	.loader-pct {
+		min-width: 4ch;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.loader-bar {
+		display: block;
+		width: 12rem;
+		height: 3px;
+		overflow: hidden;
+		background: var(--surface-2);
+		border-radius: 999px;
+	}
+
+	.loader-bar i {
+		display: block;
+		height: 100%;
+		background: linear-gradient(90deg, var(--brand-2), var(--accent), #6366f1);
+		transform: scaleX(0);
+		transform-origin: left;
+	}
+
+	.loader-url {
+		position: absolute;
+		right: 1.5rem;
+		bottom: 1.5rem;
+		left: 1.5rem;
+		margin: 0;
+		overflow: hidden;
+		color: color-mix(in srgb, var(--fg-muted) 50%, transparent);
+		font-family: var(--font-mono);
+		font-size: 0.7rem;
+		letter-spacing: 0.1em;
+		text-align: right;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	@keyframes loader-pulse {
+		50% {
+			opacity: 0.7;
+			transform: scale(0.94);
+		}
+	}
+
+	@keyframes loader-out {
+		to {
+			opacity: 0;
+			visibility: hidden;
+		}
 	}
 
 	.visually-hidden {
