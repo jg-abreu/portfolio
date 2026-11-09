@@ -2,7 +2,6 @@
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import { createHash } from 'node:crypto';
 import Base from '../../layouts/Base.astro';
-import HeroContacts from '../../components/HeroContacts.astro';
 import Heatmap from '../../components/Heatmap.astro';
 import RepoGrid from '../../components/RepoGrid.astro';
 import TechGrid from '../../components/TechGrid.astro';
@@ -60,7 +59,7 @@ Astro.csp?.insertScriptHash(`sha256-${createHash('sha256').update(personJsonLd).
 <Base>
 	<script slot="head" type="application/ld+json" is:inline set:html={personJsonLd} />
 	<main id="main" class="page">
-		<!-- Clean entry: who, what, where to find me. The headline is the page's LCP element. -->
+		<!-- Clean entry: who and what; contacts live on the Contact page and in the footer. The headline is the page's LCP element. -->
 		<section class="hero">
 			<p class="greeting" data-reveal>{t('home.greeting')}</p>
 			<h1>{t('home.headline')}</h1>
@@ -68,9 +67,6 @@ Astro.csp?.insertScriptHash(`sha256-${createHash('sha256').update(personJsonLd).
 				<span class="badge"><span class="dot" aria-hidden="true"></span>{t('home.status')}</span>
 				<span class="badge">{t('home.location')}</span>
 			</p>
-			<div data-reveal style="--d: 250ms">
-				<HeroContacts locale={locale} />
-			</div>
 		</section>
 
 		<section class="band" aria-labelledby="contrib-heading">
