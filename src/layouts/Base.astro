@@ -223,7 +223,7 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 <style is:global>
 	/*
 	 * v3 palettes. Dark: soft slate gray under blue wallpapers at the top (.wallpaper below, in the spirit of developer.org.tr).
-	 * Light: plain white, near-black ink and hairline borders (in the spirit of augustogalego.com).
+	 * Light: white, near-black ink, hairline borders and the same wallpapers, lighter. Both use a vivid blue accent.
 	 * Kept in two places on purpose: [data-theme] is set by the head script, the media query covers
 	 * visitors without JavaScript. Change both together (and the bar colors in scripts/theme.ts).
 	 */
@@ -235,8 +235,10 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 		--line: #2b313d;
 		--fg: #fafafa;
 		--fg-muted: #a1a1aa;
-		--accent: #fafafa;
-		--on-accent: #11141b;
+		--accent: #2563eb;
+		--brand: #60a5fa;
+		--brand-2: #38bdf8;
+		--on-accent: #ffffff;
 		--heat: #4ade80;
 		--font-sans: 'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 		--font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
@@ -255,9 +257,11 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 		--line: #e5e5e5;
 		--fg: #171717;
 		--fg-muted: #5c5c5c;
-		--accent: #171717;
+		--accent: #2563eb;
+		--brand: #2563eb;
+		--brand-2: #0ea5e9;
 		--on-accent: #ffffff;
-		--heat: #171717;
+		--heat: #16a34a;
 	}
 
 	@media (prefers-color-scheme: light) {
@@ -269,9 +273,11 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 			--line: #e5e5e5;
 			--fg: #171717;
 			--fg-muted: #5c5c5c;
-			--accent: #171717;
+			--accent: #2563eb;
+			--brand: #2563eb;
+			--brand-2: #0ea5e9;
 			--on-accent: #ffffff;
-			--heat: #171717;
+			--heat: #16a34a;
 		}
 	}
 
@@ -327,7 +333,7 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 	}
 
 	/*
-	 * The dark theme's wallpaper behind the top of the page (public/img/wallpapers, drawn for this
+	 * Wallpaper behind the top of the page (public/img/wallpapers, drawn for this
 	 * site). Three wallpapers cross-fade slowly, animating opacity only; with reduced motion the
 	 * first one stays. The mask fades it into the background; it scrolls away with the page.
 	 */
@@ -337,7 +343,7 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 		z-index: -1;
 		height: 60rem;
 		pointer-events: none;
-		mask-image: linear-gradient(to top, transparent 10%, rgb(0 0 0 / 0.15), rgb(0 0 0 / 0.75));
+		mask-image: linear-gradient(to top, transparent 10%, rgb(0 0 0 / 0.3), #000);
 	}
 
 	.wallpaper span {
@@ -360,13 +366,14 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 		background-image: url('/img/wallpapers/3.svg');
 	}
 
+	/* Light theme: the same wallpapers, lighter, like a bright sky behind the title. */
 	:root[data-theme='light'] .wallpaper {
-		display: none;
+		mask-image: linear-gradient(to top, transparent 15%, rgb(0 0 0 / 0.08), rgb(0 0 0 / 0.4));
 	}
 
 	@media (prefers-color-scheme: light) {
 		:root:not([data-theme]) .wallpaper {
-			display: none;
+			mask-image: linear-gradient(to top, transparent 15%, rgb(0 0 0 / 0.08), rgb(0 0 0 / 0.4));
 		}
 	}
 
@@ -551,7 +558,7 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 		width: 1.25rem;
 		height: 1.25rem;
 		fill: none;
-		stroke: currentColor;
+		stroke: var(--brand);
 		stroke-width: 1.75;
 		stroke-linecap: round;
 		stroke-linejoin: round;
@@ -608,7 +615,7 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 		inset: 0 0 auto;
 		z-index: 20;
 		height: 2px;
-		background: var(--fg);
+		background: linear-gradient(90deg, var(--brand-2), var(--accent), #6366f1);
 		transform: scaleX(0);
 		transform-origin: 0 50%;
 	}
@@ -715,7 +722,7 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 		place-items: center;
 		width: 2.1rem;
 		height: 2.1rem;
-		background: var(--accent);
+		background: linear-gradient(135deg, var(--brand-2), var(--accent) 55%, #6366f1);
 		border-radius: 0.6rem;
 		color: var(--on-accent);
 		font-size: 0.85rem;
@@ -762,6 +769,10 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 		background: var(--surface-2);
 		box-shadow: inset 0 0 0 1px var(--line);
 		color: var(--fg);
+	}
+
+	.sections a[aria-current] svg {
+		stroke: var(--brand);
 	}
 
 	.sections svg {
