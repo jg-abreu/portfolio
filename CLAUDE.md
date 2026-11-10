@@ -16,11 +16,11 @@ Personal portfolio of João Abreu: a static, bilingual (EN/PT) site with real Gi
 |---|---|---|
 | Front-end (Astro, layout, pages, i18n, content, GitHub data script) | Claude | Writes the code and runs the build |
 | Deploy and infrastructure (VM, SSH, firewall, nginx, DNS/Cloudflare, HTTPS, `deploy/`, `.github/workflows/deploy.yml`, Secrets) | João, by hand | **Guides only**: explains the concept, gives the next step, reviews and helps debug. Never writes these files nor runs commands on the VM for him |
-| Back-end (Spring Boot API) | João, by hand | Guides only, no ready-made code |
+| Back-end (Spring Boot API) | Coding assistant | Implements and tests in small parts; João reviews the code and the flow |
 | Git and GitHub (branches, commits, messages, push, PR description and opening) | Claude, in every stage, including João's | Creates the branch, commits (including files João wrote), pushes and opens the PR |
 | Review and merge | João | Claude **never merges or approves a PR** |
 
-When a decision is needed, ask **one question at a time**.
+When a decision is needed, ask **one question at a time**. Use concepts and tools João already knows; ask before introducing unfamiliar ones. Explain the implementation during review, outside the code, and keep new code free of explanatory comments.
 
 ## Project structure
 
@@ -35,6 +35,7 @@ src/
   content/stack.yaml        stack groups (names translated as stack.<id> in ui.ts)
   data/github-snapshot.json written by scripts/github-snapshot.ts on every build (git-ignored)
   i18n/ui.ts                UI strings per locale; English defines the shape
+  i18n/admin.ts             typed EN/PT strings for the private admin workspace
   lib/activity.ts           contribution stats, year heatmap layout, recent repos (shared by build and browser)
   lib/calendar.ts           Rio and UTC dates
   lib/content.ts            merges and cross-checks content; fails the build if locales diverge
@@ -56,6 +57,11 @@ src/
   scripts/journey.ts        pipeline page: packet on the rail, visit timings, headers, Cloudflare trace, last deploy
   scripts/project-popup.ts  opens and animates the project popups, browses folders via the GitHub API
   scripts/card-glow.ts      pointer glow on cards
+  layouts/Admin.astro       private workspace shell (noindex); authenticated data loads only in the browser
+  scripts/admin.ts          GitHub session, CSRF, project draft editor, archive and restore
+  styles/admin.css          responsive light/dark admin styles
+  pages/admin.astro         static entry to /en/admin/
+  pages/[locale]/admin.astro  EN/PT private project drafts; excluded from the sitemap
   pages/index.astro         redirects / to /en/ (static fallback)
   pages/404.astro           bilingual 404 (noindex); nginx should serve it with `error_page 404 /404.html`
   pages/[locale]/           Home, Projects, Pipeline, Blog, Resume and Contact, generated for every locale
@@ -76,6 +82,8 @@ deploy/
   nginx/portfolio.conf      nginx site; copied to /etc/nginx/sites-available/portfolio with scp
 .github/workflows/deploy.yml  build and rsync to the server on every push to main and once a day
 ```
+
+The admin uses same-origin /api and /oauth2 routes. Astro's dev server proxies them to the local API on port 8080. Production routing is infrastructure work for João. Project drafts are private and do not change public content until publishing is implemented.
 
 The resume page embeds the PDF in an iframe, so nginx must allow same-origin framing
 (`X-Frame-Options: SAMEORIGIN` or `frame-ancestors 'self'`); with `DENY` only the "Open" link works.
@@ -100,7 +108,8 @@ The resume page embeds the PDF in an iframe, so nginx must allow same-origin fra
 ## Git workflow
 
 - Everything merged into `main` goes live, so `main` must always be deployable. **No direct commits to `main`.**
-- One branch per stage, prefixed: `chore/`, `ci/`, `feat/`, `fix/`, `docs/`, `perf/`. Before starting a stage, `git pull` on `main` and branch from it.
+- V2 work stays on `feat/v2` in both `portfolio` and `portfolio-api`; keep `main` unchanged until João decides the V2 is ready. Do not open V2 PRs against `main` during development.
+- For independent fixes outside V2, one branch per stage, prefixed: `chore/`, `ci/`, `feat/`, `fix/`, `docs/`, `perf/`. Before starting a stage, `git pull` on `main` and branch from it.
 - Small, frequent commits in English using Conventional Commits (`feat:`, `fix:`, `chore:`, `ci:`, `docs:`, `perf:`, `refactor:`).
 - Branch, file and folder names in English.
 - PR description in English: what changed, why, how to test, and the definition-of-done checklist.

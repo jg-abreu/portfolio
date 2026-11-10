@@ -7,6 +7,14 @@ const site = 'https://joaoabreu.dev';
 // https://astro.build/config
 export default defineConfig({
 	site,
+	vite: {
+		server: {
+			proxy: {
+				'/api': 'http://localhost:8080',
+				'/oauth2': 'http://localhost:8080',
+			},
+		},
+	},
 	security: {
 		csp: {
 			directives: [
@@ -39,7 +47,7 @@ export default defineConfig({
 			// Each URL lists its other-language version as an hreflang alternate.
 			i18n: { defaultLocale: 'en', locales: { en: 'en-US', pt: 'pt-BR' } },
 			// The root only redirects and the 404 page is not content.
-			filter: (page) => page !== `${site}/` && !page.includes('/404'),
+			filter: (page) => page !== `${site}/` && !page.includes('/404') && !page.includes('/admin'),
 		}),
 	],
 });
