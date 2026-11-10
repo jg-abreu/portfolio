@@ -218,7 +218,7 @@ export function fromGitHubRepos(raw: unknown): Repo[] | null {
 				language: o?.language,
 				stars: o?.stargazers_count,
 				forks: o?.forks_count,
-				pushedAt: typeof o?.pushed_at === 'string' ? o.pushed_at.slice(0, 10) : null,
+				pushedAt: typeof o?.pushed_at === 'string' && !Number.isNaN(Date.parse(o.pushed_at)) ? rioDate(new Date(o.pushed_at)) : null,
 				fork: o?.fork,
 				archived: o?.archived,
 				homepage: o?.homepage,
@@ -237,7 +237,7 @@ export function fromDevArticles(raw: unknown): Article[] | null {
 				url: o?.url,
 				description: o?.description,
 				image: o?.cover_image ?? o?.social_image,
-				publishedAt: typeof o?.published_at === 'string' ? o.published_at.slice(0, 10) : null,
+				publishedAt: typeof o?.published_at === 'string' && !Number.isNaN(Date.parse(o.published_at)) ? rioDate(new Date(o.published_at)) : null,
 				tags: o?.tag_list,
 				readingMinutes: o?.reading_time_minutes,
 			};
