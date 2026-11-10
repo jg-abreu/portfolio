@@ -1,6 +1,6 @@
 ---
 // Contact form, modeled on developer.org.tr: bare fields with only a bottom line, the field name as
-// placeholder (the real label stays for screen readers) and a round "Send →" button. Sending is off
+// floating label and a round "Send →" button. Sending is off
 // until the API is live (V2), and the status line says so; the e-mail is in the Connect list.
 import { useTranslations, type Locale } from '../i18n/ui';
 interface Props {
@@ -12,11 +12,10 @@ const t = useTranslations(locale);
 
 <form data-contact-form aria-labelledby="contact-heading" aria-describedby="contact-status">
 	<label class="field">
-		<span class="visually-hidden">{t('contact.name')}</span>
-		<input id="contact-name" name="name" autocomplete="name" required maxlength="100" placeholder={t('contact.name')} />
+		<input id="contact-name" name="name" autocomplete="name" required maxlength="100" placeholder=" " />
+		<span class="field-label">{t('contact.name')}</span>
 	</label>
 	<label class="field">
-		<span class="visually-hidden">{t('contact.email')}</span>
 		<input
 			id="contact-email"
 			name="email"
@@ -24,13 +23,14 @@ const t = useTranslations(locale);
 			autocomplete="email"
 			required
 			maxlength="254"
-			placeholder={t('contact.email')}
+			placeholder=" "
 		/>
+		<span class="field-label">{t('contact.email')}</span>
 	</label>
 	<label class="field">
-		<span class="visually-hidden">{t('contact.message')}</span>
-		<textarea id="contact-message" name="message" required minlength="10" maxlength="5000" rows="4" placeholder={t('contact.message')}
+		<textarea id="contact-message" name="message" required minlength="10" maxlength="5000" rows="4" placeholder=" "
 		></textarea>
+		<span class="field-label">{t('contact.message')}</span>
 	</label>
 	<button type="submit" class="send" disabled aria-describedby="contact-status">
 		{t('contact.send')}
@@ -53,7 +53,30 @@ const t = useTranslations(locale);
 	}
 
 	.field {
+		position: relative;
 		display: block;
+	}
+
+	.field-label {
+		position: absolute;
+		top: 1.25rem;
+		left: 0;
+		color: var(--fg-muted);
+		line-height: 1.5;
+		pointer-events: none;
+		transform-origin: left top;
+	}
+
+	.field:focus-within .field-label,
+	input:not(:placeholder-shown) + .field-label,
+	textarea:not(:placeholder-shown) + .field-label {
+		transform: translateY(-1.25rem) scale(0.75);
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		.field-label {
+			transition: transform 0.2s ease;
+		}
 	}
 
 	input,
@@ -61,7 +84,7 @@ const t = useTranslations(locale);
 		box-sizing: border-box;
 		width: 100%;
 		min-width: 0;
-		padding: 0.75rem 0;
+		padding: 1.25rem 0 0.75rem;
 		background: transparent;
 		border: 0;
 		border-bottom: 1px solid var(--line);
@@ -69,12 +92,7 @@ const t = useTranslations(locale);
 		color: var(--fg);
 		font: inherit;
 		font-size: 1rem;
-		transition: border-color 0.2s;
-	}
-
-	input::placeholder,
-	textarea::placeholder {
-		color: color-mix(in srgb, var(--fg-muted) 75%, transparent);
+		line-height: 1.5;
 	}
 
 	textarea {
