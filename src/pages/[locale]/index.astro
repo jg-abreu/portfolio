@@ -81,7 +81,7 @@ const pipelineStages = (['commit', 'build', 'ship', 'serve', 'edge', 'you'] as c
 	body: t(`pipeline.${id}.body`),
 }));
 // This page is rebuilt on every deploy, so the build date is the date of the last deploy.
-const builtOn = dateFormat.format(new Date());
+const builtOn = new Intl.DateTimeFormat(localeTags[locale], { dateStyle: 'medium', timeZone: 'America/Sao_Paulo' }).format(new Date());
 
 const SECTION_COUNT = 7;
 const count = (key: Parameters<typeof t>[0], n: number) => t(key).replace('{n}', String(n));

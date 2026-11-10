@@ -153,7 +153,7 @@ export function fromGitHubRepos(raw: unknown): Repo[] | null {
 				description: o?.description,
 				language: o?.language,
 				stars: o?.stargazers_count,
-				pushedAt: typeof o?.pushed_at === 'string' ? o.pushed_at.slice(0, 10) : null,
+				pushedAt: typeof o?.pushed_at === 'string' && !Number.isNaN(Date.parse(o.pushed_at)) ? rioDate(new Date(o.pushed_at)) : null,
 				fork: o?.fork,
 				archived: o?.archived,
 				homepage: o?.homepage,
