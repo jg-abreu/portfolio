@@ -5,10 +5,10 @@
  * https links only, YYYY-MM-DD dates, non-negative integers, plain-text strings (rendered with
  * textContent, never as HTML). No Node or DOM APIs here.
  */
-import { utcDate } from './calendar.ts';
+import { rioDate } from './calendar.ts';
 
 export const GITHUB_USER = 'jg-abreu';
-/** Where all algorithm practice lands: a UTC day with a solution committed here is a day practiced. */
+/** Where all algorithm practice lands: a day in Rio with a solution committed here is a day practiced. */
 export const PRACTICE_REPO = 'algorithms-and-data-structures';
 
 export const ENDPOINTS = {
@@ -53,7 +53,7 @@ export interface Snapshot {
 	profile: Profile | null;
 	repos: Repo[] | null;
 	contributions: Contributions | null;
-	/** UTC days with at least one solution commit in PRACTICE_REPO, sorted. */
+	/** Days in Rio with at least one solution commit in PRACTICE_REPO, sorted. */
 	practiceDays: string[] | null;
 }
 
@@ -153,7 +153,7 @@ export function fromGitHubRepos(raw: unknown): Repo[] | null {
 				description: o?.description,
 				language: o?.language,
 				stars: o?.stargazers_count,
-				pushedAt: typeof o?.pushed_at === 'string' ? o.pushed_at.slice(0, 10) : null,
+				pushedAt: typeof o?.pushed_at === 'string' && !Number.isNaN(Date.parse(o.pushed_at)) ? rioDate(new Date(o.pushed_at)) : null,
 				fork: o?.fork,
 				archived: o?.archived,
 				homepage: o?.homepage,
@@ -171,8 +171,8 @@ export function fromContributionsApi(raw: unknown): Contributions | null {
 const SOLUTION_COMMIT = /^Time: .+, Space: /;
 
 /**
- * The UTC day of each solution commit, like LeetCode's own calendar: a commit at 23:39 in Rio is
- * already the next day. Commits that only touch docs or the repository layout are not practice.
+ * The day of each solution commit in Rio time, the portfolio's calendar: a commit at 23:39 in Rio
+ * counts for that day, even though it is already the next day in UTC. Commits that only touch docs or the repository layout are not practice.
  */
 export function fromGitHubCommits(raw: unknown): string[] | null {
 	if (!Array.isArray(raw)) return null;
@@ -181,7 +181,7 @@ export function fromGitHubCommits(raw: unknown): string[] | null {
 		.filter((commit) => typeof commit?.message === 'string' && SOLUTION_COMMIT.test(commit.message))
 		.map((commit) => obj(commit?.author)?.date);
 	return validDays(
-		dates.filter((d): d is string => typeof d === 'string' && !Number.isNaN(Date.parse(d))).map((d) => utcDate(new Date(d))),
+		dates.filter((d): d is string => typeof d === 'string' && !Number.isNaN(Date.parse(d))).map((d) => rioDate(new Date(d))),
 	);
 }
 

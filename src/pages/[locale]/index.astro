@@ -12,7 +12,7 @@ import SonarDisplay from '../../components/SonarDisplay.astro';
 import SonarIcon from '../../components/SonarIcon.astro';
 import { localeTags, locales, useTranslations, type Locale, type UiKey } from '../../i18n/ui';
 import { activityStats, heatmapCells, recentRepos } from '../../lib/activity';
-import { utcDate } from '../../lib/calendar';
+import { rioDate } from '../../lib/calendar';
 import { getAbout, getContacts, getProjects, getStack } from '../../lib/content';
 import { getGitHubSnapshot } from '../../lib/github';
 import { practiceStats } from '../../lib/github-data';
@@ -53,8 +53,8 @@ const instrumentCount = stack.reduce((n, g) => n + g.items.length, 0);
 const today = snapshot?.generatedAt ?? '';
 const contributions = snapshot?.contributions ?? null;
 const stats = contributions ? activityStats(contributions, today) : null;
-// Practice days are UTC days, like LeetCode's, so the streak is measured against today in UTC.
-const practice = practiceStats(practiceDays, utcDate());
+// Practice days are days in Rio, so the streak is measured against today in Rio.
+const practice = practiceStats(practiceDays, rioDate());
 const cells = contributions ? heatmapCells(contributions, today) : [];
 const recent = snapshot?.repos ? recentRepos(snapshot.repos, 8) : [];
 // Repo descriptions in the page's language where the project has its own text.
@@ -81,7 +81,7 @@ const pipelineStages = (['commit', 'build', 'ship', 'serve', 'edge', 'you'] as c
 	body: t(`pipeline.${id}.body`),
 }));
 // This page is rebuilt on every deploy, so the build date is the date of the last deploy.
-const builtOn = dateFormat.format(new Date());
+const builtOn = new Intl.DateTimeFormat(localeTags[locale], { dateStyle: 'medium', timeZone: 'America/Sao_Paulo' }).format(new Date());
 
 const SECTION_COUNT = 7;
 const count = (key: Parameters<typeof t>[0], n: number) => t(key).replace('{n}', String(n));
