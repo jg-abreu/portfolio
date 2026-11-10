@@ -11,8 +11,3 @@ export function rioDate(now = new Date()): string {
 	const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((p) => p.type === type)!.value;
 	return `${part('year')}-${part('month')}-${part('day')}`;
 }
-
-/** Calendar date in UTC, the day LeetCode uses for its daily problem and streaks. */
-export function utcDate(now = new Date()): string {
-	return now.toISOString().slice(0, 10);
-}
