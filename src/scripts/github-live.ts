@@ -17,14 +17,14 @@ import {
 	type Contributions,
 } from '../lib/github-data';
 import { activityStats, heatmapCells } from '../lib/activity';
-import { rioDate, utcDate } from '../lib/calendar';
+import { rioDate } from '../lib/calendar';
 
 interface LiveData {
 	contributions: Contributions | null;
 	practiceDays: string[] | null;
 }
 
-const CACHE_KEY = 'portfolio:github-live:v4';
+const CACHE_KEY = 'portfolio:github-live:v5';
 const CACHE_MS = 30 * 60 * 1000;
 const root = document.documentElement;
 const motion = root.classList.contains('fx') && !matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -184,7 +184,7 @@ for (const heatmap of document.querySelectorAll<HTMLElement>('[data-heatmap]')) 
 	heatmap.addEventListener('pointerleave', () => (tip.hidden = true));
 }
 
-// ---- Practice: UTC days with a solution committed to the practice repo ----
+// ---- Practice: days in Rio with a solution committed to the practice repo ----
 
 function updatePractice(latest: string[]) {
 	const box = document.querySelector<HTMLElement>('[data-practice]');
@@ -196,7 +196,7 @@ function updatePractice(latest: string[]) {
 	} catch {
 		built = [];
 	}
-	const stats = practiceStats([...built, ...latest], utcDate());
+	const stats = practiceStats([...built, ...latest], rioDate());
 	if (!stats) return;
 	const set = (name: string, value: string) => {
 		const el = box.querySelector<HTMLElement>(`[data-stat="${name}"]`);

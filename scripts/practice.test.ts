@@ -5,9 +5,9 @@ import { fromGitHubCommits, practiceStats, validSnapshot } from '../src/lib/gith
 const SOLUTION = 'Time: 2 ms (92.71%), Space: 71.53 MB (60.77%)';
 const commit = (date: unknown, message: unknown = SOLUTION) => ({ commit: { message, author: { date } } });
 
-test('commit days use the UTC calendar, like LeetCode', () => {
-	// 23:39 on Nov 4 in Rio is already Nov 5 in UTC.
-	assert.deepEqual(fromGitHubCommits([commit('2026-11-05T02:39:53Z')]), ['2026-11-05']);
+test('commit days use the Rio calendar', () => {
+	// 23:39 on Nov 4 in Rio is already Nov 5 in UTC, but it counts for Nov 4.
+	assert.deepEqual(fromGitHubCommits([commit('2026-11-05T02:39:53Z')]), ['2026-11-04']);
 });
 
 test('only solution commits count as practice', () => {

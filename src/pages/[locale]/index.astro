@@ -7,7 +7,7 @@ import RepoGrid from '../../components/RepoGrid.astro';
 import TechGrid from '../../components/TechGrid.astro';
 import { localeTags, locales, useTranslations, type Locale } from '../../i18n/ui';
 import { heatmapCells, recentRepos } from '../../lib/activity';
-import { utcDate } from '../../lib/calendar';
+import { rioDate } from '../../lib/calendar';
 import { getContacts, getProjects, getStack } from '../../lib/content';
 import { getGitHubSnapshot } from '../../lib/github';
 import { GITHUB_USER, practiceStats } from '../../lib/github-data';
@@ -33,8 +33,8 @@ const today = snapshot?.generatedAt ?? '';
 const contributions = snapshot?.contributions ?? null;
 const cells = contributions ? heatmapCells(contributions, today) : [];
 const practiceDays = snapshot?.practiceDays ?? [];
-// Practice days are UTC days, like LeetCode's, so the streak is measured against today in UTC.
-const practice = practiceStats(practiceDays, utcDate());
+// Practice days are days in Rio, so the streak is measured against today in Rio.
+const practice = practiceStats(practiceDays, rioDate());
 const repos = snapshot?.repos ? recentRepos(snapshot.repos, 6) : [];
 const descriptions = Object.fromEntries(projects.map((p) => [p.repo, p.tagline]));
 
