@@ -1,5 +1,20 @@
 # Retomada — 2026-11-11
 
+## Encerramento do dia
+
+João encerrou a sessão após a criação e verificação da VM.
+
+- [x] Concluir o snapshot da instância original.
+- [x] Criar a instância de 2 GB e confirmar os dois checks da AWS.
+- [x] Salvar e enviar o registro para `feat/v2`.
+- [ ] Validar os serviços restaurados e preparar API, banco e backups na nova VM.
+- [ ] Validar a V2 antes de migrar o IP de produção.
+- [ ] Implementar a aba Recomendações e seu controle no admin.
+
+Onde estamos: a nova VM está pronta para configuração; a antiga continua atendendo o site. Retomar pela validação da nova VM.
+
+Log de 2026-11-11: criada `portfolio-v2-2gb` a partir do snapshot, com ambos os checks aprovados; definida a aba Recomendações, ainda sem implementação.
+
 ## Infraestrutura
 
 - João autorizou o controle do PC para criar a VM a partir do snapshot e verificar a inicialização.
