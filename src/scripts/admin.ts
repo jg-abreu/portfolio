@@ -9,6 +9,7 @@ type Copy = {
   body: string;
 };
 type DraftStatus = "DRAFT" | "ARCHIVED";
+type Publication = { projectId: number; revision: string; draftVersion: number };
 type Draft = {
   id: number;
   version: number;
@@ -48,6 +49,8 @@ function initialize(root: HTMLElement) {
   const empty = q<HTMLElement>("[data-empty]");
   const search = q<HTMLInputElement>("[data-search]");
   let drafts: Draft[] = [];
+  let publications: Publication[] = [];
+  let deployed: { projectId: number; revision: string }[] = [];
   let filter: DraftStatus = "DRAFT";
   let current: Draft | null = null;
   let baseline = "";
@@ -127,6 +130,7 @@ function initialize(root: HTMLElement) {
       if (!Array.isArray(data) || !data.every(isDraft))
         throw new Error("Invalid projects response");
       drafts = data;
+      await loadPublications();
       loaded = true;
       q<HTMLElement>("[data-username]").textContent = session.username;
       workspace.hidden = false;
@@ -144,6 +148,21 @@ function initialize(root: HTMLElement) {
         q<HTMLButtonElement>("[data-retry]").hidden = false;
       }
     }
+  }
+
+  async function loadPublications() {
+    const selected = await request('/api/admin/project-publications');
+    if (!Array.isArray(selected) || !selected.every(item => isObject(item)
+      && Number.isSafeInteger(item.projectId) && typeof item.revision === 'string'
+      && Number.isSafeInteger(item.draftVersion))) throw new Error('Invalid publications response');
+    publications = selected as Publication[];
+    deployed = [];
+    try {
+      const manifest = await request('/project-publications.json');
+      if (isObject(manifest) && manifest.schemaVersion === 1 && Array.isArray(manifest.projects)
+        && manifest.projects.every(item => isObject(item) && Number.isSafeInteger(item.projectId) && typeof item.revision === 'string'))
+        deployed = manifest.projects as typeof deployed;
+    } catch {}
   }
 
   function render() {
@@ -174,7 +193,7 @@ function initialize(root: HTMLElement) {
       text("[data-project-description]", draft[locale].tagline);
       text(
         "[data-project-status]",
-        draft.status === "DRAFT" ? labels.drafts : labels.archived,
+        publicationLabel(draft),
       );
       text("[data-project-stack]", draft.stack);
       const date = fragment.querySelector<HTMLTimeElement>(
@@ -203,6 +222,18 @@ function initialize(root: HTMLElement) {
           () => void changeStatus(draft, archive),
         );
       }
+      const publish = fragment.querySelector<HTMLButtonElement>('[data-publish]');
+      if (publish) {
+        publish.hidden = draft.status !== 'DRAFT';
+        publish.textContent = labels.publish;
+        publish.addEventListener('click', () => void changePublication(draft, publish, false));
+      }
+      const withdraw = fragment.querySelector<HTMLButtonElement>('[data-withdraw]');
+      if (withdraw) {
+        withdraw.hidden = !publications.some(item => item.projectId === draft.id);
+        withdraw.textContent = labels.withdraw;
+        withdraw.addEventListener('click', () => void changePublication(draft, withdraw, true));
+      }
       list.append(fragment);
     }
     empty.hidden = !loaded || visible.length > 0;
@@ -211,6 +242,36 @@ function initialize(root: HTMLElement) {
       ? labels.empty
       : labels.noMatches;
     q<HTMLElement>("[data-empty-body]").hidden = !first;
+  }
+
+  function publicationLabel(draft: Draft) {
+    const selected = publications.find(item => item.projectId === draft.id);
+    const live = deployed.find(item => item.projectId === draft.id);
+    const prefix = draft.status === 'ARCHIVED' ? `${labels.archived} · ` : '';
+    if (!selected && live) return prefix + labels.withdrawPending;
+    if (selected) {
+      if (live?.revision !== selected.revision) return prefix + labels.publicationPending;
+      return prefix + (selected.draftVersion === draft.version ? labels.published : labels.unpublishedEdits);
+    }
+    return draft.status === 'DRAFT' ? labels.drafts : labels.archived;
+  }
+
+  async function changePublication(draft: Draft, button: HTMLButtonElement, withdraw: boolean) {
+    if (busy) return;
+    busy = true;
+    button.disabled = true;
+    try {
+      await mutate(`/api/admin/projects/${draft.id}/publication`, withdraw ? 'DELETE' : 'PUT', { version: draft.version });
+      await loadPublications();
+      render();
+      message(withdraw ? labels.withdrawQueued : labels.publicationQueued);
+    } catch (error) {
+      message(error instanceof ApiError && error.status === 400 ? labels.publishIncomplete : errorMessage(error));
+      reauth.hidden = !sessionError(error);
+    } finally {
+      busy = false;
+      button.disabled = false;
+    }
   }
 
   function snapshot() {
@@ -443,6 +504,9 @@ function initialize(root: HTMLElement) {
       try {
         await mutate("/api/auth/logout", "POST");
         drafts = [];
+        loaded = false;
+        publications = [];
+        deployed = [];
         list.replaceChildren();
         workspace.hidden = true;
         login.hidden = false;
@@ -470,6 +534,13 @@ function initialize(root: HTMLElement) {
   window.addEventListener("beforeunload", (event) => {
     if (editor.open && snapshot() !== baseline) event.preventDefault();
   });
+  window.setInterval(async () => {
+    if (!loaded || workspace.hidden || busy || document.visibilityState !== 'visible') return;
+    try {
+      await loadPublications();
+      render();
+    } catch {}
+  }, 30000);
   void load();
 }
 

@@ -6,6 +6,7 @@ import { getRelativeLocaleUrl } from 'astro:i18n';
 import Base from '../../../layouts/Base.astro';
 import { locales, useTranslations, type Locale } from '../../../i18n/ui';
 import { getProjectEntry, getProjects } from '../../../lib/content';
+import { renderPublicationMarkdown } from '../../../lib/publication-markdown';
 
 // One page per locale for every listed project (not the "signal" ones, which live on Home),
 // modeled on developer.org.tr: title and GitHub button, then Problem, Decisions and Result side by
@@ -23,7 +24,8 @@ export async function getStaticPaths() {
 const locale = Astro.params.locale as Locale;
 const t = useTranslations(locale);
 const project = (await getProjects(locale)).find((p) => p.id === Astro.params.id)!;
-const { Content } = await render(await getProjectEntry(locale, project.id));
+const Content = project.publicationBody === undefined ? (await render(await getProjectEntry(locale, project.id))).Content : null;
+const publicationHtml = project.publicationBody === undefined ? '' : renderPublicationMarkdown(project.publicationBody);
 
 const covers = import.meta.glob<ImageMetadata>('../../../assets/case-studies/*', { eager: true, import: 'default' });
 const cover = project.cover ? covers[`../../../assets/case-studies/${project.cover}`] : undefined;
@@ -86,7 +88,7 @@ const cover = project.cover ? covers[`../../../assets/case-studies/${project.cov
 							</figure>
 						)}
 						<div class="prose">
-							<Content />
+							{Content ? <Content /> : <div set:html={publicationHtml} />}
 						</div>
 					</section>
 				)

@@ -83,7 +83,7 @@ deploy/
 .github/workflows/deploy.yml  build and rsync to the server on every push to main and once a day
 ```
 
-The admin uses same-origin /api and /oauth2 routes. Astro's dev server proxies them to the local API on port 8080. Production routing is infrastructure work for João. Project drafts are private and do not change public content until publishing is implemented.
+The admin uses same-origin /api and /oauth2 routes. Astro's dev server proxies them to the local API on port 8080. Production routing is infrastructure work for João. Saving and archiving drafts do not alter their separately selected public copies. The build reads selected copies from PROJECTS_API_URL, fails if that configured source is unavailable, and emits project-publications.json so the admin can distinguish pending versions from deployed ones. Automatic deploy triggering is not connected yet. Existing file-based projects remain independent; a slug collision fails the build until those projects are explicitly migrated.
 
 The resume page embeds the PDF in an iframe, so nginx must allow same-origin framing
 (`X-Frame-Options: SAMEORIGIN` or `frame-ancestors 'self'`); with `DENY` only the "Open" link works.

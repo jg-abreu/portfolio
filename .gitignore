@@ -4,6 +4,9 @@ dist/
 .astro/
 # GitHub snapshot, regenerated on every build (scripts/github-snapshot.mjs)
 src/data/github-snapshot.json
+src/data/project-publications.json
+src/data/project-publications.json.tmp
+.codex-stage/
 
 # dependencies
 node_modules/
