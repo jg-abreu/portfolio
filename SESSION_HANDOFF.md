@@ -1,5 +1,14 @@
 # Retomada — 2026-11-11
 
+## Continuidade — API e login da V2 validados
+
+- Aplicativo GitHub OAuth separado `Portfolio Admin V2` criado pelo João; homepage e callback em `v2.joaoabreu.dev`. João gerou o segredo e autorizou o aplicativo com acesso limitado aos dados públicos.
+- Credenciais inseridas diretamente no `.env` privado da VM, preservando `POSTGRES_PASSWORD`; modo 600 mantido. Nenhum segredo incluído neste registro. JAR ajustado para modo 644 para leitura pelo usuário do container.
+- Compose validado e perfil `api` iniciado. PostgreSQL healthy; API acessível somente em `127.0.0.1:8080` pelo host. Health local respondeu `UP`; logs confirmaram inicialização completa.
+- Verificação pública: `/api/projects` respondeu 200 com lista vazia; `/api/admin/projects` sem sessão respondeu 401. OAuth redirecionou ao GitHub com callback correto, state e PKCE S256; cookie de sessão Secure, HttpOnly e SameSite=Lax.
+- Após autorização do João, navegador retornou a `/en/admin/`; a página está em 404 porque o build atual do front-end ainda não foi publicado. Sessão validada diretamente no mesmo navegador por `/api/admin/session`: identidade `jg-abreu`, GitHub ID `265870608`. Login completo confirmado; logout ainda não testado neste ambiente.
+- Próximo passo: publicar o build atual da feat/v2 somente no diretório da V2 e testar interface/admin/logout. Depois conectar publicação automática e validar backup externo/restauração. Não alterar main, VM antiga ou IP de produção.
+
 ## Continuidade — DNS, HTTPS e nginx da V2
 
 - JAR transferido por João com SCP e SHA-256 confirmado na captura do terminal: `8a6eacba96b2a7447e26e7a1d399aa07723b91c5b8314f34b5bf66bd143603b8`. Relatórios recuperados em 11/11 confirmam 31 testes sem falhas. A chave SSH local exige senha; usar o terminal do Lightsail enquanto não houver agente desbloqueado.
