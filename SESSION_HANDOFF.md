@@ -1,5 +1,18 @@
 # Retomada — 2026-11-11
 
+## Continuidade — banco preparado em 11/11
+
+- VM validada pelo terminal do Lightsail: 1,9 GiB de RAM total, 1,5 GiB disponíveis e 55 GB livres naquele momento; nginx ativo, `nginx -t` aprovado, HTTP local com redirecionamento 301 para HTTPS e nenhum serviço em falha.
+- SSH pelo PowerShell ainda apresenta resets e não concluiu a autenticação. O navegador da AWS funciona; não presumir causa confirmada para a falha local.
+- João instalou Docker e Compose; `hello-world` aprovado e Compose 5.7.1 na VM.
+- Diretório `/opt/portfolio-api`, dono `ubuntu:ubuntu`, modo 750, criado com autorização explícita para sudo.
+- API `feat/v2`: commit `625c17f29383ce4afb9591b3d97f0e63d9080ecf` enviado. Inclui `compose.production.yaml`, `.env.production.example`, `PRODUCTION.md` e exclusão de ambientes reais no Git. Validação local do Compose com senha fictícia aprovada nos perfis padrão e api.
+- Compose dessa versão transferido via HTTPS para `/opt/portfolio-api/compose.production.yaml`; validação remota `config --quiet` aprovada.
+- `/opt/portfolio-api/.env` criado na VM com modo 600, contendo uma senha aleatória do PostgreSQL gerada ali, sem exibição. Preservar esse arquivo; nenhuma credencial real foi salva no Git ou nas notas. OAuth ainda não preenchido.
+- `sudo docker compose -f compose.production.yaml up -d postgres` executado; `ps` confirmou `portfolio-production-postgres-1` healthy, porta apenas interna `5432/tcp`, volume `portfolio-production_postgres-data`.
+- A API ainda não foi iniciada. Faltam JAR testado e transferido, OAuth do ambiente, DNS/TLS/nginx da V2 e backup externo com restauração validada. O volume local não substitui backup.
+- Próximo passo: preparar o artefato Java fora da VM e definir o OAuth de `v2.joaoabreu.dev`. A máquina antiga e o IP de produção seguem intactos.
+
 ## Encerramento do dia
 
 João encerrou a sessão após a criação e verificação da VM.
