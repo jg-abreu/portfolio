@@ -1,5 +1,17 @@
 # Retomada — 2026-11-11
 
+## Continuidade — DNS, HTTPS e nginx da V2
+
+- JAR transferido por João com SCP e SHA-256 confirmado na captura do terminal: `8a6eacba96b2a7447e26e7a1d399aa07723b91c5b8314f34b5bf66bd143603b8`. Relatórios recuperados em 11/11 confirmam 31 testes sem falhas. A chave SSH local exige senha; usar o terminal do Lightsail enquanto não houver agente desbloqueado.
+- DNS Cloudflare criado: registro A `v2` para `18.118.163.208`, proxy ativado. Registros do domínio principal preservados.
+- Certificado Origin CA existente na nova VM cobre `*.joaoabreu.dev` e `joaoabreu.dev`; não foi preciso emitir outro.
+- Erro 522 diagnosticado: nginx escutava 443, UFW inativo, mas Lightsail só liberava 80 e 22. Após confirmação explícita do João, adicionada regra TCP 443 restrita às 15 faixas IPv4 oficiais de https://www.cloudflare.com/ips-v4. Regras de HTTP e SSH mantidas. HTTPS público voltou a responder.
+- Novo nginx `deploy/nginx/portfolio-v2.conf`, commit `9bb0b7a` na feat/v2, instalado como `/etc/nginx/sites-available/portfolio-v2` e habilitado por symlink. `nginx -t` aprovado e reload concluído; serviço ativo.
+- Host `v2.joaoabreu.dev` usa `/var/www/portfolio-v2`, inicialmente preenchido com cópia dos arquivos estáticos do snapshot. Ainda não foi publicado o build atual da feat/v2.
+- Proxy de `/api/`, `/oauth2/`, `/login/oauth2/` e `/admin` exato para `127.0.0.1:8080`, com sobrescrita dos headers encaminhados e cache desativado. `/admin/` continua sendo a entrada estática do front-end.
+- Testes públicos em 11/11: V2 `/en/` 200 com `X-Robots-Tag: noindex, nofollow` e `X-Frame-Options: SAMEORIGIN`; produção original `/en/` 200 com configuração anterior. `/api/auth/csrf` na V2 retorna 502 enquanto a API permanece parada.
+- Próximo passo: criar/configurar OAuth separado para V2, colocar credenciais diretamente no `.env` da VM sem expor no chat, iniciar API e validar migrações/health/login/logout. Depois publicar build atual do front-end, conectar publicação automática e validar backup/restauração antes do corte definitivo.
+
 ## Continuidade — banco preparado em 11/11
 
 - VM validada pelo terminal do Lightsail: 1,9 GiB de RAM total, 1,5 GiB disponíveis e 55 GB livres naquele momento; nginx ativo, `nginx -t` aprovado, HTTP local com redirecionamento 301 para HTTPS e nenhum serviço em falha.
