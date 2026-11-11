@@ -150,3 +150,7 @@ npm run preview   # serve dist/ locally
 ```
 
 Run the dev server in the background (`astro dev --background`; manage it with `astro dev stop`, `astro dev status` and `astro dev logs`).
+
+## Session context
+
+Use only Google Drive for Second Brain notes; the retired Obsidian app and MCP are not session prerequisites. Read the original `CLAUDE.local.md` for the local Drive path, then the transition, universal rules and project Status. Update Status and Log at an authorized session close, and the transition when passing the baton. Keep historical entries intact.

@@ -34,7 +34,7 @@ Log de 2026-11-11: criada `portfolio-v2-2gb` a partir do snapshot, com ambos os 
 2. Preparar e validar API Spring Boot, PostgreSQL, nginx, backups externos e publicação da V2. Builds e testes devem rodar no GitHub Actions, mantendo a VM para execução.
 3. Após validar o ambiente novo e obter autorização para o corte, mover o IP estático. A retirada da instância antiga exige decisão explícita de João.
 
-As regras atuais fornecidas por João reservam infraestrutura e back-end para implementação manual dele; esta sessão teve autorização específica para criar a VM pela interface. Seguir as instruções vigentes na retomada.
+As regras atuais permitem à IA implementar e testar o back-end com revisão do João; infraestrutura segue orientação manual, salvo autorização explícita no escopo da sessão. A criação desta VM teve autorização específica pela interface. Seguir as instruções vigentes na retomada.
 
 ## Recomendações
 
@@ -48,4 +48,4 @@ As regras atuais fornecidas por João reservam infraestrutura e back-end para im
 
 - Front-end em `feat/v2`, atualizado com `git pull --ff-only` antes desta atividade. V2 permanece fora de `main`.
 - Última implementação anterior: front-end `52d1d0c`; API `7a39873`. Publicações de projetos têm cópias separadas dos rascunhos e integração com build; disparo automático do deploy continua pendente.
-- Usar somente o Drive, conforme orientação anterior do João. A pasta do Drive indicada em `CLAUDE.local.md` não foi encontrada nesta sessão; este registro fica no repositório.
+- Usar somente o Drive: caminho ativo confirmado em 11/11 na retomada, `H:\My Drive\Second Brain`. Instruções globais e locais corrigidas; Status, Log e Transição atualizados no Drive. O caminho antigo em C: estava desatualizado.
