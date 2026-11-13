@@ -14,6 +14,14 @@ Images use SHA-256 content keys ending in `.png`. The build downloads only `/api
 
 ## Current stage
 
+### Approved book-cover search
+
+João approved Google Books on 2026-11-13. In the admin, entering a book title and choosing **Search covers** will list available covers alongside title, author and edition information. João selects the correct edition before the cover is attached to the draft. Manual upload remains available when no suitable result exists. Gemini integration is deferred.
+
+This lookup belongs only in the authenticated admin. It must not add runtime requests to public pages or automatically publish a result. The backend must validate the selected provider result and image before importing it through the same image storage pipeline as manual uploads. Do not accept an arbitrary remote image URL from the browser. Preserve provider attribution and links required by the applicable Google Books terms; verify those requirements and available quota before implementing the integration.
+
+Reference: https://developers.google.com/books/docs/v1/using
+
 The static page, source validation, image download and build manifest are implemented. The API endpoints, database persistence, private image upload and admin editor are pending. The page is not yet linked in the main navigation. No personal recommendations have been invented or seeded; synthetic fixtures exist only for tests.
 
 Backend implementation must preserve separate draft and selected-publication copies. Saving or archiving a draft must not change its selected public copy. Image files belong outside the database, and unpublished uploads must remain private. Production storage and deployment remain separate infrastructure steps.
