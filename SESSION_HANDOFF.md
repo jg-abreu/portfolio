@@ -1,5 +1,11 @@
 # Retomada — 2026-11-11
 
+## Continuidade — dependências do frontend em 13/11
+
+- npm audit --json consultou registry com sucesso: zero vulnerabilidades conhecidas em todas as severidades, 346 dependências reportadas. Não é auditoria Java, CodeQL ou certificação completa do código.
+- Dependabot preparado somente na feat/v2: npm e Actions semanais, PRs de versão para feat/v2, limites3/2, minor/patch npm agrupados, sem automerge. GitHub lê configuração na branch padrão; ainda não ativo, nenhum run/PR criado. No lançamento autorizado revisar destino de manutenção; não copiar para main agora. Security updates têm configuração/branch padrão próprias, não alteradas.
+- docs/dependency-security.md registra escopo, fontes oficiais e pendências Java/CodeQL. Inspeção pontual de DOM/Markdown/localStorage não encontrou nova falha confirmada. Nenhuma alteração de dependência/runtime/deploy.
+
 ## Continuidade — contador integrado isolado em 13/11
 
 - Revisão real em Chrome/PT com API8081/Astro4324 separados, banco sintético portfolio_visits_review_20261113, DIRECT e chave HMAC temporária só em memória. Primeiro acesso expôs Visitas aproximadas:1 na árvore de acessibilidade; reload preservou total1 e uma linha de deduplicação no PostgreSQL.
