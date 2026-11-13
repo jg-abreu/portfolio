@@ -48,7 +48,7 @@ src/
   components/TechGrid.astro      technologies with simple-icons logos (home)
   components/ProjectPopup.astro  repository popup on the projects page (root files, folders browsable)
   components/Handoff.astro       what each pipeline stage receives and hands on
-  components/ContactForm.astro   contact form (sending off until the API is live)
+  components/ContactForm.astro   contact form (PUBLIC_CONTACT_ENABLED stays false by default)
   components/ContactIcon.astro   contact channel icons
   scripts/theme.ts          light/dark switch with a circular reveal (View Transitions API)
   scripts/loader.ts         intro loader on entry and reload; the percentage follows real milestones
@@ -59,6 +59,8 @@ src/
   scripts/card-glow.ts      pointer glow on cards
   layouts/Admin.astro       private workspace shell (noindex); authenticated data loads only in the browser
   scripts/admin.ts          GitHub session, CSRF, project drafts and private contact inbox
+  lib/contact.ts            same-origin CSRF contact client and acknowledged receipt
+  scripts/contact.ts        optional contact submission, retry keys and bilingual feedback
   styles/admin.css          responsive light/dark admin styles
   pages/admin.astro         static entry to /en/admin/
   pages/[locale]/admin.astro  EN/PT project drafts and inbox; excluded from the sitemap

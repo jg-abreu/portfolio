@@ -1,5 +1,15 @@
 # Retomada — 2026-11-11
 
+## Continuidade — contato e fila preparados em 13/11
+
+- João aprovou SMTP/JavaMailSender com conta dev remetente, os dois e-mails destinatários e retenção de 90 dias. Aprendizado do fluxo combinado para o fim do projeto.
+- Recebimento `/api/contact` implementado, condicionado a `portfolio.contact.submission.enabled=true` (padrão desligado). Mantém CSRF, valida campos, limita JSON a 16 KiB e aceita no máximo 5 tentativas por endereço/10 min e 100 globais/10 min. Limitador local limitado em memória, sem logs de dados dos visitantes. Revisar origem confiável do endereço de cliente antes da exposição pública.
+- Migração V6 acrescenta submission_key UUID única. Repetição da mesma chave e conteúdo retorna 202 sem duplicar; conteúdo diferente com a mesma chave retorna 409. A resposta accepted significa persistência, não entrega por e-mail.
+- Worker SMTP preparado e desligado por padrão: captura atômica de uma mensagem por vez com trava de 5 minutos, até 5 tentativas e recuo de 1/2/4/8 minutos. Falhas não perdem a mensagem. SMTP é pelo menos uma vez: falha após entrega ou entrega parcial pode causar repetição, documentada para revisão antes de ativar.
+- Retenção em tarefa separada, habilitada por `portfolio.contact.retention.enabled=true`, remove mensagens com mais de 90 dias e preserva travas de envio ainda ativas. Nenhuma flag ativada fora dos testes; nenhuma exclusão na VM.
+- Formulário EN/PT integrado atrás de `PUBLIC_CONTACT_ENABLED=true`, padrão desativado. Mantém texto nas falhas e chave nas repetições, limpa apenas após 202 confirmado. UI nova ainda depende de revisão real no navegador.
+- Validação final desta implementação: API 84 testes sem falhas, verify aprovado; site 34 testes aprovados. SMTP simulado; sem credenciais de Gmail e sem e-mail real. Próximo bloqueio para entrega real: configurar autenticação SMTP privadamente (senha de app da conta dev, quando disponível), depois testar explicitamente uma mensagem sintética aos dois destinos. Nenhum deploy.
+
 ## Continuidade — inbox privado em 13/11
 
 - Mantido o bloqueio de deploy: trabalho somente na feat/v2. Nenhum servidor foi alterado nesta etapa.

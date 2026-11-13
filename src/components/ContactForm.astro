@@ -1,16 +1,19 @@
 ---
-// Contact form, modeled on developer.org.tr: bare fields with only a bottom line, the field name as
-// floating label and a round "Send →" button. Sending is off
-// until the API is live (V2), and the status line says so; the e-mail is in the Connect list.
 import { useTranslations, type Locale } from '../i18n/ui';
 interface Props {
 	locale: Locale;
 }
 const { locale } = Astro.props;
 const t = useTranslations(locale);
+const enabled = import.meta.env.PUBLIC_CONTACT_ENABLED === 'true';
+const labels = {
+  sending: t('contact.sending'), accepted: t('contact.accepted'), rateLimited: t('contact.rateLimited'),
+  invalid: t('contact.invalid'), error: t('contact.error'),
+};
 ---
 
-<form data-contact-form aria-labelledby="contact-heading" aria-describedby="contact-status">
+<form data-contact-form data-enabled={String(enabled)} data-labels={JSON.stringify(labels)} aria-labelledby="contact-heading" aria-describedby="contact-status">
+  <input type="hidden" name="website" value="" />
 	<label class="field">
 		<input id="contact-name" name="name" autocomplete="name" required maxlength="100" placeholder=" " />
 		<span class="field-label">{t('contact.name')}</span>
@@ -36,14 +39,12 @@ const t = useTranslations(locale);
 		{t('contact.send')}
 		<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"></path></svg>
 	</button>
-	<p id="contact-status" class="status" role="status">{t('contact.unavailable')}</p>
+	<p id="contact-status" class="status" role="status">{enabled ? t('contact.ready') : t('contact.unavailable')}</p>
+  {enabled && <p class="status">{t('contact.privacy')}</p>}
 </form>
 
 <script>
-	// No endpoint yet: never navigate, transmit fields, or show a fabricated success.
-	document.querySelectorAll<HTMLFormElement>('[data-contact-form]').forEach((form) => {
-		form.addEventListener('submit', (event) => event.preventDefault());
-	});
+  import '../scripts/contact';
 </script>
 
 <style>
