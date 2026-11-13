@@ -77,7 +77,7 @@ function initialize(root: HTMLElement) {
     const source = q<HTMLAnchorElement>('[data-book-source]');
     source.hidden = !book;
     if (book) { preview.src = bookCoverUrl(book); source.href = bookInfoUrl(book); }
-    else if (/^[0-9a-f]{64}\.png$/.test(key)) { preview.src = `/api/admin/recommendation-images/${key}`; source.removeAttribute('href'); }
+    else if (/^[0-9a-f]{64}\.png$/.test(key)) { preview.src = `/api/admin/recommendation-images/${encodeURIComponent(key)}`; source.removeAttribute('href'); }
     else preview.removeAttribute('src');
     preview.hidden = !key && !book;
   }

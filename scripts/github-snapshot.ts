@@ -1,7 +1,7 @@
 // Build-time snapshot of public GitHub data, written to src/data/github-snapshot.json
 // (git-ignored). Runs before every build. Each source is fetched independently: a source that
 // fails keeps its value from the previous snapshot, or stays null, so the site never invents data.
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { rioDate } from '../src/lib/calendar.ts';
 import {
@@ -34,7 +34,12 @@ async function getJson(url: string, init: RequestInit = {}): Promise<unknown> {
 	return res.json();
 }
 
-const previous: Snapshot | null = existsSync(OUT) ? validSnapshot(JSON.parse(readFileSync(OUT, 'utf8'))) : null;
+let previous: Snapshot | null = null;
+try {
+	previous = validSnapshot(JSON.parse(readFileSync(OUT, 'utf8')));
+} catch (error) {
+	if (!(error instanceof Error && 'code' in error && error.code === 'ENOENT')) throw error;
+}
 
 /** Every page of the practice repo's commits; any failed page fails the source, so a partial history is never kept. */
 async function practiceDays(): Promise<string[] | null> {

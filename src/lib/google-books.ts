@@ -1,10 +1,10 @@
 export function bookInfoUrl(volumeId: string): string {
   if (!/^[A-Za-z0-9_-]{1,100}$/.test(volumeId)) throw new Error('Invalid book identifier');
-  return `https://books.google.com/books?id=${volumeId}`;
+  return `https://books.google.com/books?id=${encodeURIComponent(volumeId)}`;
 }
 export function bookCoverUrl(volumeId: string): string {
   bookInfoUrl(volumeId);
-  return `https://books.google.com/books/content?id=${volumeId}&printsec=frontcover&img=1&zoom=1&source=gbs_api`;
+  return `https://books.google.com/books/content?id=${encodeURIComponent(volumeId)}&printsec=frontcover&img=1&zoom=1&source=gbs_api`;
 }
 export type BookResult = { volumeId: string; title: string; authors: string[]; publisher: string; publishedDate: string; hasCover: boolean };
 export function parseBookResults(value: unknown): BookResult[] {
