@@ -1,5 +1,13 @@
 # Retomada — 2026-11-11
 
+## Continuidade — revisão local do admin em 12/11
+
+- João reafirmou: não publicar o front-end nem fazer novos deploys agora; lançamento conjunto da V2 quando pronta. Trabalho continua em `feat/v2`, sem PR para main. As instruções históricas abaixo sobre publicar o build são próximas etapas futuras, não autorização vigente.
+- Pull trouxe o assistente: front-end `0422e90` e API `8d8fb77`; alterações preservadas. Nenhuma mudança no servidor nesta etapa.
+- Corrigida limpeza local de sessão no admin: logout e respostas 401/403 apagam campos do editor, dados carregados e usuário, fecham diálogos e voltam ao login. Uma versão de sessão impede respostas anteriores ao logout de atualizarem a tela; erros de sessão no manifesto opcional não são mais ignorados.
+- Quatro regressões reproduzidas antes da correção e aprovadas depois, executando o script real com HTTP/DOM controlados. Oito testes do assistente também aprovados. `npm test` executa ambos. Procedimento manual em `docs/admin-testing.md`.
+- Testes atuais de autenticação da API: 14 aprovados (login, identidade, state/PKCE, CSRF, repetição do callback e logout). Docker e serviços locais não encontrados nesta verificação; criação/edição/arquivamento com PostgreSQL e revisão visual real ainda pendentes. Não confundir o harness com teste completo no navegador.
+
 ## Continuidade — API e login da V2 validados
 
 - Aplicativo GitHub OAuth separado `Portfolio Admin V2` criado pelo João; homepage e callback em `v2.joaoabreu.dev`. João gerou o segredo e autorizou o aplicativo com acesso limitado aos dados públicos.

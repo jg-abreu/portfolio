@@ -56,7 +56,29 @@ function initialize(root: HTMLElement) {
   let baseline = "";
   let busy = false;
   let loaded = false;
+  let sessionVersion = 0;
   form.noValidate = true;
+
+  function clearSession() {
+    sessionVersion++;
+    drafts = [];
+    publications = [];
+    deployed = [];
+    current = null;
+    baseline = "";
+    loaded = false;
+    form.reset();
+    formMessage.textContent = "";
+    search.value = "";
+    q<HTMLElement>("[data-username]").textContent = "";
+    list.replaceChildren();
+    if (discard.open) discard.close();
+    if (editor.open) editor.close();
+    workspace.hidden = true;
+    connection.hidden = true;
+    login.hidden = false;
+    message("");
+  }
 
   class ApiError extends Error {
     constructor(readonly status: number) {
@@ -68,14 +90,21 @@ function initialize(root: HTMLElement) {
     path: string,
     options: RequestInit = {},
   ): Promise<unknown> {
+    const version = sessionVersion;
     const response = await fetch(path, {
       ...options,
       credentials: "same-origin",
       cache: "no-store",
       signal: AbortSignal.timeout(15000),
     });
-    if (!response.ok) throw new ApiError(response.status);
-    return response.status === 204 ? null : response.json();
+    if (version !== sessionVersion) throw new ApiError(401);
+    if (!response.ok) {
+      if (response.status === 401 || response.status === 403) clearSession();
+      throw new ApiError(response.status);
+    }
+    const data = response.status === 204 ? null : await response.json();
+    if (version !== sessionVersion) throw new ApiError(401);
+    return data;
   }
 
   async function mutate(path: string, method: string, body?: unknown) {
@@ -162,7 +191,9 @@ function initialize(root: HTMLElement) {
       if (isObject(manifest) && manifest.schemaVersion === 1 && Array.isArray(manifest.projects)
         && manifest.projects.every(item => isObject(item) && Number.isSafeInteger(item.projectId) && typeof item.revision === 'string'))
         deployed = manifest.projects as typeof deployed;
-    } catch {}
+    } catch (error) {
+      if (sessionError(error)) throw error;
+    }
   }
 
   function render() {
@@ -503,13 +534,7 @@ function initialize(root: HTMLElement) {
       button.disabled = true;
       try {
         await mutate("/api/auth/logout", "POST");
-        drafts = [];
-        loaded = false;
-        publications = [];
-        deployed = [];
-        list.replaceChildren();
-        workspace.hidden = true;
-        login.hidden = false;
+        clearSession();
       } catch (error) {
         message(errorMessage(error));
       } finally {
