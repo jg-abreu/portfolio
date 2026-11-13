@@ -20,4 +20,16 @@ Gmail dev confirmed the matching `Portfolio contact #1` notification in INBOX/SE
 
 After the check, the development server was restarted with PUBLIC_CONTACT_ENABLED=false, and the API was restarted on loopback with submission, delivery and retention disabled. The isolated database and synthetic row remain for review. Neither the SMTP password file nor normal repository defaults were changed to enable delivery.
 
-Phone-width layout, EN contact-form submission, the real browser unavailable-service experience and the autonomous scheduler still need their own release checks. The automated suites previously passed 84 backend tests and 34 frontend tests; they were not rerun for this documentation-only result.
+At this point phone layout, EN submission, browser failure feedback and the autonomous scheduler were still pending. The follow-up below records their later verification. The automated suites previously passed 84 backend tests and 34 frontend tests.
+
+## Mobile and scheduling follow-up — 2026-11-13
+
+Chrome device emulation at 360 CSS pixels was visually checked for the contact form and private inbox in EN/PT and light/dark appearances. Fields, feedback, message text and inbox actions stayed readable within the viewport. This was browser emulation, not a physical-phone or exhaustive accessibility audit.
+
+With server intake disabled, submitting synthetic EN and PT forms displayed the localized failure feedback and retained all three fields. This exercised a real unavailable intake endpoint, not a disconnected network or every HTTP error. After enabling only local intake, the EN mobile form acknowledged receipt and cleared its fields. The isolated database now also contains synthetic row 2, pending with zero attempts; SMTP and retention stayed disabled throughout this follow-up. Do not enable delivery on this review database without inspecting its synthetic queue.
+
+The EN/PT mobile inbox displayed both rows and the new message detail. Logout returned to login; device emulation and DevTools were then closed. API intake and the frontend form flag were restored to false. No additional email or deployment occurred.
+
+The new API ContactSchedulerTests integration test passed against a disposable PostgreSQL Testcontainer. Spring scheduled the real worker with a shortened test-only polling delay; the real notifier used a mocked JavaMailSender. Without invoking the worker from the test, the row moved through sending to sent with one attempt and a timestamp. This verifies scheduling wiring with simulated transport; the earlier check separately verified real SMTP. Normal polling defaults and application code did not change.
+
+Remaining release checks include session expiry while an inbox is open, conflicts between tabs, disconnected-network behavior and the production proxy/retention/backup configuration. These local checks do not authorize public intake or deployment.

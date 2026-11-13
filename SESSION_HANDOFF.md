@@ -1,5 +1,13 @@
 # Retomada — 2026-11-11
 
+## Continuidade — celular e agendador validados em 13/11
+
+- Complementa os registros anteriores: formulário e inbox inspecionados no Chrome em 360 CSS px, EN/PT e temas claro/escuro. Lista, detalhe, ações, campos e feedback legíveis; sem ajuste funcional necessário. Emulação de navegador, não aparelho físico.
+- Com recebimento da API desligado, os formulários EN/PT exibiram erro real e preservaram nome, e-mail e mensagem. Com apenas o recebimento local ligado, formulário EN confirmou aceite e limpou campos. Nova linha sintética id=2 no banco `portfolio_e2e_20261113_0110`, pending/attempts=0. Linha id=1 continua sent/attempts=1. Não ligar SMTP nesse banco sem revisar a fila; nenhum novo e-mail enviado.
+- Novo ContactSchedulerTests da API aprovado (1 teste): Spring dispara o worker real automaticamente, PostgreSQL Testcontainers e JavaMailSender simulado; observa sending e sent com uma tentativa. Nenhuma chamada manual ao worker no teste. Código funcional e polling padrão inalterados; suítes completas anteriores não foram repetidas.
+- Logout móvel concluído; DevTools/emulação fechados. API restaurada PID 23868 em loopback:8080, mesmo banco isolado, recebimento/SMTP/retenção false; Astro PID 24868 com PUBLIC_CONTACT_ENABLED=false. Revalidar PIDs antes de usar. Sem deploy ou mudanças na main.
+- Restam revisão de expiração com inbox aberto, conflito entre abas, rede desconectada e preparação de proxy/retenção/backup antes do lançamento. Publicação automática e Recomendações seguem pendentes.
+
 ## Continuidade — fluxo local integrado validado em 13/11
 
 - João confirmou recebimento do teste SMTP #0 nos dois destinos e autorizou seguir com o fluxo completo local. Usado banco separado `portfolio_e2e_20261113_0110`, criado sem tocar no banco habitual `portfolio`; seis migrações aplicadas.
