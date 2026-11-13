@@ -1,5 +1,12 @@
 # Retomada — 2026-11-11
 
+## Continuidade — restauração isolada e API atualizada em 13/11
+
+- BackupRestoreTests exporta pg_dump real de um PostgreSQL descartável e restaura em outro, com imagem sintética copiada separadamente. Confere oito migrações/Flyway, dados capturados apesar de mudanças posteriores na origem, contrato EN/PT de recomendação, revisão/capa, contador/fila, identity e FK. Não é backup externo da VM; checklist manual em portfolio-api/docs/backup-restore.md.
+- Falha intermitente em fixture de ContactDeliveryTests reproduzida 53/100 vezes com attempts=0; fixture explicitamente vencida passou 100/100. Removido diagnóstico temporário e adicionado teste de mensagem futura não elegível. Worker de produção intacto. Suíte completa final: 133 testes, zero falhas/erros/ignorados. API a965d5c e 310eaa5 enviados na feat/v2.
+- JAR empacotado e processo local antigo PID4472 parado após verificar porta/JAR. Novo PID21784, timeout30m, banco isolado portfolio_e2e_20261113_0110 atualizado até V8; health UP. Intake/mail/retention/visits/publication/profile-card false, tokens de dispatch/card e Gemini esvaziados apenas no processo de revisão. GET público Recomendações vazio e publicação anônima 401. Banco habitual e VM intactos.
+- Próximo imediato: revisão autenticada do status novo no navegador; ainda não registrar como validada. Depois demais checks locais, credenciais reais/infraestrutura manual e lançamento conjunto conforme autorização. Nenhuma alteração em main, e-mail novo, cota Gemini ou deploy.
+
 ## Continuidade — fila de publicação e Lighthouse em 13/11
 
 - Publicação preparada na API 20330df e site f0aa667, ambos enviados à feat/v2. V8 registra geração na mesma transação de selecionar/retirar cópia; salvar/arquivar rascunho não dispara. Lease de 2 min, envio fora da transação, coalescência, falha espera 5 min, agendador 30 s; flag PORTFOLIO_PUBLICATION_ENABLED false por padrão. Destino fixo publication-v2.yml/ref feat/v2, nenhum token/run/workflow criado. Aceitação pelo GitHub não significa build/deploy concluído; manifestos continuam sendo a prova por item.

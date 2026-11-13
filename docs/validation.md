@@ -21,6 +21,16 @@ An additional label-content/name audit exposed the header's visible `JA` initial
 
 After these corrections, the real bilingual static-build integration test passed. Astro checking reported zero errors, warnings or hints, and the final static render produced 29 pages. These audits are not screen-reader testing, physical-device testing, authenticated admin-browser testing or production performance measurements. The simple local server lacks production caching and security-header configuration, so its cache/header suggestions must not be mistaken for verified production defects.
 
+## Backup and timing follow-up — 2026-11-13
+
+The API now includes `BackupRestoreTests`: a real custom-format `pg_dump` exported from one disposable PostgreSQL 18 container and restored with `pg_restore` into a second independent container. A synthetic image was backed up separately; the source image/message/counter were changed after capture. The restored data retained the captured values, bilingual recommendation record/revision, queue generations, valid identity sequence and foreign-key constraint. Flyway validated all eight restored migrations with no pending migration; the image passed the real storage integrity/decoding check.
+
+The expanded suite exposed an intermittent delivery-test assumption about a just-created row already being due. A temporary 100-repeat probe reproduced 53 failures with zero SMTP attempts; making the fixture explicitly overdue produced 100 successful repeats. Temporary instrumentation was removed, and a separate future-schedule regression was added. Production delivery code did not change. The complete API suite then passed 133 tests, zero failures/errors/skips. API commits `a965d5c` and `310eaa5` were pushed to `feat/v2`.
+
+The tested JAR was packaged and the verified older local review process was replaced. Review API PID 21784 started with a 30-minute session and intake, SMTP, retention, visits, publication dispatch and profile card disabled; health was UP. The isolated review database received V8, while the habitual database and VM were preserved. Anonymous publication-status access returned 401 and the public recommendation catalogue remained empty. Revalidate PID/runtime settings before future work.
+
+This is not proof of an external production backup, remote disaster recovery or a configured backup schedule. No real contact archive, email, provider request or deployment was created. The API's `docs/backup-restore.md` records the manual external-backup acceptance checklist. Authenticated browser review of the new publication status remains pending at this checkpoint.
+
 ## Remaining acceptance work
 
 - Real assistant responses, source fidelity and exact fallback: Gemini key is absent from the inspected Windows user/process environment and existing IntelliJ run configuration. No key was created or exposed.
