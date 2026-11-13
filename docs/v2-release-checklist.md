@@ -8,12 +8,13 @@ This is the ordered remaining acceptance work, not authorization to deploy. Both
 - [ ] Complete project-edit conflict checks across tabs and remaining disconnected-network, keyboard, focus and reduced-motion interactions. Keep automated session tests distinct from browser evidence.
 - [ ] Review actual recommendation content/covers and the intended resume PDF, then check their performance and accessibility. Empty-catalogue scores do not cover loaded media.
 - [ ] Run the planned two-instance/concurrency exercise only locally, with synthetic data and outbound email/provider/dispatch features disabled. Record resource use and limitations; do not target production.
-- [ ] Run Java advisory and source/CodeQL analysis, review findings and record actual results. Frontend npm audit reported zero known vulnerabilities on 2026-11-13. Weekly npm/Actions/Maven monitoring is prepared, not active. See [dependency security](dependency-security.md).
+- [x] Run resolved Maven advisory checks and V2 CodeQL analysis, review findings and record results. Guava was updated; repeat OSV query had no matches. Fixes/triage and scope are in [dependency security](dependency-security.md). Dependabot version monitoring remains prepared, not active.
 
 ## 2. Verify real integrations
 
 - [ ] Configure the Gemini key privately and audit real EN/PT answers, source fidelity and exact insufficient-knowledge/error behavior. Do not include keys or private contact data in prompts, logs or notes.
-- [ ] Configure the profile-card token privately, verify the fixed public GitHub query/cache/fallback and obtain João's visual approval. Profile README integration waits for the authorized release.
+- [x] Verify a real public card query/parse/render locally using existing authorized CLI authentication in memory only. This did not configure a deployment token or test live scheduled failure/recovery.
+- [ ] Configure a dedicated minimal card deployment credential, check live refresh/cache/fallback and obtain João's visual approval. Profile README integration waits for the authorized release.
 - [ ] Complete the receiving-workflow handoff and live publication checks when release authorization permits default-branch registration. Verify project and recommendation manifests against selected revisions, failed builds and rollback. Dispatch acceptance alone is not publication. See [publication](publication.md).
 
 ## 3. Manual infrastructure acceptance — João
