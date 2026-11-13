@@ -22,7 +22,11 @@ This lookup belongs only in the authenticated admin. It must not add runtime req
 
 Reference: https://developers.google.com/books/docs/v1/using
 
-The static page, source validation, image download and build manifest are implemented. The sibling `portfolio-api` repository now implements draft persistence, separate selected copies and private image upload. The admin editor and Google Books search remain pending. The page is not yet linked in the main navigation. No personal recommendations have been invented or seeded; synthetic fixtures exist only for tests.
+The static page, source validation, image download and build manifest are implemented. The sibling `portfolio-api` repository implements draft persistence, separate selected copies and private image upload. The EN/PT admin editor is available at `/{locale}/admin/recommendations/`, linked from the existing project/inbox workspace. Google Books search remains pending. The public page is not yet linked in the main navigation. No personal recommendations have been invented or seeded; synthetic fixtures exist only for tests.
+
+The editor saves drafts, uploads covers, archives/restores items and selects/withdraws public copies. It displays selected versus built revisions and blocks publication changes while the form has unsaved edits. Opening another item or closing a dirty editor requires an explicit discard choice. Uploaded files remain unattached until the draft is saved.
+
+Session expiry and logout clear private fields, image sources, lists and dialogs. A generation guard rejects responses arriving after logout, including delayed CSRF and manifest responses. Session checks run every 30 seconds while visible; cached navigation clears private state before revalidating. The shared request client invokes the transport without an object receiver, avoiding the browser's `Illegal invocation` error. This failure was reproduced in a regression test and the authenticated editor was verified in Chrome after the fix. PT/mobile and manual save/upload review are still pending.
 
 Backend implementation must preserve separate draft and selected-publication copies. Saving or archiving a draft must not change its selected public copy. Image files belong outside the database, and unpublished uploads must remain private. Production storage and deployment remain separate infrastructure steps.
 
