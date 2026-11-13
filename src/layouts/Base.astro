@@ -13,6 +13,7 @@ import {
 	type Locale,
 } from '../i18n/ui';
 import Assistant from '../components/Assistant.astro';
+import VisitCounter from '../components/VisitCounter.astro';
 import { rioDate } from '../lib/calendar';
 import { getContacts } from '../lib/content';
 
@@ -235,6 +236,7 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 				</nav>
 			</div>
 			<p class="footer-note">© {rioDate().slice(0, 4)} João Abreu · {t('footer.note')}</p>
+			{!standalone && <VisitCounter locale={locale} />}
 		</footer>
 		<script>
 			import '../scripts/theme';

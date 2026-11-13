@@ -52,6 +52,7 @@ src/
   components/Handoff.astro       what each pipeline stage receives and hands on
   components/ContactForm.astro   contact form (PUBLIC_CONTACT_ENABLED stays false by default)
   components/ContactIcon.astro   contact channel icons
+  components/VisitCounter.astro  optional approximate-visit footer, excluded from admin and 404
   scripts/theme.ts          light/dark switch with a circular reveal (View Transitions API)
   scripts/loader.ts         intro loader on entry and reload; the percentage follows real milestones
   scripts/scroll-fx.ts      progress bar, see-through header over the wallpaper, reveal on scroll
@@ -63,6 +64,8 @@ src/
   scripts/admin.ts          GitHub session, CSRF, project drafts and private contact inbox
   lib/contact.ts            same-origin CSRF contact client and acknowledged receipt
   scripts/contact.ts        optional contact submission, retry keys and bilingual feedback
+  lib/visits.ts             same-origin CSRF visit registration and validated real total
+  scripts/visits.ts         optional public-page tracking after load; hides unavailable totals
   styles/admin.css          responsive light/dark admin styles
   pages/admin.astro         static entry to /en/admin/
   pages/[locale]/admin.astro  EN/PT project drafts and inbox; excluded from the sitemap

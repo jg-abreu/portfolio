@@ -1,5 +1,15 @@
 # Retomada — 2026-11-11
 
+## Continuidade — contador implementado em 13/11
+
+- API ganhou módulo visits, condicionado a PORTFOLIO_VISITS_ENABLED=true (padrão false): GET total e POST com CSRF retornando total/counted, no-store. HMAC-SHA256 dos bytes canônicos do IP, janela de 30 min sem reiniciar a espera, UPSERT e incremento do total na mesma transação. Limpeza a cada minuto de hashes vencidos, sem zerar total; tabelas V2 reutilizadas.
+- DIRECT ignora headers; CLOUDFLARE_PROXY exige CIDRs explícitos do peer nginx/Docker e da Cloudflare, valida X-Real-IP sobrescrito e CF-Connecting-IP literal. Exige server.forward-headers-strategy=NONE quando ligado. Não habilitar atrás do proxy sem conferir a cadeia real. Chave privada >=32 caracteres, sem valor real criado/gravado nesta etapa. Bots óbvios ignorados por heurística; visitas não equivalem a pessoas únicas.
+- Site: rodapé opcional PUBLIC_VISITS_ENABLED=true, só páginas públicas, exclui admin/404. Espera load, usa CSRF, valida total real e localiza número; erros deixam contador oculto. Nenhum identificador/path enviado ou localStorage usado pelo contador. Padrão continua false.
+- API verify completo aprovado com 93 testes; depois adicionada verificação HTTP real com cookie/CSRF e repetição sem duplicação, e suíte focada do contador passou 8 testes. Não chamar de execução completa de 94 testes: a rodada final de 8 foi focada. Um teste antigo de outbox agora marca a fixture explicitamente vencida antes de testar reenvio; comportamento do worker intacto.
+- Site 42 testes aprovados e build 25 páginas, astro check sem erros/avisos/dicas. Integração do build liga flag para conferir marcador em artigos e ausência em admin/404; build normal restaurado desligado. Rodapé numérico habilitado ainda sem revisão visual específica.
+- API local restaurada PID 22824 (revalidar), JAR contém contador, sessão 30 min, visitas/intake/SMTP/retenção false. Health UP e GET /api/visits=404 confirmados com feature desligada. Astro PID 24868, contato/contador desligados. Nenhuma modificação na VM/main, envio de e-mail ou deploy.
+- Próxima etapa grande: Recomendações com imagens fora do banco, rascunhos/cópias públicas EN/PT e controle no admin. Depois publicação automática, revisão do assistente e verificações finais (inclui carga/balanceamento só local), backup/restauração e configuração de proxy/retenção/segredos antes do lançamento. João pediu execução contínua, parando somente em ponto seguro próximo do limite; não pedir nova autorização para o trabalho já autorizado.
+
 ## Continuidade — blog interno concluído em 13/11
 
 - Cards do blog abrem páginas próprias em /en/blog/{slug}/ e /pt/blog/{slug}/. Corpo completo importado automaticamente do DEV no build, com texto original EN/PT dos dois artigos existentes. Sem requisição da API DEV no navegador; imagens continuam no CDN existente.

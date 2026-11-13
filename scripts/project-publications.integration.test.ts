@@ -44,7 +44,7 @@ test('builds bilingual project and blog pages and preserves selected copies on f
     fail = true;
     await assert.rejects(run(['scripts/project-publications.ts'], env), /503/);
     assert.equal(await readFile(snapshotPath, 'utf8'), selected);
-    await run(['node_modules/astro/bin/astro.mjs', 'build']);
+    await run(['node_modules/astro/bin/astro.mjs', 'build'], { ...process.env, PUBLIC_VISITS_ENABLED: 'true' });
     const en = await readFile('dist/en/projects/publication-test-only/index.html', 'utf8');
     const pt = await readFile('dist/pt/projects/publication-test-only/index.html', 'utf8');
     assert.match(en, /Publication integration test/);
@@ -53,9 +53,12 @@ test('builds bilingual project and blog pages and preserves selected copies on f
     for (const locale of ['en', 'pt']) {
       const blog = await readFile(`dist/${locale}/blog/local-article-test/index.html`, 'utf8');
       assert.match(blog, /<strong>Local Markdown body<\/strong>/);
+      assert.match(blog, /data-visits(?:\s|=|>)/);
       assert.match(blog, new RegExp(`/${locale}/blog/`));
       assert.match(await readFile(`dist/${locale}/blog/index.html`, 'utf8'), new RegExp(`/${locale}/blog/local-article-test/`));
     }
+    assert.doesNotMatch(await readFile('dist/404.html', 'utf8'), /data-visits(?:\s|=|>)/);
+    assert.doesNotMatch(await readFile('dist/en/admin/index.html', 'utf8'), /data-visits(?:\s|=|>)/);
     assert.match(await readFile('dist/en/projects/index.html', 'utf8'), /publication-test-only/);
     const manifest = JSON.parse(await readFile('dist/project-publications.json', 'utf8'));
     assert.deepEqual(manifest.projects, [{ projectId: project.projectId, revision: project.revision }]);
