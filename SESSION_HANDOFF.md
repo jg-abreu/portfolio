@@ -1,5 +1,10 @@
 # Retomada — 2026-11-11
 
+## Continuidade — monitoramento Maven preparado em 13/11
+
+- API 73b1487 enviado à feat/v2: Dependabot Maven semanal para pom raiz, PRs de versão para feat/v2, limite 3, minor/patch agrupados, sem automerge. YAML/destino conferidos; README aponta docs/dependency-security.md. Nenhuma versão/dependência alterada, nenhuma análise Java/CVE ou CodeQL executada.
+- Configuração só na branch V2: não ativa no GitHub enquanto ausente da branch padrão. No lançamento autorizado revisar destino de manutenção e comprovar run real. Security updates usam branch padrão/configuração própria, não alteradas. Main/VM/deploy preservados. Ponto seguro; não iniciar etapa pesada perto do limite pedido pelo João.
+
 ## Continuidade — dependências do frontend em 13/11
 
 - npm audit --json consultou registry com sucesso: zero vulnerabilidades conhecidas em todas as severidades, 346 dependências reportadas. Não é auditoria Java, CodeQL ou certificação completa do código.
