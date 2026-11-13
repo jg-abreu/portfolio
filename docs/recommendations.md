@@ -22,7 +22,7 @@ This lookup belongs only in the authenticated admin. It must not add runtime req
 
 Reference: https://developers.google.com/books/docs/v1/using
 
-The static page, source validation, image download and build manifest are implemented. The API endpoints, database persistence, private image upload and admin editor are pending. The page is not yet linked in the main navigation. No personal recommendations have been invented or seeded; synthetic fixtures exist only for tests.
+The static page, source validation, image download and build manifest are implemented. The sibling `portfolio-api` repository now implements draft persistence, separate selected copies and private image upload. The admin editor and Google Books search remain pending. The page is not yet linked in the main navigation. No personal recommendations have been invented or seeded; synthetic fixtures exist only for tests.
 
 Backend implementation must preserve separate draft and selected-publication copies. Saving or archiving a draft must not change its selected public copy. Image files belong outside the database, and unpublished uploads must remain private. Production storage and deployment remain separate infrastructure steps.
 
