@@ -36,6 +36,15 @@ test('recommendations reject duplicates and invalid versions or categories', () 
   const value = item(); value.data.category = 'OTHER'; assert.throws(() => parse(value));
 });
 
+test('book covers retain only a valid Google reference and cannot also contain a local image', () => {
+  const value = item();
+  const data = { ...value.data, imageKey: '', googleBooksId: 'synthetic-edition' };
+  assert.equal(parse({ ...value, data }).recommendations[0].data.googleBooksId, 'synthetic-edition');
+  assert.throws(() => parse({ ...value, data: { ...data, googleBooksId: '../unsafe' } }));
+  assert.throws(() => parse({ ...value, data: { ...data, imageKey: value.data.imageKey } }));
+  assert.throws(() => parse({ ...value, data: { ...data, category: 'TOOLS' } }));
+});
+
 test('recommendations accept only HTTPS or explicit local sources', () => {
   for (const source of ['http://example.com/api/recommendations', 'https://user:password@example.com/api', 'file:///private', 'https://example.com/#fragment'])
     assert.throws(() => recommendationSource(source));

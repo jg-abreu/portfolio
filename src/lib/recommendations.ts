@@ -6,6 +6,7 @@ export type RecommendationData = {
   slug: string;
   category: RecommendationCategory;
   imageKey: string;
+  googleBooksId?: string;
   url: string;
   displayOrder: number;
   en: RecommendationCopy;
@@ -56,9 +57,12 @@ export function parseRecommendationSnapshot(value: unknown): RecommendationSnaps
       || !text(item.revision, 36) || !/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/.test(item.revision)
       || !record(item.data)) throw new Error('Invalid recommendation publication');
     const data = item.data;
-    if (!text(data.slug, 100) || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(data.slug)
+    const googleBooksId = data.googleBooksId ?? '';
+    if (!text(googleBooksId, 100, false) || (googleBooksId !== '' && !/^[A-Za-z0-9_-]{1,100}$/.test(googleBooksId))
+      || !text(data.slug, 100) || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(data.slug)
       || !recommendationCategories.includes(data.category as RecommendationCategory)
-      || !text(data.imageKey, 68) || !/^[0-9a-f]{64}\.png$/.test(data.imageKey)
+      || !text(data.imageKey, 68, false)
+      || (googleBooksId ? data.imageKey !== '' || data.category !== 'BOOKS' : !/^[0-9a-f]{64}\.png$/.test(data.imageKey))
       || !optionalLink(data.url) || !Number.isSafeInteger(data.displayOrder) || Number(data.displayOrder) < 0
       || ids.has(Number(item.recommendationId)) || slugs.has(data.slug) || revisions.has(item.revision))
       throw new Error('Invalid or duplicate recommendation');
@@ -70,7 +74,7 @@ export function parseRecommendationSnapshot(value: unknown): RecommendationSnaps
     return {
       recommendationId: Number(item.recommendationId), revision: item.revision, draftVersion: Number(item.draftVersion),
       data: { slug: data.slug, category: data.category as RecommendationCategory, imageKey: data.imageKey,
-        url: data.url, displayOrder: Number(data.displayOrder), en, pt },
+        ...(googleBooksId ? { googleBooksId } : {}), url: data.url, displayOrder: Number(data.displayOrder), en, pt },
     };
   });
   recommendations.sort((a, b) => recommendationCategories.indexOf(a.data.category) - recommendationCategories.indexOf(b.data.category)

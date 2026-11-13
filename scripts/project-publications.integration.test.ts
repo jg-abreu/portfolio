@@ -29,6 +29,9 @@ test('builds bilingual project and blog pages and preserves selected copies on f
     data: { slug: 'synthetic-book', category: 'BOOKS', imageKey, url: 'https://example.com/book', displayOrder: 0,
       en: { title: 'Synthetic recommendation', description: '<script>unsafe()</script>', imageAlt: 'Synthetic cover' },
       pt: { title: 'Recomendação de teste', description: 'Somente teste.', imageAlt: 'Capa de teste' } } };
+  const bookRecommendation = { ...recommendation, recommendationId: 987655, revision: '22345678-1234-1234-1234-123456789abc',
+    data: { ...recommendation.data, slug: 'synthetic-book-reference', imageKey: '', googleBooksId: 'synthetic-edition', displayOrder: 1 } };
+  let imageRequests = 0;
   const article = { title: 'Local article integration test', url: 'https://dev.to/joao_abreu/local-article-test',
     description: 'An article without a runtime DEV request', image: null, publishedAt: '2026-11-13',
     tags: ['java'], readingMinutes: 2, slug: 'local-article-test', bodyMarkdown: '## Full article\n\n**Local Markdown body**' };
@@ -40,13 +43,14 @@ test('builds bilingual project and blog pages and preserves selected copies on f
   let fail = false;
   const server = createServer((request, response) => {
     if (request.url?.startsWith('/api/recommendation-images/')) {
+      imageRequests++;
       response.writeHead(fail ? 503 : 200, { 'Content-Type': 'image/png' });
       response.end(image);
       return;
     }
     response.writeHead(fail ? 503 : 200, { 'Content-Type': 'application/json' });
     response.end(JSON.stringify(request.url === '/api/recommendations'
-      ? { schemaVersion: 1, recommendations: [recommendation] } : { schemaVersion: 1, projects: [project] }));
+      ? { schemaVersion: 1, recommendations: [recommendation, bookRecommendation] } : { schemaVersion: 1, projects: [project] }));
   });
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
   const address = server.address();
@@ -57,6 +61,7 @@ test('builds bilingual project and blog pages and preserves selected copies on f
     await writeFile(blogPath, JSON.stringify({ schemaVersion: 1, articles: [article] }), 'utf8');
     await run(['scripts/project-publications.ts'], env);
     await run(['scripts/recommendations-snapshot.ts'], env);
+    assert.equal(imageRequests, 1);
     const selectedRecommendations = await readFile(recommendationPath, 'utf8');
     const selected = await readFile(snapshotPath, 'utf8');
     fail = true;
@@ -76,6 +81,8 @@ test('builds bilingual project and blog pages and preserves selected copies on f
       assert.match(picks, /\/_astro\/[^" ]+\.webp/);
       assert.doesNotMatch(picks, /<script>unsafe\(\)<\/script>/);
       assert.doesNotMatch(picks, /<iframe/);
+      assert.match(picks, /https:\/\/books\.google\.com\/books\/content\?id=synthetic-edition/);
+      assert.match(picks, /poweredby\.png/);
       const blog = await readFile(`dist/${locale}/blog/local-article-test/index.html`, 'utf8');
       assert.match(blog, /<strong>Local Markdown body<\/strong>/);
       assert.match(blog, /data-visits(?:\s|=|>)/);
@@ -89,7 +96,8 @@ test('builds bilingual project and blog pages and preserves selected copies on f
     assert.deepEqual(manifest.projects, [{ projectId: project.projectId, revision: project.revision }]);
     const recommendationsManifest = JSON.parse(await readFile('dist/recommendation-publications.json', 'utf8'));
     assert.deepEqual(recommendationsManifest.recommendations, [{ recommendationId: recommendation.recommendationId,
-      revision: recommendation.revision, draftVersion: recommendation.draftVersion }]);
+      revision: recommendation.revision, draftVersion: recommendation.draftVersion }, { recommendationId: bookRecommendation.recommendationId,
+      revision: bookRecommendation.revision, draftVersion: bookRecommendation.draftVersion }]);
   } finally {
     await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
     await writeFile(snapshotPath, previous, 'utf8');

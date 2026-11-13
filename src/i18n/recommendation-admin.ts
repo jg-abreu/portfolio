@@ -19,6 +19,13 @@ const en = {
   unsaved: 'Save your changes before changing the selected public copy or draft status.',
   discardTitle: 'Discard unsaved changes?', discard: 'Discard changes', keep: 'Keep editing',
   invalidFile: 'Choose a PNG or JPEG file no larger than 2 MiB.',
+  bookQuery: 'Book title or ISBN', bookSearch: 'Search Books', bookResults: 'Google Books search results',
+  bookEmpty: 'No books found. Try including the author or ISBN.', bookChoose: 'Use this cover',
+  bookMissing: 'No cover available for this edition.', bookSelected: 'Book cover selected. Save the draft to keep it.',
+  bookUnavailable: 'Book search is unavailable. Check the API configuration or try again later.',
+  bookWait: 'Wait a moment before searching again. The provider may also have reached its quota.',
+  bookOpen: 'View on Google Books', bookHelp: 'Choose the correct edition. The cover remains hosted by Google Books.',
+  poweredBy: 'Powered by Google',
 };
 export type RecommendationAdminLabels = { [K in keyof typeof en]: string };
 const pt: RecommendationAdminLabels = {
@@ -42,5 +49,12 @@ const pt: RecommendationAdminLabels = {
   unsaved: 'Salve suas alterações antes de mudar a cópia pública ou o status do rascunho.',
   discardTitle: 'Descartar alterações não salvas?', discard: 'Descartar alterações', keep: 'Continuar editando',
   invalidFile: 'Escolha um arquivo PNG ou JPEG de até 2 MiB.',
+  bookQuery: 'Título do livro ou ISBN', bookSearch: 'Pesquisar livros', bookResults: 'Resultados de pesquisa do Google Books',
+  bookEmpty: 'Nenhum livro encontrado. Tente incluir o autor ou ISBN.', bookChoose: 'Usar esta capa',
+  bookMissing: 'Esta edição não tem capa disponível.', bookSelected: 'Capa do livro selecionada. Salve o rascunho para mantê-la.',
+  bookUnavailable: 'A busca de livros está indisponível. Confira a configuração da API ou tente mais tarde.',
+  bookWait: 'Espere um momento antes de pesquisar novamente. A cota do provedor também pode ter sido atingida.',
+  bookOpen: 'Ver no Google Books', bookHelp: 'Escolha a edição correta. A capa permanece hospedada no Google Books.',
+  poweredBy: 'Powered by Google',
 };
 export const recommendationAdminUi = { en, pt };

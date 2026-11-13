@@ -22,7 +22,7 @@ export default defineConfig({
 				"base-uri 'none'",
 				"object-src 'none'",
 				"form-action 'none'",
-				"img-src 'self' https://avatars.githubusercontent.com https://media2.dev.to",
+				"img-src 'self' https://avatars.githubusercontent.com https://media2.dev.to https://books.google.com",
 				"font-src 'self'",
 				"connect-src 'self' https://api.github.com https://github-contributions-api.jogruber.de",
 			],

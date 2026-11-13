@@ -10,7 +10,7 @@ const data = new URL('../src/data/', import.meta.url);
 await mkdir(assets, { recursive: true });
 await mkdir(data, { recursive: true });
 if (source) {
-  for (const key of new Set(snapshot.recommendations.map(item => item.data.imageKey))) {
+  for (const key of new Set(snapshot.recommendations.map(item => item.data.imageKey).filter(Boolean))) {
     const bytes = await fetchRecommendationImage(source, key);
     const temporary = new URL(`${key}.tmp`, assets);
     await writeFile(temporary, bytes);

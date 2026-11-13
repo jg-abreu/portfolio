@@ -12,6 +12,7 @@ export function isRecommendationDraft(value: unknown): value is RecommendationDr
   return text(data.slug, 100) && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(data.slug)
     && recommendationCategories.includes(data.category as typeof recommendationCategories[number])
     && text(data.imageKey, 68) && /^(?:|[0-9a-f]{64}\.png)$/.test(data.imageKey)
+    && (data.googleBooksId == null || (text(data.googleBooksId, 100) && /^(?:|[A-Za-z0-9_-]{1,100})$/.test(data.googleBooksId)))
     && text(data.url, 1000) && integer(data.displayOrder)
     && ['en', 'pt'].every(locale => {
       const copy = data[locale];
