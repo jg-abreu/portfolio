@@ -41,6 +41,8 @@ src/
   lib/content.ts            merges and cross-checks content; fails the build if locales diverge
   lib/github-data.ts        endpoints, types and validators for GitHub and DEV data (shared by build and browser)
   lib/github.ts             reads and revalidates the snapshot at build time (null parts = no data, never invented)
+  lib/blog.ts               validates and synchronizes the configured author's full DEV articles
+  lib/blog-data.ts          reads the public article snapshot for static page generation
   layouts/Base.astro        <html lang>, hreflang, Open Graph, CSP-hashed head scripts, palette tokens, wallpapers,
                             intro loader, header pill, footer, page transitions
   components/Heatmap.astro       year of contributions, GitHub-style
@@ -68,6 +70,9 @@ src/
   pages/404.astro           bilingual 404 (noindex); nginx should serve it with `error_page 404 /404.html`
   pages/[locale]/           Home, Projects, Pipeline, Blog, Resume and Contact, generated for every locale
   pages/[locale]/projects/[id].astro  page for every listed project (problem, decisions, result, case study)
+  pages/[locale]/blog/[slug].astro  internal static article reader; EN/PT UI, original published Markdown
+scripts/blog-snapshot.ts    fetches full DEV article bodies after the metadata snapshot; bounded downloads,
+                            cached-copy fallback, no browser DEV API request (see docs/blog.md)
 scripts/github-snapshot.ts  build-time fetch of profile, repos, contributions, practice commits, DEV articles and
                             project repository roots; each source keeps its previous value if it fails
                             (run by `npm run build`; uses GITHUB_TOKEN if set)

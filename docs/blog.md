@@ -1,0 +1,13 @@
+# Internal blog
+
+The blog index opens static article pages at /en/blog/{slug}/ and /pt/blog/{slug}/. Reading requires no DEV API request, iframe, popup script or API connection in the visitor's browser. Covers and supported inline images still use the existing DEV image CDN. The locale switch preserves the article route. The article text stays in its original published language.
+
+Every build runs the GitHub/DEV metadata snapshot, then npm run blog. The second step fetches the full Markdown from the configured author's published DEV article-by-path endpoint. No API key or new service is needed. Only dev.to/joao_abreu URLs, matching author/detail identities and bounded bodies are accepted. Reference: https://developers.forem.com/api/v1#tag/articles/operation/getArticleByPath
+
+Generated src/data/blog-snapshot.json is ignored by Git and contains only public article data. If an update fails, a complete cached copy of that article is retained. A confirmed empty article list removes old entries; explicit 404/410 detail responses remove the corresponding article. A first fetch with no readable body or an unknown list without cache fails the build before replacing its snapshot, so an automated deployment can leave the existing release intact. A fresh CI checkout has no previous local cache unless the deployment process explicitly restores one; do not claim cross-run caching is already configured.
+
+Downloads use four requests at a time, a 10-second request timeout, a 45-second shared budget and a 2 MB response bound. Bodies are bounded to 200,000 characters. This phase follows the existing 100-article metadata limit.
+
+The existing Markdown renderer is reused with a separate article mode. Raw HTML/scripts/iframes are not executed; links require credential-free HTTPS. Supported image hosts, including images in João's own raw GitHub repositories, use DEV's existing image proxy and no-referrer, with lazy loading. Other image sources degrade to alt text. Forem Liquid embeds are not executed. Code blocks and tables scroll within their containers. The article has one page-level h1; imported h1 headings become h2.
+
+The current build fetched both real articles and generated four article pages. Tests cover author/path validation, cache preservation, removal, malformed bodies, unsafe Markdown/images and actual EN/PT HTML generation with local card links. The complete site suite passed 39 tests; Astro check and the static build passed. Chrome review opened an article through a local card, checked text and an imported diagram, reviewed 360-pixel reading and horizontally scrollable code, both themes and the locale switch preserving the article. DevTools was closed afterward. No deployment is part of this change.

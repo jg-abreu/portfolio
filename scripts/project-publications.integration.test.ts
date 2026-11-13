@@ -15,9 +15,14 @@ function run(args: string[], env = process.env) {
   });
 }
 
-test('builds bilingual static pages from the API and preserves the snapshot on fetch failure', async () => {
+test('builds bilingual project and blog pages and preserves selected copies on fetch failure', async () => {
   const snapshotPath = 'src/data/project-publications.json';
   const previous = await readFile(snapshotPath, 'utf8');
+  const blogPath = 'src/data/blog-snapshot.json';
+  const previousBlog = await readFile(blogPath, 'utf8').catch(() => '{"schemaVersion":1,"articles":[]}');
+  const article = { title: 'Local article integration test', url: 'https://dev.to/joao_abreu/local-article-test',
+    description: 'An article without a runtime DEV request', image: null, publishedAt: '2026-11-13',
+    tags: ['java'], readingMinutes: 2, slug: 'local-article-test', bodyMarkdown: '## Full article\n\n**Local Markdown body**' };
   const copy = { title: 'Publication integration test', tagline: 'Bilingual static content', problem: 'A problem',
     decisions: 'One decision\nAnother decision', result: 'A result', body: '## Case study\n\n**Saved Markdown**' };
   const project = { projectId: 987654, revision: '12345678-1234-1234-1234-123456789abc',
@@ -33,6 +38,7 @@ test('builds bilingual static pages from the API and preserves the snapshot on f
   assert.ok(address && typeof address !== 'string');
   const env = { ...process.env, PROJECTS_API_URL: `http://127.0.0.1:${address.port}/api/projects` };
   try {
+    await writeFile(blogPath, JSON.stringify({ schemaVersion: 1, articles: [article] }), 'utf8');
     await run(['scripts/project-publications.ts'], env);
     const selected = await readFile(snapshotPath, 'utf8');
     fail = true;
@@ -44,12 +50,19 @@ test('builds bilingual static pages from the API and preserves the snapshot on f
     assert.match(en, /Publication integration test/);
     assert.match(en, /<strong>Saved Markdown<\/strong>/);
     assert.match(pt, /Teste de publicação/);
+    for (const locale of ['en', 'pt']) {
+      const blog = await readFile(`dist/${locale}/blog/local-article-test/index.html`, 'utf8');
+      assert.match(blog, /<strong>Local Markdown body<\/strong>/);
+      assert.match(blog, new RegExp(`/${locale}/blog/`));
+      assert.match(await readFile(`dist/${locale}/blog/index.html`, 'utf8'), new RegExp(`/${locale}/blog/local-article-test/`));
+    }
     assert.match(await readFile('dist/en/projects/index.html', 'utf8'), /publication-test-only/);
     const manifest = JSON.parse(await readFile('dist/project-publications.json', 'utf8'));
     assert.deepEqual(manifest.projects, [{ projectId: project.projectId, revision: project.revision }]);
   } finally {
     await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
     await writeFile(snapshotPath, previous, 'utf8');
+    await writeFile(blogPath, previousBlog, 'utf8');
     await run(['node_modules/astro/bin/astro.mjs', 'build']);
   }
 });

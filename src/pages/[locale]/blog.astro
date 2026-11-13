@@ -1,10 +1,8 @@
 ---
-// Blog, modeled on developer.org.tr: João's published DEV articles from the build snapshot, as
-// cards with the post image, title, tags and date. Each card links to the article on DEV; the body
-// is never copied here. A new article shows up on the next build (every push and once a day).
 import Base from '../../layouts/Base.astro';
+import { getRelativeLocaleUrl } from 'astro:i18n';
 import { localeTags, locales, useTranslations, type Locale } from '../../i18n/ui';
-import { getGitHubSnapshot } from '../../lib/github';
+import { getBlogArticles } from '../../lib/blog-data';
 import { DEVTO_USER } from '../../lib/github-data';
 
 export function getStaticPaths() {
@@ -14,7 +12,7 @@ export function getStaticPaths() {
 const locale = Astro.params.locale as Locale;
 const t = useTranslations(locale);
 const dateFormat = new Intl.DateTimeFormat(localeTags[locale], { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' });
-const articles = getGitHubSnapshot()?.articles ?? [];
+const articles = getBlogArticles();
 ---
 
 <Base title={`${t('nav.blog')} - João Abreu`} description={t('blog.body')}>
@@ -35,7 +33,7 @@ const articles = getGitHubSnapshot()?.articles ?? [];
 								</div>
 							)}
 							<h2>
-								<a href={a.url}>{a.title}</a>
+								<a href={getRelativeLocaleUrl(locale, `blog/${a.slug}/`)}>{a.title}</a>
 							</h2>
 							{a.tags.length > 0 && (
 								<ul class="tags">
@@ -51,7 +49,7 @@ const articles = getGitHubSnapshot()?.articles ?? [];
 									</svg>
 									<time datetime={a.publishedAt}>{dateFormat.format(new Date(`${a.publishedAt}T00:00:00Z`))}</time>
 								</span>
-								{a.readingMinutes > 0 && <span>{t('blog.minutes').replace('{n}', String(a.readingMinutes))}</span>}
+								{a.readingMinutes > 0 && <span>{t('blog.minutes').replace('{n}', new Intl.NumberFormat(localeTags[locale]).format(a.readingMinutes))}</span>}
 							</p>
 						</li>
 					))}

@@ -1,5 +1,14 @@
 # Retomada — 2026-11-11
 
+## Continuidade — blog interno concluído em 13/11
+
+- Cards do blog abrem páginas próprias em /en/blog/{slug}/ e /pt/blog/{slug}/. Corpo completo importado automaticamente do DEV no build, com texto original EN/PT dos dois artigos existentes. Sem requisição da API DEV no navegador; imagens continuam no CDN existente.
+- Novo scripts/blog-snapshot.ts após snapshot de metadados: valida autor/URL/corpo, baixa com limites e grava snapshot público ignorado pelo Git. Falha mantém cópia anterior completa; ausência de corpo/cópia no primeiro carregamento bloqueia o build para preservar o release atual. CI novo não tem cache entre execuções configurado; ver docs/blog.md.
+- Renderização usa o parser já existente: HTML executável e embeds não executados, links HTTPS, imagens de hosts permitidos e repositórios raw do próprio João pelo proxy DEV. Blocos de código e tabelas rolam dentro do conteúdo; diagrama real visível.
+- 39 testes do site aprovados, incluindo geração real das páginas EN/PT em fixture; astro check 0 erros/avisos/dicas e build final 25 páginas, quatro de artigos. Avisos de CSP/Shiki já existentes. Nenhuma mudança no deploy.
+- Chrome: card abriu artigo local, leitura de texto/diagrama/código, 360 px nos dois temas, idioma manteve o mesmo slug. Espaçamento superior ajustado. DevTools fechado e tema claro restaurado; CUA encerrou normalmente.
+- API segue correção 2d3f975, sessão normal 30 min, PID 29712 (revalidar); intake/SMTP/retenção false. Próxima etapa: contador, regra já confirmada na issue #4 e no Drive: uma visita por IP a cada 30 min, sem reiniciar espera nos acessos intermediários, todas páginas públicas menos 404. Recomendações/publicação automática e preparação do lançamento continuam pendentes.
+
 ## Continuidade — conflitos e expiração do inbox em 13/11
 
 - Conflito real entre abas revelou bug da API: despacho ERROR do Tomcat era negado pela segurança, transformando 409 em 403 e levando o front ao login. Corrigido permitindo apenas DispatcherType.ERROR; rotas normais, ADMIN e CSRF preservados. Novo ContactHttpErrorTests com HTTP/Tomcat real ficou vermelho (409 esperado, 403 recebido), depois verde; fixture de sessão somente em src/test.
