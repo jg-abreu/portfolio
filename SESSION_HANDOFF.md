@@ -1,5 +1,11 @@
 # Retomada — 2026-11-11
 
+## Continuidade — contador integrado isolado em 13/11
+
+- Revisão real em Chrome/PT com API8081/Astro4324 separados, banco sintético portfolio_visits_review_20261113, DIRECT e chave HMAC temporária só em memória. Primeiro acesso expôs Visitas aproximadas:1 na árvore de acessibilidade; reload preservou total1 e uma linha de deduplicação no PostgreSQL.
+- API temporária parada após conferir PID/JAR/porta; reload removeu contador da árvore e preservou conteúdo/rodapé. Capturas não mostraram a linha numérica: não declarar aprovação visual, largura móvel ou formato EN. Detalhes/limites em docs/visits.md. Sem mudança funcional ou testes de produção.
+- Astro4324 encerrado via comando próprio; API8080 habitual healthUP. Aba voltou ao login PT4321. Banco sintético preservado, sem exclusão; chave temporária não persistida. Todos os demais recursos da API isolada desativados. Main, VM, dispatch, e-mails e Gemini intactos.
+
 ## Continuidade — status autenticado e layout em 13/11
 
 - Login GitHub local chegou ao admin e confirmou atualizações automáticas desativadas. Encontrado bug real: PublicationStatus era terceiro filho direto do grid de duas colunas, deslocando sidebar e comprimindo título. Componente movido para dentro de studio-main.
