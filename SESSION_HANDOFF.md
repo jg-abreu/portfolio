@@ -1,5 +1,12 @@
 # Retomada — 2026-11-11
 
+## Continuidade — card SVG e README da API em 13/11
+
+- API ganhou GET /api/profile-card.svg, desativado por padrão: consulta GraphQL fixa para contribuições do último ano e último repositório público do próprio jg-abreu. Refresh em segundo plano a cada 15 min; leitura pública só usa cache. Falha mantém última leitura e data; sem leitura mostra indisponível. Cache em memória por processo, perdido no restart.
+- SVG com textos escapados, sem recursos externos, ETag/304 e cache HTTP de 5 min; token PROFILE_CARD_GITHUB_TOKEN só no servidor. Nenhum token real configurado ou consulta real feita. Flag PORTFOLIO_PROFILE_CARD_ENABLED ausente mantém rota sem controller; admin/CSRF preservados.
+- Dez testes focados aprovados; suíte completa da API passou 122 testes, zero falhas/erros/ignorados. Prévia pelo renderer real, com número/repositório sintéticos, rasterizada e inspecionada localmente; não é aprovação visual do João. Commit API 560b81f enviado à feat/v2. docs/profile-card.md registra configuração e limitações.
+- README da API criado com stack, execução local, contratos, flags, documentação e limitações verificadas. JAR da API local não foi substituído/reiniciado; banco habitual, infraestrutura, main, produção e README público do perfil intactos. Ainda faltam teste GraphQL real, aprovação visual e integração no perfil no lançamento. Próxima implementação: publicação automática, dentro da regra de infraestrutura manual.
+
 ## Continuidade — assistente claro e teclado em 13/11
 
 - Chrome local 4321, 360×653 CSS px, PT/EN: diálogo claro legível, controles dentro da largura e rolagem vertical disponível. Nenhuma pergunta enviada, chamada Gemini ou alteração funcional.
