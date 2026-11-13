@@ -1,0 +1,7 @@
+---
+import { publicationUi } from '../i18n/publication';
+import type { Locale } from '../i18n/ui';
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+---
+<p class="muted" data-build-status data-build-labels={JSON.stringify(publicationUi[locale])} role="status" aria-live="polite" hidden></p>

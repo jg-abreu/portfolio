@@ -1,3 +1,4 @@
+import { clearBuildStatus, updateBuildStatus } from '../lib/publication-status';
 import type { AdminLabels } from "../i18n/admin";
 
 type Copy = {
@@ -86,6 +87,7 @@ function initialize(root: HTMLElement) {
   }
 
   function clearSession() {
+    clearBuildStatus(root!);
     sessionVersion++;
     drafts = [];
     publications = [];
@@ -192,6 +194,7 @@ function initialize(root: HTMLElement) {
       workspace.hidden = false;
       login.hidden = true;
       connection.hidden = true;
+      void updateBuildStatus(root!, request);
       render();
     } catch (error) {
       if (sessionError(error)) {
@@ -207,6 +210,7 @@ function initialize(root: HTMLElement) {
   }
 
   async function loadPublications() {
+    if (!workspace.hidden) void updateBuildStatus(root!, request);
     const selected = await request('/api/admin/project-publications');
     if (!Array.isArray(selected) || !selected.every(item => isObject(item)
       && Number.isSafeInteger(item.projectId) && typeof item.revision === 'string'

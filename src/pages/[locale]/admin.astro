@@ -1,4 +1,5 @@
 ---
+import PublicationStatus from '../../components/PublicationStatus.astro';
 import Admin from "../../layouts/Admin.astro";
 import { locales, localeNames, type Locale } from "../../i18n/ui";
 import { adminUi } from "../../i18n/admin";
@@ -88,6 +89,7 @@ const fields = [
       <small class="muted">{t.loginNote}</small>
     </section>
     <div class="workspace" data-workspace hidden>
+      <PublicationStatus locale={locale} />
       <aside class="sidebar">
         <div>
           <p class="eyebrow">{t.content}</p>

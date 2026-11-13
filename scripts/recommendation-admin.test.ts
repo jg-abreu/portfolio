@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { runInNewContext } from 'node:vm';
+import { clearBuildStatus, updateBuildStatus } from '../src/lib/publication-status.ts';
 import test from 'node:test';
 import ts from 'typescript';
 import { AdminClient, AdminRequestError } from '../src/lib/admin-client.ts';
@@ -49,7 +50,8 @@ function harness() {
   }) as typeof fetch;
   class BoundClient extends AdminClient { constructor(clear: () => void) { super(clear, transport); } }
   const root = { dataset: { locale: 'en', labels: JSON.stringify({ expired: 'Expired', draft: 'Draft', unpublished: 'Unpublished' }) }, querySelector: element };
-  runInNewContext(source, { exports: {}, require: (path: string) => path.includes('admin-client') ? { AdminClient: BoundClient, AdminRequestError }
+  runInNewContext(source, { exports: {}, require: (path: string) => path.includes('publication-status') ? { clearBuildStatus, updateBuildStatus }
+    : path.includes('admin-client') ? { AdminClient: BoundClient, AdminRequestError }
     : path.includes('google-books') ? { bookCoverUrl, bookInfoUrl, parseBookResults } : { isRecommendationDraft, isRecommendationSummary },
     document: { querySelector: () => root, createElement: () => element(`created-${created++}`), visibilityState: 'visible' },
     window: { addEventListener() {}, setInterval(callback: Function) { poll = callback; } }, fetch: transport, FormData, AbortSignal, console });

@@ -1,4 +1,5 @@
 ---
+import PublicationStatus from '../../../components/PublicationStatus.astro';
 import Admin from '../../../layouts/Admin.astro';
 import { locales, type Locale } from '../../../i18n/ui';
 import { recommendationUi } from '../../../i18n/recommendations';
@@ -29,6 +30,7 @@ const other = locale === 'en' ? 'pt' : 'en';
           <button class="button secondary" type="button" data-logout>{t.logout}</button>
         </div>
         <p class="muted">{t.publicationHelp}</p>
+        <PublicationStatus locale={locale} />
         <div class="recommendation-toolbar">
           <button class="button primary" type="button" data-new>{t.newItem}</button>
           <button class="button secondary" type="button" data-refresh>{t.refresh}</button>

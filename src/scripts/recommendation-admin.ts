@@ -1,3 +1,4 @@
+import { clearBuildStatus, updateBuildStatus } from '../lib/publication-status';
 import { AdminClient, AdminRequestError } from '../lib/admin-client';
 import { isRecommendationDraft, isRecommendationSummary, type RecommendationDraft, type RecommendationSummary } from '../lib/recommendation-admin';
 import type { RecommendationAdminLabels } from '../i18n/recommendation-admin';
@@ -35,6 +36,7 @@ function initialize(root: HTMLElement) {
   const notice = (text: string) => { q<HTMLElement>('[data-notice]').textContent = text; };
 
   function clear() {
+    clearBuildStatus(root);
     current = null; publications = []; deployed = []; baseline = ''; pendingDiscard = null;
     form.reset(); file.value = ''; preview.removeAttribute('src'); preview.hidden = true;
     list.replaceChildren(); editor.hidden = true; workspace.hidden = true; login.hidden = false;
@@ -146,6 +148,7 @@ function initialize(root: HTMLElement) {
     q<HTMLElement>('[data-empty]').hidden = values.length !== 0;
     q<HTMLElement>('[data-username]').textContent = session.username;
     workspace.hidden = false; login.hidden = true; q<HTMLElement>('[data-retry]').hidden = true;
+    void updateBuildStatus(root, path => client.request(path));
   }
   form.addEventListener('submit', event => {
     event.preventDefault();
@@ -236,7 +239,10 @@ function initialize(root: HTMLElement) {
   window.setInterval(() => {
     if (document.visibilityState !== 'visible' || workspace.hidden || busy) return;
     const version = client.version();
-    void client.request('/api/admin/session').then(() => client.assertCurrent(version)).catch(error);
+    void client.request('/api/admin/session').then(() => {
+      client.assertCurrent(version);
+      return updateBuildStatus(root, path => client.request(path));
+    }).catch(error);
   }, 30000);
   void execute(async () => { await load(); notice(''); });
 }
