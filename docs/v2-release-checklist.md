@@ -4,10 +4,11 @@ This is the ordered remaining acceptance work, not authorization to deploy. Both
 
 ## 1. Finish local acceptance
 
-- [ ] Inspect the enabled numeric visit footer visually in EN/PT at phone width. Real PT browser/API/database registration, deduplication and API-failure hiding already passed; screenshots did not establish numeric placement. See [visits](visits.md).
-- [ ] Complete project-edit conflict checks across tabs and remaining disconnected-network, keyboard, focus and reduced-motion interactions. Keep automated session tests distinct from browser evidence.
+- [x] Inspect the enabled numeric visit footer at 360 × 653 in EN/PT and light/dark themes. A synthetic transport total verified formatting and placement; real registration/deduplication/API-failure checks remain separate evidence. Bottom spacing keeps the number above the assistant launcher. See [visits](visits.md).
+- [x] Exercise project-editor conflict, transport failure and expiry in two isolated browser tabs in EN/PT at 360 px with synthetic HTTP responses. Conflicts/network failures preserved unsaved input; expiry cleared private state. Native dialog keyboard traversal returned to the dialog without focusing background controls. This is frontend acceptance, not a new real OAuth/API/database conflict test.
+- [ ] Complete broader disconnected-network, keyboard, focus, reduced-motion and provider-failure interactions across remaining flows. Keep fixture-based browser evidence distinct from real-provider/session checks.
 - [ ] Review actual recommendation content/covers and the intended resume PDF, then check their performance and accessibility. Empty-catalogue scores do not cover loaded media.
-- [ ] Run the planned two-instance/concurrency exercise only locally, with synthetic data and outbound email/provider/dispatch features disabled. Record resource use and limitations; do not target production.
+- [x] Run the bounded two-instance/concurrency exercise locally with synthetic data and outbound providers disabled: 96 concurrent posts, 16 new counts, both nodes total 17; cross-node/failover CSRF rejection and recovery checked. Details/resources/limits: portfolio-api/docs/local-two-instance.md. This short burst does not certify sustained load, real nginx/Cloudflare or VM capacity.
 - [x] Run resolved Maven advisory checks and V2 CodeQL analysis, review findings and record results. Guava was updated; repeat OSV query had no matches. Fixes/triage and scope are in [dependency security](dependency-security.md). Dependabot version monitoring remains prepared, not active.
 
 ## 2. Verify real integrations
@@ -34,4 +35,4 @@ This is the ordered remaining acceptance work, not authorization to deploy. Both
 
 ## Next session starting point
 
-Start with section 1's visit-footer visual check, then remaining local interaction checks. Independent work can continue while real integration credentials are unavailable. Do not invent credentials, personal recommendation content or successful scan/deploy results. Evidence and scope live in [validation](validation.md), module documentation and `SESSION_HANDOFF.md`.
+Start with the remaining local interaction checks in section 1. Independent work can continue while deployment credentials are unavailable. Do not invent credentials, personal recommendation content or successful scan/deploy results. Evidence and scope live in [validation](validation.md), module documentation and `SESSION_HANDOFF.md`.

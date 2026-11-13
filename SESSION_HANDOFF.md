@@ -1,5 +1,20 @@
 # Retomada — 2026-11-11
 
+## Continuidade — rodapé e editor isolados em 13/11
+
+- Contador EN/PT inspecionado em Chrome headless isolado com viewport real360×653/DPR1, temas claro/escuro e movimento reduzido. Fixture HTTP sintética total1234 em8081, Astro4324 com cópia de fonte/public; formatos1,234/1.234 e document/scrollWidth360 nos quatro casos, sem elementos horizontais excedentes. Padding inferior6rem mantém texto acima do launcher do assistente. Captura CLI anterior tinha viewport interno maior que imagem: não era prova de overflow do produto; sem workaround global.
+- Build completo29 páginas/87 arquivos com zero diagnósticos; timeout na fonte de contribuições preservou snapshot anterior, demais fontes atualizaram. Avisos de build Shiki/CSP preexistentes. Alteração funcional só CSS do contador; sem novos testes unitários espelhando CSS.
+- Editor real do Astro com HTTP interceptado/sessão/rascunho sintéticos: duas abas por idioma360×653/reduced motion. AbaA salva uma vez; B recebe409 e preserva texto/login; requestabort mantém campos e feedback localizado;401 fecha diálogo e limpa formulário/lista/username. Teclado30Tab sem foco em controles de fundo; ciclo nativo body→próximoTab retorna diálogo. Screenshots de erro EN/PT inspecionados. Não é novo teste OAuth/backend/DB real nem offline completo. Espera inicial em aba background foi resolvida ativando aba e polling limitado, sem mudança do produto.
+- Artefatos/helpers ignorados .codex-stage/audit-visits-footer.cjs, visits-footer-metrics.json, visits-*-360.png, audit-project-interactions.cjs, project-browser-interactions.json e project-network-*-360.png. Bibliotecas Puppeteer já instaladas pelo Lighthouse, nenhum pacote novo. Nenhum e-mail, provider, VM/main, seleção pública, dispatch ou deploy.
+- Próximo: demais interações e conteúdo real/PDF/capas; credencial mínima/card/aprovação, receiver e infraestrutura manual/backup externo continuam em docs/v2-release-checklist.md. Não declarar V2 concluída.
+
+## Continuidade — duas instâncias locais em 13/11
+
+- scripts/two-instance-review.py na API executou dois JVMs reais empacotados, PostgreSQL18 descartável próprio e proxy Python loopback com afinidade. Gemini/Books/card/SMTP/intake/retenção/dispatch desligados, OAuth sintético e HMAC efêmera compartilhada. Faixas proxy/edge só de documentação para teste; nunca copiar para VM.
+- Primeira visita contou1; outra sessão no outro nó para mesmo endereço não duplicou. Burst96POST/8workers/16novosendereços contouexatamente16, ambosnóstotal17 e17hashes32bytes. 0,373s/~257rps, p5027,15ms/p9547,54ms/max54,37ms. Não carga sustentada/capacidadeVM/SLA. Memória dos dois JVMs: ~662MiB working set/~756MiB privada, excluiPostgres/proxy/OS.
+- CSRF do nó errado403; afinidade permitiu fluxo normal. Após terminar um nó, token antigo403; nova sessão/CSRF recuperou no sobrevivente sem recontar. Admin anônimo401; OAuth/admin autenticado/failover transparente não testados. Sessão atual é local ao processo; não desligar CSRF nem propor dois nós na VM só por este smoke.
+- Finally encerrou apenas processos/proxy/container próprios, Docker confirmou só PostgreSQL habitual restante, API8080healthUP. Fonte/resultado em portfolio-api/docs/local-two-instance.md e target/two-instance-review.json ignorado. Nenhuma mudança funcional, segredo, VM/main, e-mail ou deploy.
+
 ## Continuidade — Gemini real auditado em 13/11
 
 - João configurou GEMINI_API_KEY no ambiente Windows; presença confirmada sem valor na saída. AI Studio tinha chave portfolio-assistant-dev existente/free tier; nenhum segredo novo ou billing alterado. Formulário PowerShell falhou por política de execução, não contornada; João configurou pela tela nativa.
