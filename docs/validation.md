@@ -72,6 +72,12 @@ Each locale completed one accepted write and one rejected stale write in the syn
 
 This verifies actual frontend behavior against controlled responses, not the real backend's optimistic-lock transaction, authenticated cross-tab OAuth behavior, a fully disconnected browser, a physical phone or assistive technology. Existing real HTTP/session and backend tests remain separate evidence. Reports/screenshots are ignored local artifacts. No mail, provider call, publication selection, workflow dispatch or deploy occurred.
 
+## Built public routes with integrations blocked — 2026-11-13
+
+All 22 public EN/PT routes in the current static build were loaded from a loopback HTTP server in isolated headless Chrome at 360 × 653, device scale 1 and reduced motion. This includes both homes, project lists/case studies, blog lists/articles, Pipeline, contact, recommendations and resume pages. Requests outside the local origin and all `/api/` calls were aborted. Every route returned 200 with its heading, nonempty main content and footer; document/client widths were 360 with no horizontal overflow, and no uncaught page exceptions were recorded. Blocking external image resources intentionally does not guarantee that unavailable external images remain visible.
+
+After each page loaded, Chrome's network emulation was switched offline and its heading/main text remained unchanged. On both homes, the assistant was opened, received a synthetic question and showed failure without an answer while preserving the input. Escape closed its native dialog and restored focus to the launcher. No request reached a real provider. This verifies resident page content and the assistant's network-failure interaction, not opening/reloading new pages offline, service-worker support, every click flow, PDF rendering/content approval or the still-empty recommendation catalogue with real covers. The ignored report is `.codex-stage/public-fallback-audit.json`. A harness assertion was corrected to await the actual `aria-busy="false"` state; no product code changed for this exercise.
+
 ## Remaining acceptance work
 
 Use the ordered [V2 release checklist](v2-release-checklist.md) for ownership and completion gates. This list records the outstanding scope, not authorization to deploy.

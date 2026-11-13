@@ -1,5 +1,10 @@
 # Retomada — 2026-11-11
 
+## Continuidade — fallback das 22 rotas públicas em 13/11
+
+- Build estático atual servido apenas em loopback4323; Chrome isolado360×653/DPR1/reduced motion, toda requisição externa e /api bloqueada. Todas22rotas públicas EN/PT retornaram200 com h1/main/rodapé, document/scrollWidth360 e zero exceções JS não tratadas. Home, projetos/cases, blog/artigos, Pipeline, contato, recomendações e currículo cobertos. Bloquear imagens externas não garante imagem disponível; não é inspeção/render do PDF nem catálogo real de capas.
+- Após carregamento, CDP offline preservou texto h1/main. Assistente nas duas homes: pergunta sintética, falha sem resposta e input preservado, Escape fechou diálogo e foco voltou ao launcher. Nenhum provedor chamado. Não é abrir/recarregar páginas novas offline/PWA ou validação de toda interação. Harness inicialmente esperava ausência de aria-busy, mas produto usa false; corrigido teste, produto intacto. Artefatos ignorados audit-public-fallback.cjs/public-fallback-audit.json.
+
 ## Continuidade — rodapé e editor isolados em 13/11
 
 - Contador EN/PT inspecionado em Chrome headless isolado com viewport real360×653/DPR1, temas claro/escuro e movimento reduzido. Fixture HTTP sintética total1234 em8081, Astro4324 com cópia de fonte/public; formatos1,234/1.234 e document/scrollWidth360 nos quatro casos, sem elementos horizontais excedentes. Padding inferior6rem mantém texto acima do launcher do assistente. Captura CLI anterior tinha viewport interno maior que imagem: não era prova de overflow do produto; sem workaround global.
