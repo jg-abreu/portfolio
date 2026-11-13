@@ -68,7 +68,7 @@ Native Chrome review confirmed the corrected English desktop layout and 360 × 6
 
 Use the ordered [V2 release checklist](v2-release-checklist.md) for ownership and completion gates. This list records the outstanding scope, not authorization to deploy.
 
-- Real assistant responses, source fidelity and exact fallback: Gemini key is absent from the inspected Windows user/process environment and existing IntelliJ run configuration. No key was created or exposed.
+- Broader assistant/browser and deployment quota acceptance: the key is now configured privately. A six-request real service/provider and Astro/Spring HTTP audit passed for technologies and exact missing-salary fallback in PT/EN. Source fidelity was checked against the approved knowledge base. This is a sample, not a general factual-accuracy guarantee; details are in portfolio-api/docs/assistant.md.
 - Profile-card approval, dedicated deployment credential and live refresh checks: a real public GraphQL query/parse/render passed using existing CLI authentication in a one-shot local process. No permanent token or profile README integration was created.
 - Publication-status queue/dispatch states against a connected receiver; the disabled state has now been reviewed in the authenticated local browser. Cleanup and late-response behavior are covered by automated tests.
 - Enabled visit-footer visual review (real PT registration/deduplication/API-failure integration already passed; see visits.md), disconnected-network behavior, cross-tab project edits and remaining interaction/reduced-motion/provider-failure checks beyond the combined home smoke above.

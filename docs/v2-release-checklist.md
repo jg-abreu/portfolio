@@ -12,7 +12,7 @@ This is the ordered remaining acceptance work, not authorization to deploy. Both
 
 ## 2. Verify real integrations
 
-- [ ] Configure the Gemini key privately and audit real EN/PT answers, source fidelity and exact insufficient-knowledge/error behavior. Do not include keys or private contact data in prompts, logs or notes.
+- [x] Configure the key privately and audit a real PT/EN sample: four service/provider requests plus two through Astro/Spring HTTP passed, with approved sources and exact missing-information fallbacks. No contacts or credentials in prompts/logs. Broader UI/provider-failure and deployment quota acceptance remains separate.
 - [x] Verify a real public card query/parse/render locally using existing authorized CLI authentication in memory only. This did not configure a deployment token or test live scheduled failure/recovery.
 - [ ] Configure a dedicated minimal card deployment credential, check live refresh/cache/fallback and obtain João's visual approval. Profile README integration waits for the authorized release.
 - [ ] Complete the receiving-workflow handoff and live publication checks when release authorization permits default-branch registration. Verify project and recommendation manifests against selected revisions, failed builds and rollback. Dispatch acceptance alone is not publication. See [publication](publication.md).

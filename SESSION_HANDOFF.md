@@ -1,5 +1,13 @@
 # Retomada — 2026-11-11
 
+## Continuidade — Gemini real auditado em 13/11
+
+- João configurou GEMINI_API_KEY no ambiente Windows; presença confirmada sem valor na saída. AI Studio tinha chave portfolio-assistant-dev existente/free tier; nenhum segredo novo ou billing alterado. Formulário PowerShell falhou por política de execução, não contornada; João configurou pela tela nativa.
+- Quatro chamadas reais Resources/Service/Model, gemini-3.1-flash-lite e knowledge2026-11-12.1: tecnologias PT/EN com technical-knowledge/fatos fiéis; salário ausente PT/EN com fallback exato e zero fontes. Primeira21,6s, demais1,2–2,2s; não benchmark.
+- Duas chamadas reais por Astro4324→SpringHTTP8081→Gemini: tecnologiasPT e fallbackEN, 200/no-store, locale/version/fontes conferidos. Vazio400/admin anônimo401. Total6 chamadas, sem histórico/contatos; não é UI real no navegador ou garantia geral da IA. Falha/timeout/429 reais não induzidos.
+- Isolada33780/Astro8476 encerrados, banco portfolio_gemini_review_20261113_185016 preservado. Habitual21784 parada com porta/JAR conferidos; package sem repetir testes, JARGuava33.7.2 confirmado. Nova API26364 com Gemini, timeout30m, banco isolado habitual; intake/SMTP/retenção/visitas/dispatch/cardfalse. HealthUP/admin401/site4321=200. Revalidar PIDs.
+- Relatórios ignorados .codex-stage/gemini-live-audit.json e gemini-http-audit.json; chave privada. Auditoria visual sintética de visitas teve acessibilidade100 EN/PT a360px, mas capturas cortaram fim do rodapé e CUA bloqueou por URL: aparência numérica ainda pendente. Sem VM/main, e-mail, merge ou deploy.
+
 ## Continuidade — segurança real e card público em 13/11
 
 - Maven Dependency Plugin 3.10.0 gerou árvore de 206 pares; OSV encontrou Guava33.4.0-android transitiva do google-genai2.2.0/auth1.33.0, GHSA-xxph-c9ww-hj94. API6f2e960 gerencia33.7.2-android: árvore conferida, 133 testes completos passaram e nova consulta OSV sem achados. Script portátil scripts/audit-maven-osv.py; relatórios ignorados em target. Não é scan de plugins/JDK/containers nem prova de explorabilidade.
