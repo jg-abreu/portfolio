@@ -1,5 +1,15 @@
 # Retomada — 2026-11-11
 
+## Continuidade — fluxo local integrado validado em 13/11
+
+- João confirmou recebimento do teste SMTP #0 nos dois destinos e autorizou seguir com o fluxo completo local. Usado banco separado `portfolio_e2e_20261113_0110`, criado sem tocar no banco habitual `portfolio`; seis migrações aplicadas.
+- Formulário PT habilitado somente no processo de dev, preenchido e enviado pelo Chrome/CUA com uma mensagem sintética. Confirmação real recebida e campos limpos; banco tinha exatamente uma linha pending, attempts=0, id=1.
+- Login GitHub real e inbox EN/PT conferidos: listagem, detalhe, leitura, arquivamento e restauração. Versão 3, read_at preenchido, archived_at vazio, entrega ainda pending e attempts=0 após ações do inbox.
+- Worker real invocado manualmente uma única vez, com guardas para banco/linha/destinatários sintéticos esperados; não foi habilitado scheduler. Banco passou a sent, attempts=1, sent_at preenchido. Gmail dev confirmou `Portfolio contact #1` na INBOX; João confirmou chegada no pessoal.
+- Logout removeu conteúdo privado e, após reload, navegador continuou na tela de login. Consulta anônima independente ao inbox respondeu 401. CUA finalizado normalmente, sem o bloqueio de URL anterior nesta verificação.
+- Restauração concluída: Astro PID 10552 em localhost:4321, PUBLIC_CONTACT_ENABLED=false; API PID 20552, loopback:8080, ligada ao banco isolado para revisão com recebimento/SMTP/retenção false. Arquivo privado SMTP continua com flags false. Health UP; formulário HTML desabilitado confirmado. Nenhuma alteração no servidor/main, nenhum deploy.
+- Mensagem sintética preservada no banco isolado. Documentação detalha limites: largura de celular, envio pelo formulário EN, falha real de serviço na UI, conflitos entre abas e disparo autônomo do scheduler ainda pendentes. Suítes anteriores 84/34 aprovadas; sem novo código funcional ou reexecução dessas suítes neste teste manual.
+
 ## Continuidade — autenticação SMTP local em 13/11
 
 - João criou uma senha de app e a inseriu pessoalmente em `.env.smtp.local` da API. Arquivo confirmado como ignorado pelo Git, com acesso local restrito ao usuário e SYSTEM; senha não exibida nem versionada. Espaços de agrupamento removidos localmente.
