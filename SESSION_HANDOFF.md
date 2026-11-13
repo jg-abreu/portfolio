@@ -1,5 +1,11 @@
 # Retomada — 2026-11-11
 
+## Continuidade — upload manual validado em 13/11
+
+- Chrome PT em 360 CSS px: PNG sintético 1×1 escolhido pelo seletor nativo, upload aceito, rascunho EN/PT salvo, página recarregada e item reaberto com imagem e textos persistidos. Não equivale à avaliação visual de uma capa real.
+- Fixture `synthetic-manual-cover-upload` arquivada no banco isolado, sem cópia pública selecionada. GET /api/recommendations confirmou catálogo vazio. Nenhum código funcional, deploy, e-mail ou chamada Gemini nesta revisão.
+- Mantidas branches feat/v2, main e produção intactas. Próximo: pendências da revisão final e preparação da publicação; infraestrutura continua sendo executada manualmente pelo João.
+
 ## Continuidade — contador implementado em 13/11
 
 - API ganhou módulo visits, condicionado a PORTFOLIO_VISITS_ENABLED=true (padrão false): GET total e POST com CSRF retornando total/counted, no-store. HMAC-SHA256 dos bytes canônicos do IP, janela de 30 min sem reiniciar a espera, UPSERT e incremento do total na mesma transação. Limpeza a cada minuto de hashes vencidos, sem zerar total; tabelas V2 reutilizadas.
