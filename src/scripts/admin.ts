@@ -10,6 +10,16 @@ type Copy = {
 };
 type DraftStatus = "DRAFT" | "ARCHIVED";
 type Publication = { projectId: number; revision: string; draftVersion: number };
+type InboxMessage = {
+  id: number;
+  version: number;
+  name: string;
+  createdAt: string;
+  readAt: string | null;
+  archivedAt: string | null;
+  deliveryStatus: string;
+};
+type InboxDetail = InboxMessage & { email: string; message: string };
 type Draft = {
   id: number;
   version: number;
@@ -57,7 +67,23 @@ function initialize(root: HTMLElement) {
   let busy = false;
   let loaded = false;
   let sessionVersion = 0;
+  let inboxGeneration = 0;
+  let inboxPage = 0;
+  let inboxArchived = false;
+  let inboxBusy = false;
+  let inboxCurrent: InboxDetail | null = null;
   form.noValidate = true;
+
+  function clearInbox() {
+    inboxGeneration++;
+    inboxBusy = false;
+    inboxPage = 0;
+    inboxCurrent = null;
+    q<HTMLElement>("[data-inbox-list]").replaceChildren();
+    q<HTMLElement>("[data-inbox-detail]").hidden = true;
+    for (const field of ["sender", "email", "body", "status"])
+      q<HTMLElement>(`[data-inbox-${field}]`).textContent = "";
+  }
 
   function clearSession() {
     sessionVersion++;
@@ -67,6 +93,7 @@ function initialize(root: HTMLElement) {
     current = null;
     baseline = "";
     loaded = false;
+    clearInbox();
     form.reset();
     formMessage.textContent = "";
     search.value = "";
@@ -553,6 +580,139 @@ function initialize(root: HTMLElement) {
       localStorage.setItem("theme", theme);
     } catch {}
   });
+
+  function inboxStatus(text: string) {
+    q<HTMLElement>("[data-inbox-status]").textContent = text;
+  }
+
+  function showInboxError(error: unknown) {
+    if (!sessionError(error)) inboxStatus(error instanceof ApiError && error.status === 409
+      ? labels.inboxConflict : labels.inboxError);
+  }
+
+  function showMessage(detail: InboxDetail) {
+    inboxCurrent = detail;
+    q<HTMLElement>("[data-inbox-sender]").textContent = detail.name;
+    q<HTMLElement>("[data-inbox-email]").textContent = detail.email;
+    q<HTMLElement>("[data-inbox-body]").textContent = detail.message;
+    q<HTMLButtonElement>("[data-inbox-read]").textContent = detail.readAt ? labels.inboxMarkUnread : labels.inboxMarkRead;
+    q<HTMLButtonElement>("[data-inbox-archive]").textContent = detail.archivedAt ? labels.inboxRestore : labels.inboxArchive;
+    q<HTMLElement>("[data-inbox-detail]").hidden = false;
+    q<HTMLElement>("[data-inbox-sender]").focus();
+  }
+
+  async function openMessage(id: number) {
+    if (inboxBusy) return;
+    inboxBusy = true;
+    const generation = ++inboxGeneration;
+    inboxCurrent = null;
+    q<HTMLElement>("[data-inbox-detail]").hidden = true;
+    inboxStatus(labels.checking);
+    try {
+      const detail = await request(`/api/admin/messages/${id}`);
+      if (generation !== inboxGeneration) return;
+      if (!isInboxDetail(detail)) throw new Error("Invalid inbox detail");
+      showMessage(detail);
+      inboxStatus("");
+    } catch (error) {
+      if (generation === inboxGeneration) showInboxError(error);
+    } finally {
+      if (generation === inboxGeneration) inboxBusy = false;
+    }
+  }
+
+  async function loadInbox() {
+    const generation = ++inboxGeneration;
+    inboxBusy = true;
+    inboxCurrent = null;
+    q<HTMLElement>("[data-inbox-detail]").hidden = true;
+    q<HTMLElement>("[data-inbox-list]").replaceChildren();
+    q<HTMLButtonElement>("[data-inbox-previous]").disabled = true;
+    q<HTMLButtonElement>("[data-inbox-next]").disabled = true;
+    inboxStatus(labels.checking);
+    try {
+      const data = await request(`/api/admin/messages?archived=${inboxArchived}&page=${inboxPage}&size=20`);
+      if (generation !== inboxGeneration) return;
+      if (!isObject(data) || !Array.isArray(data.messages) || !data.messages.every(isInboxMessage)
+        || typeof data.hasNext !== "boolean" || !Number.isSafeInteger(data.totalElements))
+        throw new Error("Invalid inbox page");
+      const list = q<HTMLElement>("[data-inbox-list]");
+      for (const item of data.messages) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "inbox-item";
+        const date = new Intl.DateTimeFormat(locale === "pt" ? "pt-BR" : "en-US", {
+          dateStyle: "medium", timeStyle: "short", timeZone: "America/Sao_Paulo",
+        }).format(new Date(item.createdAt));
+        button.textContent = `${item.name} · ${date} · ${item.readAt ? labels.inboxRead : labels.inboxUnread}`;
+        button.addEventListener("click", () => void openMessage(item.id));
+        list.append(button);
+      }
+      q<HTMLButtonElement>("[data-inbox-previous]").disabled = inboxPage === 0;
+      q<HTMLButtonElement>("[data-inbox-next]").disabled = !data.hasNext;
+      inboxStatus(data.messages.length ? "" : labels.inboxEmpty);
+    } catch (error) {
+      if (generation === inboxGeneration) showInboxError(error);
+    } finally {
+      if (generation === inboxGeneration) inboxBusy = false;
+    }
+  }
+
+  async function changeMessage(action: "read" | "archive") {
+    if (inboxBusy || !inboxCurrent) return;
+    inboxBusy = true;
+    const generation = ++inboxGeneration;
+    const selected = inboxCurrent;
+    const value = action === "read" ? !selected.readAt : !selected.archivedAt;
+    try {
+      const detail = await mutate(`/api/admin/messages/${selected.id}/${action}`, "PATCH", {
+        value, version: selected.version,
+      });
+      if (generation !== inboxGeneration) return;
+      if (!isInboxDetail(detail)) throw new Error("Invalid inbox update");
+      await loadInbox();
+      if (action === "read" && generation + 1 === inboxGeneration && !workspace.hidden) showMessage(detail);
+    } catch (error) {
+      if (generation === inboxGeneration) showInboxError(error);
+    } finally {
+      if (generation === inboxGeneration) inboxBusy = false;
+    }
+  }
+
+  q<HTMLButtonElement>("[data-open-inbox]").addEventListener("click", () => {
+    q<HTMLElement>("[data-projects-screen]").hidden = true;
+    q<HTMLElement>("[data-inbox-screen]").hidden = false;
+    q<HTMLElement>("[data-open-projects]").removeAttribute("aria-current");
+    q<HTMLElement>("[data-open-inbox]").setAttribute("aria-pressed", "true");
+    q<HTMLElement>("#inbox-heading").focus();
+    inboxPage = 0;
+    void loadInbox();
+  });
+  q<HTMLAnchorElement>("[data-open-projects]").addEventListener("click", (event) => {
+    event.preventDefault();
+    clearInbox();
+    q<HTMLElement>("[data-projects-screen]").hidden = false;
+    q<HTMLElement>("[data-inbox-screen]").hidden = true;
+    q<HTMLElement>("[data-open-projects]").setAttribute("aria-current", "page");
+    q<HTMLElement>("[data-open-inbox]").setAttribute("aria-pressed", "false");
+  });
+  for (const button of root.querySelectorAll<HTMLButtonElement>("[data-inbox-filter]"))
+    button.addEventListener("click", () => {
+      inboxArchived = button.dataset.inboxFilter === "true";
+      inboxPage = 0;
+      for (const other of root.querySelectorAll("[data-inbox-filter]"))
+        other.setAttribute("aria-pressed", String(other === button));
+      void loadInbox();
+    });
+  q<HTMLButtonElement>("[data-inbox-refresh]").addEventListener("click", () => void loadInbox());
+  q<HTMLButtonElement>("[data-inbox-previous]").addEventListener("click", () => {
+    if (!inboxBusy && inboxPage > 0) { inboxPage--; void loadInbox(); }
+  });
+  q<HTMLButtonElement>("[data-inbox-next]").addEventListener("click", () => {
+    if (!inboxBusy) { inboxPage++; void loadInbox(); }
+  });
+  q<HTMLButtonElement>("[data-inbox-read]").addEventListener("click", () => void changeMessage("read"));
+  q<HTMLButtonElement>("[data-inbox-archive]").addEventListener("click", () => void changeMessage("archive"));
   window.addEventListener("pageshow", (event) => {
     if (event.persisted) location.reload();
   });
@@ -571,6 +731,19 @@ function initialize(root: HTMLElement) {
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
+}
+function isInboxMessage(value: unknown): value is InboxMessage {
+  return isObject(value) && Number.isSafeInteger(value.id) && Number(value.id) > 0
+    && Number.isSafeInteger(value.version) && Number(value.version) >= 0
+    && typeof value.name === "string" && typeof value.createdAt === "string"
+    && Number.isFinite(Date.parse(value.createdAt))
+    && [value.readAt, value.archivedAt].every(date => date === null
+      || typeof date === "string" && Number.isFinite(Date.parse(date)))
+    && ["pending", "sending", "sent", "failed"].includes(String(value.deliveryStatus));
+}
+function isInboxDetail(value: unknown): value is InboxDetail {
+  return isInboxMessage(value) && "email" in value && typeof value.email === "string"
+    && "message" in value && typeof value.message === "string";
 }
 function isCopy(value: unknown): value is Copy {
   return (

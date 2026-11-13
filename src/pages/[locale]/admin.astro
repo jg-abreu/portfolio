@@ -93,6 +93,7 @@ const fields = [
           <nav aria-label={t.content}>
             <a
               class="nav-current"
+              data-open-projects
               href={`/${locale}/admin/`}
               aria-current="page"
             >
@@ -102,6 +103,9 @@ const fields = [
               {t.projects}
               <span>01</span>
             </a>
+            <button type="button" class="workspace-nav" data-open-inbox aria-pressed="false">
+              {t.inbox}
+            </button>
           </nav>
         </div>
         <div class="account">
@@ -125,6 +129,7 @@ const fields = [
         </div>
       </aside>
       <main id="main" class="studio-main">
+        <div data-projects-screen>
         <div class="page-title">
           <div>
             <p class="eyebrow">{t.projects}</p>
@@ -182,6 +187,39 @@ const fields = [
             {t.new} →
           </button>
         </div>
+        </div>
+        <section data-inbox-screen hidden aria-labelledby="inbox-heading">
+          <div class="page-title">
+            <div>
+              <p class="eyebrow">{t.inbox}</p>
+              <h1 id="inbox-heading" tabindex="-1">{t.inbox}</h1>
+              <p class="muted">{t.inboxBody}</p>
+            </div>
+            <button class="button secondary" type="button" data-inbox-refresh>{t.inboxRefresh}</button>
+          </div>
+          <div class="toolbar">
+            <div class="filters" role="group" aria-label={t.inbox}>
+              <button type="button" data-inbox-filter="false" aria-pressed="true">{t.inbox}</button>
+              <button type="button" data-inbox-filter="true" aria-pressed="false">{t.archived}</button>
+            </div>
+          </div>
+          <p role="status" data-inbox-status></p>
+          <div class="inbox-list" data-inbox-list></div>
+          <div class="inbox-pagination">
+            <button class="button secondary" type="button" data-inbox-previous disabled>{t.inboxPrevious}</button>
+            <button class="button secondary" type="button" data-inbox-next disabled>{t.inboxNext}</button>
+          </div>
+          <article class="inbox-detail" data-inbox-detail hidden>
+            <h2 data-inbox-sender tabindex="-1"></h2>
+            <p><strong>{t.inboxEmail}: </strong><span data-inbox-email></span></p>
+            <h3>{t.inboxMessage}</h3>
+            <p class="inbox-body" data-inbox-body></p>
+            <div class="inbox-pagination">
+              <button class="button secondary" type="button" data-inbox-read></button>
+              <button class="button secondary" type="button" data-inbox-archive></button>
+            </div>
+          </article>
+        </section>
       </main>
     </div>
     <dialog class="editor" data-editor aria-labelledby="editor-heading">

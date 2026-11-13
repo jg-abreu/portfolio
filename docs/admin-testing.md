@@ -14,3 +14,7 @@ With Docker Desktop and the local API running on port 8080, start the Astro deve
 6. Repeat at phone width and in both themes.
 
 Use only the local database for disposable projects. These checks do not require deployment, changes to `main`, or changes to the V2 server.
+
+The Inbox view lists private contact messages in pages of 20. It opens message details as plain text and offers read/unread, archive and restore actions. Its API uses independently versioned read/archive state, so inbox actions do not change email delivery. Contact submission and SMTP delivery are not enabled by this view.
+
+Inbox regression tests additionally check plain text rendering, clearing visitor data on logout, rejecting late responses and using updated versions for successive mutations. Before release, validate the inbox in a real browser with synthetic messages in the local database, including both languages, phone width, session expiry and conflicts between tabs.

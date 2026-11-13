@@ -58,10 +58,10 @@ src/
   scripts/project-popup.ts  opens and animates the project popups, browses folders via the GitHub API
   scripts/card-glow.ts      pointer glow on cards
   layouts/Admin.astro       private workspace shell (noindex); authenticated data loads only in the browser
-  scripts/admin.ts          GitHub session, CSRF, project draft editor, archive and restore
+  scripts/admin.ts          GitHub session, CSRF, project drafts and private contact inbox
   styles/admin.css          responsive light/dark admin styles
   pages/admin.astro         static entry to /en/admin/
-  pages/[locale]/admin.astro  EN/PT private project drafts; excluded from the sitemap
+  pages/[locale]/admin.astro  EN/PT project drafts and inbox; excluded from the sitemap
   pages/index.astro         redirects / to /en/ (static fallback)
   pages/404.astro           bilingual 404 (noindex); nginx should serve it with `error_page 404 /404.html`
   pages/[locale]/           Home, Projects, Pipeline, Blog, Resume and Contact, generated for every locale

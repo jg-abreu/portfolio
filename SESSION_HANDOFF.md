@@ -1,5 +1,15 @@
 # Retomada — 2026-11-11
 
+## Continuidade — inbox privado em 13/11
+
+- Mantido o bloqueio de deploy: trabalho somente na feat/v2. Nenhum servidor foi alterado nesta etapa.
+- Validação real do admin local concluída anteriormente: login GitHub, criação bilíngue, edição, preparação/retirada de cópia pública, arquivamento e restauração. Rascunho `admin-check-20261112` deixado arquivado, sem cópia pública; projeto preexistente preservado. Logout voltou ao login; consulta adicional do 401 no mesmo navegador interrompida pela política da ferramenta ao perder a identificação da URL.
+- Implementado inbox: API privada `/api/admin/messages` com paginação, detalhe, leitura/não leitura e arquivo/restauração. Migração V5 adiciona read_at, archived_at e version sem alterar V1. Campos de envio/conteúdo mapeados somente para leitura pelo inbox; alterações usam versão e CSRF.
+- Interface EN/PT no mesmo admin, conteúdo sempre textContent; cleanup de sessão e proteção contra respostas atrasadas estendidos ao inbox. Testes de script cobrem rendering, limpeza e encadeamento correto de versões. Revisão real do novo inbox no navegador ainda pendente.
+- API: 74 testes aprovados com PostgreSQL Testcontainers. Empacotamento repetido sem testes após encerrar o processo local 8312 que mantinha o JAR aberto; artefato gerado. API local precisa ser iniciada novamente; não presumir que o processo antigo continua ativo.
+- João autorizou SMTP/JavaMailSender mesmo sem conhecer ainda; pediu para aprender no fim. Escolheu a conta dev como remetente; destinatários continuam pessoal e dev. Transporte SMTP preparado na API, desativado por padrão e sem credenciais: texto simples, Reply-To validado, falha propagada sem marcar entrega. Não há worker chamando esse transporte nem envio real; formulário público continua desativado. Exemplos privados de configuração em docs/contact-smtp.md. Prazo de retenção perguntado, aguardando decisão.
+- Validação final: API 77 testes sem falhas e verify aprovado; site 30 testes e build aprovados, com avisos de CSP/Shiki já existentes. API local permanece parada após o empacotamento; nova migração validada apenas nos bancos isolados de teste, sem alteração da VM.
+
 ## Continuidade — revisão local do admin em 12/11
 
 - João reafirmou: não publicar o front-end nem fazer novos deploys agora; lançamento conjunto da V2 quando pronta. Trabalho continua em `feat/v2`, sem PR para main. As instruções históricas abaixo sobre publicar o build são próximas etapas futuras, não autorização vigente.
