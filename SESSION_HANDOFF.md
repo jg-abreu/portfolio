@@ -1,5 +1,12 @@
 # Retomada — 2026-11-11
 
+## Continuidade — conflitos e expiração do inbox em 13/11
+
+- Conflito real entre abas revelou bug da API: despacho ERROR do Tomcat era negado pela segurança, transformando 409 em 403 e levando o front ao login. Corrigido permitindo apenas DispatcherType.ERROR; rotas normais, ADMIN e CSRF preservados. Novo ContactHttpErrorTests com HTTP/Tomcat real ficou vermelho (409 esperado, 403 recebido), depois verde; fixture de sessão somente em src/test.
+- API verify completo aprovado: 86 testes. Site: 35 testes, incluindo novo caso que remove corpo/e-mail/lista do inbox após sessão expirada. Repetição real em duas abas exibiu conflitos EN/PT sem logout e permitiu salvar após reabrir a versão atual.
+- Expiração real local com timeout temporário de 1 minuto e abas do inbox em segundo plano: ao voltar, login visível, corpo e e-mail sintéticos ausentes. Reload posterior interrompido pela política de URL do controle do navegador, sem contorno. CUA encerrado. Prazo normal restaurado para 30 minutos, API PID 29712; revalidar PID.
+- Banco isolado preservado com id=1 sent/attempts=1 e id=2 pending/attempts=0, lida, não arquivada, versão 3. Nenhum envio novo, contato/SMTP/retenção false, sem deploy/main. Continuar por funcionalidades pendentes; não depender do navegador para salvar a correção.
+
 ## Continuidade — celular e agendador validados em 13/11
 
 - Complementa os registros anteriores: formulário e inbox inspecionados no Chrome em 360 CSS px, EN/PT e temas claro/escuro. Lista, detalhe, ações, campos e feedback legíveis; sem ajuste funcional necessário. Emulação de navegador, não aparelho físico.

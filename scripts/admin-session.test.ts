@@ -168,6 +168,22 @@ test('an inbox response arriving after logout cannot restore message details', a
   assert.equal(app.element('[data-inbox-detail]').hidden, true);
 });
 
+test('session expiry clears an open inbox and its private message fields', async () => {
+  const app = await workspace();
+  app.openInbox();
+  await app.settle();
+  app.element('[data-inbox-list]').children[0].events.get('click')();
+  await app.settle();
+  assert.equal(app.element('[data-inbox-email]').textContent, 'sender@example.com');
+  app.expire();
+  await app.refresh();
+  app.assertCleared();
+  assert.equal(app.element('[data-inbox-list]').children.length, 0);
+  assert.equal(app.element('[data-inbox-body]').textContent, '');
+  assert.equal(app.element('[data-inbox-email]').textContent, '');
+  assert.equal(app.element('[data-inbox-detail]').hidden, true);
+});
+
 test('inbox actions use the version returned by the previous update', async () => {
   const app = await workspace();
   app.openInbox();
