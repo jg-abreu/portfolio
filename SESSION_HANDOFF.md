@@ -1,5 +1,11 @@
 # Retomada — 2026-11-11
 
+## Continuidade — autenticação SMTP local em 13/11
+
+- João criou uma senha de app e a inseriu pessoalmente em `.env.smtp.local` da API. Arquivo confirmado como ignorado pelo Git, com acesso local restrito ao usuário e SYSTEM; senha não exibida nem versionada. Espaços de agrupamento removidos localmente.
+- Teste de conexão via JavaMailSenderImpl.testConnection aprovado com STARTTLS obrigatório, sem envio de mensagem. Flags de entrega, recebimento e retenção continuam false nesse arquivo; nada alterado na VM.
+- Preparado teste sintético pelo adaptador real SmtpContactNotifier, assunto `Portfolio contact #0`, para pessoal + dev. Envio ainda não executado: aguarda confirmação explícita para a mensagem real. Aceitação SMTP não comprova recebimento em cada caixa; conferir os dois destinos depois.
+
 ## Continuidade — contato e fila preparados em 13/11
 
 - João aprovou SMTP/JavaMailSender com conta dev remetente, os dois e-mails destinatários e retenção de 90 dias. Aprendizado do fluxo combinado para o fim do projeto.
