@@ -83,6 +83,8 @@ test('builds bilingual project and blog pages and preserves selected copies on f
       assert.doesNotMatch(picks, /<iframe/);
       assert.match(picks, /https:\/\/books\.google\.com\/books\/content\?id=synthetic-edition/);
       assert.match(picks, /poweredby\.png/);
+      assert.match(picks, new RegExp(`href="/${locale}/recommendations/"[^>]*aria-label="[^"]+"[^>]*aria-current="page"`));
+      assert.match(picks, new RegExp(`href="/${locale === 'en' ? 'pt' : 'en'}/recommendations/"`));
       const blog = await readFile(`dist/${locale}/blog/local-article-test/index.html`, 'utf8');
       assert.match(blog, /<strong>Local Markdown body<\/strong>/);
       assert.match(blog, /data-visits(?:\s|=|>)/);

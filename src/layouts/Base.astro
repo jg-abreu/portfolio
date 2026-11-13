@@ -14,6 +14,7 @@ import {
 } from '../i18n/ui';
 import Assistant from '../components/Assistant.astro';
 import VisitCounter from '../components/VisitCounter.astro';
+import { recommendationUi } from '../i18n/recommendations';
 import { rioDate } from '../lib/calendar';
 import { getContacts } from '../lib/content';
 
@@ -47,10 +48,12 @@ const pages = [
 	{ id: 'projects', label: t('nav.projects'), icon: 'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z' },
 	{ id: 'pipeline', label: t('nav.pipeline'), icon: 'M6 21a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm12-14a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM8 19h8a3.5 3.5 0 0 0 0-7H8a3.5 3.5 0 0 1 0-7h8' },
 	{ id: 'blog', label: t('nav.blog'), icon: 'M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Zm0 0v6h6M8 13h8m-8 4h5' },
+	{ id: 'recommendations', label: recommendationUi[locale].title, shortLabel: recommendationUi[locale].nav, icon: 'M6 3h12v18l-6-4-6 4Z' },
 	{ id: 'resume', label: t('nav.resume'), icon: 'M4 8h16v12H4Zm5 0V5h6v3m-11 5h16' },
 	{ id: 'contact', label: t('nav.contact'), icon: 'M3 6h18v12H3Zm0 1 9 6 9-6' },
 ].map((p) => ({
 	...p,
+	shortLabel: 'shortLabel' in p ? p.shortLabel : p.label,
 	href: getRelativeLocaleUrl(locale, p.id ? `${p.id}/` : ''),
 	current: !standalone && (p.id === '' ? pathInLocale === '' : pathInLocale.startsWith(p.id)),
 }));
@@ -153,12 +156,12 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 					<ul>
 						{
 							pages.map((p) => (
-								<li>
-									<a href={p.href} aria-current={p.current ? 'page' : undefined} title={p.label}>
+								<li class:list={{ current: p.current }}>
+									<a href={p.href} aria-label={p.label} aria-current={p.current ? 'page' : undefined} title={p.label}>
 										<svg viewBox="0 0 24 24" aria-hidden="true">
 											<path d={p.icon} />
 										</svg>
-										<span class:list={['label', { 'visually-hidden': !p.current }]}>{p.label}</span>
+										<span class:list={['label', { 'visually-hidden': !p.current }]}>{p.shortLabel}</span>
 									</a>
 								</li>
 							))
@@ -1029,7 +1032,15 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 
 		.sections ul {
 			justify-content: space-between;
+			gap: 0;
+			width: 100%;
 		}
+		.sections { min-width: 0; }
+		.sections li { flex: 0 0 2rem; min-width: 0; }
+		.sections li.current { flex: 1 1 auto; }
+		.sections a { width: 2rem; min-width: 0; padding-inline: 0; justify-content: center; }
+		.sections a[aria-current] { width: 100%; padding-inline: .5rem; }
+		.sections a[aria-current] .label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 	}
 
 	.site-footer {
