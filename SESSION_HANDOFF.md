@@ -1,5 +1,12 @@
 # Retomada — 2026-11-11
 
+## Continuidade — templates públicos e fallback em 13/11
+
+- Drive recuperou as evidências pendentes da restauração/133 testes e do bloqueio da revisão CUA; backup privado das notas enviado em 9068847. Histórico preservado.
+- Lighthouse 13.6.0 ampliado para nove templates públicos: home EN 98, projetos EN 99, caso de estudo PT 99, Pipeline EN 99, blog PT 94, currículo PT 99, contato EN 99, Recomendações PT 99. Acessibilidade/boas práticas/SEO 100 nesses casos. Artigo teve contraste 3,56:1 e acessibilidade96; corrigidos links de --accent para --brand e mesmo padrão no eyebrow do assistente. Artigo EN final97 e PT91, demais três categorias100; contraste aprovado nos dois. Build/check final 29 páginas aprovado; sem testes novos para mudança CSS de duas linhas.
+- Smoke combinado home PT: Chrome isolado headless com movimento reduzido forçado e APIs GitHub/contribuições bloqueadas, confirmado status-1/zero bytes. Captura completa inspecionada preservou headline, heatmap/estatísticas do snapshot, repositórios, tecnologias e rodapé. Notas99/100/100/100. Não é rede totalmente offline nem revisão de todo gesto/efeito. Relatórios locais ignorados; docs/validation.md detalha escopo e valores.
+- Revisão autenticada do novo status de publicação continua pendente; última tentativa do controle nativo foi bloqueada por confiança na URL, sem contorno. Credenciais reais de assistente/card e infraestrutura manual continuam pendentes. Nenhum deploy, merge/main, e-mail ou chamada Gemini.
+
 ## Continuidade — restauração isolada e API atualizada em 13/11
 
 - BackupRestoreTests exporta pg_dump real de um PostgreSQL descartável e restaura em outro, com imagem sintética copiada separadamente. Confere oito migrações/Flyway, dados capturados apesar de mudanças posteriores na origem, contrato EN/PT de recomendação, revisão/capa, contador/fila, identity e FK. Não é backup externo da VM; checklist manual em portfolio-api/docs/backup-restore.md.

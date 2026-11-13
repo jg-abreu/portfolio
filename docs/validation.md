@@ -31,13 +31,40 @@ The tested JAR was packaged and the verified older local review process was repl
 
 This is not proof of an external production backup, remote disaster recovery or a configured backup schedule. No real contact archive, email, provider request or deployment was created. The API's `docs/backup-restore.md` records the manual external-backup acceptance checklist. Authenticated browser review of the new publication status remains pending at this checkpoint.
 
+## Expanded public-template review — 2026-11-13
+
+Nine additional default-mobile Lighthouse 13.6.0 runs covered the public templates on the same loopback static server. Contact and visits were disabled and no form or assistant question was submitted. The article contrast failure below was corrected, then the same article template was rechecked in both locales.
+
+| Route/template | Performance | Accessibility | Best practices | SEO |
+| --- | --- | --- | --- | --- |
+| `/en/` | 98 | 100 | 100 | 100 |
+| `/en/projects/` | 99 | 100 | 100 | 100 |
+| `/pt/projects/portfolio-api/` | 99 | 100 | 100 | 100 |
+| `/en/pipeline/` | 99 | 100 | 100 | 100 |
+| `/pt/blog/` | 94 | 100 | 100 | 100 |
+| EN article, after contrast correction | 97 | 100 | 100 | 100 |
+| PT article, after contrast correction | 91 | 100 | 100 | 100 |
+| `/pt/resume/` | 99 | 100 | 100 | 100 |
+| `/en/contact/` | 99 | 100 | 100 | 100 |
+| `/pt/recommendations/` | 99 | 100 | 100 | 100 |
+
+The article route was `why-my-gets-worked-but-every-post-got-a-403-a-cors-bug-behind-nginx-in-docker-2io`. Before correction, its links used the button accent `#2563eb` on dark `#11141b`, measured at 3.56:1 and accessibility 96. Article links now use the existing theme-aware brand token. The assistant eyebrow used the same accent-as-text pattern and was updated too; the rest of the interface and button backgrounds are unchanged. Calculated text ratios are 7.25:1 on the dark page, 6.71:1 on the dark assistant surface and 5.17:1 on white. Final EN/PT article contrast audits passed. The closed-dialog page audits do not independently verify the opened assistant panel.
+
+The other template measurements preceded these two text-color changes; the article reruns and final build used the corrected source. These are representative templates, not every route/language/content state. Scores are individual runs, not a statistical performance guarantee. The empty recommendation catalogue and current resume state do not certify performance with real cover lists or an uploaded PDF. Astro check/build passed with 29 pages after the CSS correction; no unrelated test suite was rerun for the two-line color change.
+
+## Blocked providers and reduced-motion smoke — 2026-11-13
+
+A separate home PT run used a fresh isolated headless Chrome with `--force-prefers-reduced-motion` and blocked URL patterns for `api.github.com` and `github-contributions-api.jogruber.de`. The report confirmed both contribution/practice requests failed with status -1 and zero transferred bytes. The full-page audit screenshot was inspected: headline, snapshot contribution count/heatmap, practice statistics, repository cards, technologies and footer remained rendered. No fresh GitHub values were inferred from this check.
+
+This combined smoke scored 99/100/100/100. It is evidence for this home viewport with two providers blocked, not a fully disconnected browser, all interactive flows or every animation on all routes. Reduced-motion guards were also inspected in the bootstrap, theme, popup, card-glow and contribution scripts. Reports and extracted public-page screenshots remain in ignored local staging; none was uploaded. The flag comes from the [Chromium graphics switches](https://chromium.googlesource.com/chromium/src/+/master/ui/gfx/switches.cc).
+
 ## Remaining acceptance work
 
 - Real assistant responses, source fidelity and exact fallback: Gemini key is absent from the inspected Windows user/process environment and existing IntelliJ run configuration. No key was created or exposed.
 - Real profile-card data and final visual approval: its token is absent from the inspected user/process environment; no profile README integration was performed.
 - New publication-status UI against an upgraded review API, including authenticated phone-width display. Its cleanup and late-response behavior are covered by automated tests.
-- Enabled visit-footer browser review, disconnected-network behavior, cross-tab project edits, reduced-motion and external-service-blocked behavior on the complete final site.
-- Wider page/template Lighthouse coverage, accessibility review and final approval by João.
+- Enabled visit-footer browser review, disconnected-network behavior, cross-tab project edits and remaining interaction/reduced-motion/provider-failure checks beyond the combined home smoke above.
+- Real-content/PDF/cover states, remaining accessibility review and final approval by João; representative public templates now have recorded Lighthouse results above the target.
 - Local two-instance load-balancer exercise, scanning setup, persistent image storage, external backup/restore, trusted production proxy, provider quota/cost checks and authorized release. Infrastructure remains manual work by João under current project rules.
 
 Reference: [official Lighthouse CLI](https://github.com/GoogleChrome/lighthouse/blob/main/readme.md).
