@@ -1,5 +1,12 @@
 # Retomada — 2026-11-11
 
+## Continuidade — fila de publicação e Lighthouse em 13/11
+
+- Publicação preparada na API 20330df e site f0aa667, ambos enviados à feat/v2. V8 registra geração na mesma transação de selecionar/retirar cópia; salvar/arquivar rascunho não dispara. Lease de 2 min, envio fora da transação, coalescência, falha espera 5 min, agendador 30 s; flag PORTFOLIO_PUBLICATION_ENABLED false por padrão. Destino fixo publication-v2.yml/ref feat/v2, nenhum token/run/workflow criado. Aceitação pelo GitHub não significa build/deploy concluído; manifestos continuam sendo a prova por item.
+- API: suíte completa 131 testes, oito migrações somente em Testcontainers descartáveis, sem falhas/erros/ignorados. Site: 64 testes/build 29 páginas, depois 15 focados e integração bilíngue repetida após ajustes. Novo status privado PT/EN nos dois admins, limpeza no logout/respostas atrasadas; revisão autenticada do status no navegador ainda pendente. JAR/banco habitual não foram atualizados ou migrados.
+- Lighthouse CLI 13.6.0 local/mobile, Chrome isolado: home PT 98/100/100/100; Recomendações EN final 97/100/100/100. Corrigidos nomes acessíveis do logotipo JA e menu compacto Picks; auditoria final de nomes aprovou sem nós problemáticos. Build/check finais aprovados; não representa todas as páginas, catálogo com capas, aparelho físico ou produção. Detalhes em docs/validation.md.
+- Chave Gemini ausente nas fontes conferidas (ambiente usuário/processo e IntelliJ); token do card ausente no ambiente usuário/processo. Nenhum segredo exposto/configurado. Não simular como auditoria real. GitHub exige workflow registrado na branch padrão: conexão real continua aguardando lançamento autorizado e execução manual de infraestrutura pelo João; instruções concretas em docs/publication.md. Main, VM e produção intactas.
+
 ## Continuidade — card SVG e README da API em 13/11
 
 - API ganhou GET /api/profile-card.svg, desativado por padrão: consulta GraphQL fixa para contribuições do último ano e último repositório público do próprio jg-abreu. Refresh em segundo plano a cada 15 min; leitura pública só usa cache. Falha mantém última leitura e data; sem leitura mostra indisponível. Cache em memória por processo, perdido no restart.

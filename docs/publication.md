@@ -32,3 +32,9 @@ João's manual receiving-workflow checklist for the authorized release:
 - Confirm the final main/release target with João before replacing the V2-only constants. No permission to merge or launch is implied by the existence of this module.
 
 References: [workflow dispatch REST API](https://docs.github.com/en/rest/actions/workflows), [events that trigger workflows](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows).
+
+## Local validation — 2026-11-13
+
+The API passed its complete suite of 131 tests with disposable PostgreSQL and simulated GitHub dispatch. The site passed 64 tests and a 29-page build. After the recommendation status polling adjustment, 15 focused session/status/editor tests passed and the build was repeated. Astro checking reported no errors, warnings or hints. UI tests cover malformed status and late replies after logout; existing admin session tests continue to verify private cleanup. The new status has not yet received a dedicated authenticated browser review against the upgraded API.
+
+V8 has been applied only to disposable test databases. The habitual local review JAR/database were not replaced, restarted or migrated. No receiving workflow, credentials, remote Actions run or deployment was created. This is tested publication preparation, not an end-to-end live publication claim.

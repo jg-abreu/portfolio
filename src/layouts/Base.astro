@@ -148,7 +148,7 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 		<a class="skip-link" href="#main">{t('nav.skip')}</a>
 		<header class="site-header">
 			<div class="header-inner">
-				<a class="brand" href={home} aria-label="João Abreu">
+				<a class="brand" href={home} aria-label={t('nav.brand')}>
 					<span class="brand-mark" aria-hidden="true">JA</span>
 					<span class="brand-name">João Abreu</span>
 				</a>
@@ -157,7 +157,7 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 						{
 							pages.map((p) => (
 								<li class:list={{ current: p.current }}>
-									<a href={p.href} aria-label={p.label} aria-current={p.current ? 'page' : undefined} title={p.label}>
+									<a href={p.href} aria-label={p.shortLabel === p.label ? p.label : `${p.shortLabel} — ${p.label}`} aria-current={p.current ? 'page' : undefined} title={p.label}>
 										<svg viewBox="0 0 24 24" aria-hidden="true">
 											<path d={p.icon} />
 										</svg>
