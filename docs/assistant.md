@@ -90,4 +90,12 @@ Verified in English: the dialog and controls fit the same phone viewport, and a 
 
 The simulator was stopped after review. Expected 503 and 429 entries in DevTools came from deliberate fixtures. Public recommendations remained empty through the normal Astro/API route. Existing real GitHub OAuth checks were completed during the recommendation/inbox workflow; the earlier OAuth-pending entry above is historical.
 
-Still pending: real PT/EN model-answer/source fidelity audit, exact live fallback verification, light-theme and broader keyboard/accessibility review, trusted production proxy validation and authorized V2 release preparation. No main merge, production deployment or real Gemini query occurred in this stage.
+Still pending at that checkpoint: real PT/EN model-answer/source fidelity audit, exact live fallback verification, light-theme and broader keyboard/accessibility review, trusted production proxy validation and authorized V2 release preparation. No main merge, production deployment or real Gemini query occurred in this stage.
+
+## Light theme and keyboard review — 2026-11-13
+
+The normal local Astro site on port 4321 was reviewed in Chrome at 360 × 653 CSS pixels. The Portuguese and English assistant dialogs were legible in the light theme, with the question field, submission control and contact link fitting within the horizontally bounded dialog. Vertical scrolling remains available. No question was submitted and no Gemini request was made.
+
+In Portuguese, opening the dialog focused the question field. Tab showed a visible focus indicator on the submit button and then the contact link, scrolling the latter into view. Closing with the visible close button returned focus to the launch button, as confirmed by reopening with Enter. Escape closed the dialog and displayed the launch button's focus indicator. Escape and restored launch focus were also checked in English. Chrome's own browser controls remained reachable; this was not a full tab-order or assistive-technology audit.
+
+No functional change was required. Response/error states in the light theme, screen-reader testing, physical-device testing, the real PT/EN answer/source audit and exact live fallback verification remain pending. Earlier dark-theme simulated-response evidence remains separate from this no-request review. Production and main were unchanged.

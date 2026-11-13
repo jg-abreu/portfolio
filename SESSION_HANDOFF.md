@@ -1,5 +1,11 @@
 # Retomada — 2026-11-11
 
+## Continuidade — assistente claro e teclado em 13/11
+
+- Chrome local 4321, 360×653 CSS px, PT/EN: diálogo claro legível, controles dentro da largura e rolagem vertical disponível. Nenhuma pergunta enviada, chamada Gemini ou alteração funcional.
+- PT: foco inicial no campo, Tab com indicador visível em envio e contato; botão de fechar devolve foco ao gatilho e Enter reabre; Escape fecha. EN: diálogo claro e Escape com foco restaurado conferidos. Não equivale a auditoria completa de tabulação/leitor de tela, resposta clara ou aparelho físico.
+- Continuam pendentes auditoria real de respostas/fontes/fallback, revisão ampla de acessibilidade e preparação da publicação dentro da regra de infraestrutura manual. Registro detalhado em docs/assistant.md.
+
 ## Continuidade — upload manual validado em 13/11
 
 - Chrome PT em 360 CSS px: PNG sintético 1×1 escolhido pelo seletor nativo, upload aceito, rascunho EN/PT salvo, página recarregada e item reaberto com imagem e textos persistidos. Não equivale à avaliação visual de uma capa real.
