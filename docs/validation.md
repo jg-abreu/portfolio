@@ -66,10 +66,12 @@ Native Chrome review confirmed the corrected English desktop layout and 360 × 6
 
 ## Remaining acceptance work
 
+Use the ordered [V2 release checklist](v2-release-checklist.md) for ownership and completion gates. This list records the outstanding scope, not authorization to deploy.
+
 - Real assistant responses, source fidelity and exact fallback: Gemini key is absent from the inspected Windows user/process environment and existing IntelliJ run configuration. No key was created or exposed.
 - Real profile-card data and final visual approval: its token is absent from the inspected user/process environment; no profile README integration was performed.
 - Publication-status queue/dispatch states against a connected receiver; the disabled state has now been reviewed in the authenticated local browser. Cleanup and late-response behavior are covered by automated tests.
-- Enabled visit-footer browser review, disconnected-network behavior, cross-tab project edits and remaining interaction/reduced-motion/provider-failure checks beyond the combined home smoke above.
+- Enabled visit-footer visual review (real PT registration/deduplication/API-failure integration already passed; see visits.md), disconnected-network behavior, cross-tab project edits and remaining interaction/reduced-motion/provider-failure checks beyond the combined home smoke above.
 - Real-content/PDF/cover states, remaining accessibility review and final approval by João; representative public templates now have recorded Lighthouse results above the target.
 - Local two-instance load-balancer exercise, scanning setup, persistent image storage, external backup/restore, trusted production proxy, provider quota/cost checks and authorized release. Infrastructure remains manual work by João under current project rules.
 

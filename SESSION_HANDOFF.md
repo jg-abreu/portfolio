@@ -1,5 +1,10 @@
 # Retomada — 2026-11-11
 
+## Continuidade — checklist ordenado e ponto seguro em 13/11
+
+- docs/v2-release-checklist.md consolida sequência: aceitação local, integrações reais, infraestrutura manual do João e gate de lançamento conjunto. Separa monitoramento preparado de scans efetivos e restauração local de recuperação externa. Nenhum item futuro marcado concluído.
+- Próxima retomada: aparência do contador habilitado EN/PT/mobile; depois interações locais restantes. Credenciais reais, CodeQL/Java, receiver e infraestrutura continuam pendentes. Não ativar produção para destravar teste. Esta rodada apenas documental, sem testes pesados ou mudanças de runtime.
+
 ## Continuidade — monitoramento Maven preparado em 13/11
 
 - API 73b1487 enviado à feat/v2: Dependabot Maven semanal para pom raiz, PRs de versão para feat/v2, limite 3, minor/patch agrupados, sem automerge. YAML/destino conferidos; README aponta docs/dependency-security.md. Nenhuma versão/dependência alterada, nenhuma análise Java/CVE ou CodeQL executada.
