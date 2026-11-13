@@ -58,11 +58,17 @@ A separate home PT run used a fresh isolated headless Chrome with `--force-prefe
 
 This combined smoke scored 99/100/100/100. It is evidence for this home viewport with two providers blocked, not a fully disconnected browser, all interactive flows or every animation on all routes. Reduced-motion guards were also inspected in the bootstrap, theme, popup, card-glow and contribution scripts. Reports and extracted public-page screenshots remain in ignored local staging; none was uploaded. The flag comes from the [Chromium graphics switches](https://chromium.googlesource.com/chromium/src/+/master/ui/gfx/switches.cc).
 
+## Authenticated publication status and layout — 2026-11-13
+
+The local GitHub login reached the authenticated admin and displayed the disabled automatic-update state. This exposed a layout regression: the status paragraph was a third direct child of the two-column workspace grid, displacing the sidebar and squeezing the project heading. The status now lives inside the main content column.
+
+Native Chrome review confirmed the corrected English desktop layout and 360 × 653 CSS-pixel mobile layout in English/Portuguese, with light/dark states inspected. The disabled status remained readable without visible horizontal overflow in the inspected viewport. Logout returned to the Portuguese login screen; DevTools was closed and the light theme restored. No draft, publication selection, email or workflow dispatch was created. Other queue states remain covered by automated tests rather than this browser review. The build passed with 29 pages and zero Astro diagnostics; existing CSP/Shiki build warnings remain.
+
 ## Remaining acceptance work
 
 - Real assistant responses, source fidelity and exact fallback: Gemini key is absent from the inspected Windows user/process environment and existing IntelliJ run configuration. No key was created or exposed.
 - Real profile-card data and final visual approval: its token is absent from the inspected user/process environment; no profile README integration was performed.
-- New publication-status UI against an upgraded review API, including authenticated phone-width display. Its cleanup and late-response behavior are covered by automated tests.
+- Publication-status queue/dispatch states against a connected receiver; the disabled state has now been reviewed in the authenticated local browser. Cleanup and late-response behavior are covered by automated tests.
 - Enabled visit-footer browser review, disconnected-network behavior, cross-tab project edits and remaining interaction/reduced-motion/provider-failure checks beyond the combined home smoke above.
 - Real-content/PDF/cover states, remaining accessibility review and final approval by João; representative public templates now have recorded Lighthouse results above the target.
 - Local two-instance load-balancer exercise, scanning setup, persistent image storage, external backup/restore, trusted production proxy, provider quota/cost checks and authorized release. Infrastructure remains manual work by João under current project rules.

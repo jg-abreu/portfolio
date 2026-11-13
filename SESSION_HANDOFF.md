@@ -1,5 +1,11 @@
 # Retomada — 2026-11-11
 
+## Continuidade — status autenticado e layout em 13/11
+
+- Login GitHub local chegou ao admin e confirmou atualizações automáticas desativadas. Encontrado bug real: PublicationStatus era terceiro filho direto do grid de duas colunas, deslocando sidebar e comprimindo título. Componente movido para dentro de studio-main.
+- Chrome nativo: layout desktop EN corrigido, largura móvel 360×653 em EN/PT e temas claro/escuro inspecionados; status legível, sem overflow horizontal visível na área revista. Logout retornou ao login PT; DevTools fechado, tema claro restaurado. Nenhum rascunho, seleção pública, dispatch ou e-mail criado. Demais estados da fila só têm cobertura automatizada nesta rodada.
+- Build/check aprovados, 29 páginas e zero diagnósticos Astro; avisos CSP/Shiki preexistentes. Main, VM e produção preservadas. Próximas pendências em docs/validation.md.
+
 ## Continuidade — templates públicos e fallback em 13/11
 
 - Drive recuperou as evidências pendentes da restauração/133 testes e do bloqueio da revisão CUA; backup privado das notas enviado em 9068847. Histórico preservado.

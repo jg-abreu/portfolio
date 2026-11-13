@@ -89,7 +89,6 @@ const fields = [
       <small class="muted">{t.loginNote}</small>
     </section>
     <div class="workspace" data-workspace hidden>
-      <PublicationStatus locale={locale} />
       <aside class="sidebar">
         <div>
           <p class="eyebrow">{t.content}</p>
@@ -133,6 +132,7 @@ const fields = [
         </div>
       </aside>
       <main id="main" class="studio-main">
+        <PublicationStatus locale={locale} />
         <div data-projects-screen>
         <div class="page-title">
           <div>
