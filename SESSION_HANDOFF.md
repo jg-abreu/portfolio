@@ -4,7 +4,8 @@
 
 - João criou uma senha de app e a inseriu pessoalmente em `.env.smtp.local` da API. Arquivo confirmado como ignorado pelo Git, com acesso local restrito ao usuário e SYSTEM; senha não exibida nem versionada. Espaços de agrupamento removidos localmente.
 - Teste de conexão via JavaMailSenderImpl.testConnection aprovado com STARTTLS obrigatório, sem envio de mensagem. Flags de entrega, recebimento e retenção continuam false nesse arquivo; nada alterado na VM.
-- Preparado teste sintético pelo adaptador real SmtpContactNotifier, assunto `Portfolio contact #0`, para pessoal + dev. Envio ainda não executado: aguarda confirmação explícita para a mensagem real. Aceitação SMTP não comprova recebimento em cada caixa; conferir os dois destinos depois.
+- João autorizou um único teste sintético pelo adaptador real SmtpContactNotifier, assunto `Portfolio contact #0`, para pessoal + dev. SMTP aceitou o envio em 13/11, aproximadamente 00:58 no Rio. Gmail conectado à conta dev confirmou a mensagem com labels INBOX e SENT. Recebimento no pessoal ainda depende de confirmação; não reenviar automaticamente.
+- Teste foi do transporte real com dados sintéticos, fora da fila/banco, não do formulário completo. Flags locais continuam desativadas. Nenhum deploy ou envio adicional realizado.
 
 ## Continuidade — contato e fila preparados em 13/11
 
