@@ -32,3 +32,6 @@ pnpm-debug.log*
 
 # local, machine-specific instructions for Claude Code (not versioned)
 CLAUDE.local.md
+src/data/recommendations.json
+src/data/recommendations.json.tmp
+src/assets/recommendations-generated/

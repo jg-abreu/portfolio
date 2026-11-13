@@ -10,7 +10,8 @@
   "scripts": {
     "test": "node --test scripts/*.test.ts",
     "dev": "astro dev",
-    "build": "npm run publications && npm run snapshot && npm run blog && astro check && astro build",
+    "build": "npm run publications && npm run recommendations && npm run snapshot && npm run blog && astro check && astro build",
+    "recommendations": "node scripts/recommendations-snapshot.ts",
     "blog": "node scripts/blog-snapshot.ts",
     "snapshot": "node scripts/github-snapshot.ts",
     "og": "node scripts/og-images.ts",
