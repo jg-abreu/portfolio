@@ -35,6 +35,14 @@ Local acceptance for the current content scope is complete as recorded below (20
 - [ ] Review contact outbox, SMTP, retention, visit HMAC stability, provider quotas and process-local limit behavior before enabling features. A local rate limit is not a distributed spending cap.
 - [ ] Review workflow destination, branch guards, protected environment, permissions, atomic release replacement and rollback. Preserve the old serving release/database and do not move DNS/IPs or remove a VM early.
 
+### V2 preview environment — 2026-11-14 (done by Claude with João's explicit authorization)
+
+- [x] `portfolio-v2-2gb` (2 GB) with static IP `portfolio-v2-ip`; firewall identical to production (80/443 limited to the 22 Cloudflare ranges, SSH unchanged). Cloudflare `A v2` proxied to the static IP. Packages upgraded and rebooted.
+- [x] API `d7e2f70` JAR deployed with the production compose (persistent `recommendations/` media directory, optional Gemini/profile-card keys). Flyway V4 → V9 after a local `pg_dump`; previous JAR/compose kept in `/opt/portfolio-api/backups`. Gemini key added by João; real PT questions answered with sources and the salary question fell back without inventing a value.
+- [x] Site `feat/v2` deployed to `/var/www/portfolio-v2` (atomic rsync; previous copy kept). External checks: public/admin pages 200, PDF served, anonymous admin 401, actuator not exposed, HSTS/SAMEORIGIN/noindex, OAuth redirect to the v2 callback. João's real GitHub login reached the admin and the card editor on v2.
+- [x] Off-site backup: private Lightsail bucket `joaoabreu-portfolio-v2-backups` ($1/month), daily systemd timer, `age`-encrypted archive (private key kept off the server by João), upload read-back verified, 30-day retention. Restore rehearsal from an encrypted archive into disposable PostgreSQL 18 passed (V9, 10 tables). See API `docs/backup-restore.md`.
+- [ ] Still disabled on v2: contact intake/SMTP/retention, visits, profile card refresh token, publication dispatch. Enable one at a time after the reviews in section 3.
+
 ## 4. Joint release gate
 
 - [ ] João approves the final preview and the exact scope/remaining accepted limitations.
