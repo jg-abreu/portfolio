@@ -4,6 +4,7 @@
 import { readFileSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { rioDate } from '../src/lib/calendar.ts';
+import { parseProjectSnapshot } from '../src/lib/project-publications.ts';
 import {
 	ENDPOINTS,
 	GITHUB_USER,
@@ -54,10 +55,22 @@ async function practiceDays(): Promise<string[] | null> {
 	throw new Error('more commit pages than expected');
 }
 
-/** Root folders and files of every project repository listed in src/content/projects.yaml. */
+/** Repositories of the projects published from the admin (downloaded by scripts/project-publications.ts). */
+function publishedRepos(): string[] {
+	try {
+		const snapshot = parseProjectSnapshot(JSON.parse(readFileSync(new URL('../src/data/project-publications.json', import.meta.url), 'utf8')));
+		return snapshot.projects
+			.map((project) => project.repositoryUrl.replace(/\/$/, '').match(/^https:\/\/github\.com\/jg-abreu\/([A-Za-z0-9._-]+)$/)?.[1])
+			.filter((repo): repo is string => !!repo);
+	} catch {
+		return [];
+	}
+}
+
+/** Root folders and files of every project repository: src/content/projects.yaml plus published projects. */
 async function trees(): Promise<Record<string, TreeEntry[]> | null> {
 	const yaml = readFileSync(new URL('../src/content/projects.yaml', import.meta.url), 'utf8');
-	const repos = [...yaml.matchAll(/^\s+repo:\s*([A-Za-z0-9._-]+)\s*$/gm)].map((m) => m[1]);
+	const repos = [...new Set([...[...yaml.matchAll(/^\s+repo:\s*([A-Za-z0-9._-]+)\s*$/gm)].map((m) => m[1]), ...publishedRepos()])];
 	const out: Record<string, TreeEntry[]> = {};
 	for (const repo of repos) {
 		const entries = fromGitHubContents(await getJson(ENDPOINTS.repoRoot(repo), { headers: githubHeaders }));

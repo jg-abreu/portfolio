@@ -1,39 +1,4 @@
-# Language-neutral project data. Each id needs a text file in every locale:
-# src/content/projects/en/<id>.md and src/content/projects/pt/<id>.md.
-
-- id: tutoring-management-system
-  repo: tutoring-management-system
-  role: featured
-  order: 0
-  stack: [Java 21, Spring Boot 4.1, PostgreSQL 17, React 19, TypeScript, Docker, GitHub Actions]
-  # Case study page: the Markdown body in each locale, with this cover from src/assets/case-studies/.
-  caseStudy: true
-  cover: tutoring-cover.svg
-
-- id: portfolio-api
-  repo: portfolio-api
-  role: secondary
-  order: 1
-  stack: [Java 21, Spring Boot 4.1, PostgreSQL 18, Flyway, Testcontainers, Docker Compose]
-  inProgress: true
-
-- id: leetcode
-  repo: algorithms-and-data-structures
-  role: signal
-  order: 2
-  stack: [Java, Python]
-  profiles:
-    - label: LeetCode
-      url: https://leetcode.com/u/jg-abreu/
-    - label: Codeforces
-      url: https://codeforces.com/profile/jg-abreu
-    - label: AtCoder
-      url: https://atcoder.jp/users/jgabreu
-    - label: CSES
-      url: https://cses.fi/user/522406
-
-- id: daily-learning-log
-  repo: daily-learning-log
-  role: signal
-  order: 3
-  stack: [Java 17, Spring Boot 3, MySQL]
+# Projects are managed in the admin (/admin) and read from the API at build time.
+# Add an entry here only for a project that must live in the repository; each id needs a text file
+# in every locale (src/content/projects/en/<id>.md and src/content/projects/pt/<id>.md).
+[]
