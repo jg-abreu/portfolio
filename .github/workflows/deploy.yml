@@ -35,10 +35,15 @@ jobs:
 
       - run: npm ci
 
-      # The snapshot script reads GITHUB_TOKEN for a higher API rate limit.
+      # The snapshot script reads GITHUB_TOKEN for a higher API rate limit. Published projects and
+      # recommendations come from the API; if it is unreachable the build fails and the live site stays.
       - run: npm run build
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PROJECTS_API_URL: https://joaoabreu.dev/api/projects
+          RECOMMENDATIONS_API_URL: https://joaoabreu.dev/api/recommendations
+          PUBLIC_VISITS_ENABLED: "true"
+          PUBLIC_CONTACT_ENABLED: "true"
 
       - name: Set up SSH
         env:
