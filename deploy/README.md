@@ -6,16 +6,21 @@ How joaoabreu.dev is served, and how to rebuild the server from scratch.
 visitor ──HTTPS──▶ Cloudflare (proxy, cache, edge certificate)
                        │  HTTPS, SSL mode Full (strict)
                        ▼
-                 AWS Lightsail · Ubuntu 24.04 · nginx
-                 /var/www/portfolio  ◀── rsync over SSH (user deploy) from GitHub Actions
+                 AWS Lightsail portfolio-v2-2gb · Ubuntu 24.04 · nginx
+                   ├─ /var/www/portfolio     ◀── rsync over SSH (user deploy) from GitHub Actions
+                   └─ /api, /oauth2, /login/oauth2 ──▶ 127.0.0.1:8080
+                        Docker Compose (/opt/portfolio-api): Spring Boot API + PostgreSQL 18
 ```
 
 | Piece | Where | Notes |
 |---|---|---|
-| Server | AWS Lightsail, instance `portfolio`, us-east-2 (Ohio) | $5 plan: 512 MB, 2 vCPU, 20 GB SSD, 1 TB transfer, dual-stack |
-| Address | Static IP `portfolio-ip` attached to the instance | Free while attached; billed if left detached |
+| Server | AWS Lightsail, instance `portfolio-v2-2gb`, us-east-2 (Ohio) | 2 GB, 2 vCPU, 60 GB SSD, dual-stack; created from a snapshot of the first server |
+| Address | Static IP `portfolio-v2-ip` attached to the instance | Free while attached; billed if left detached |
+| API | `/opt/portfolio-api` with `compose.production.yaml` | JAR built and tested outside the VM; private settings in `.env` and `smtp.env` (mode 600). See `portfolio-api/PRODUCTION.md` |
+| Backups | Private Lightsail bucket `joaoabreu-portfolio-v2-backups` | Daily `age`-encrypted dump + covers, 30-day retention; the decryption key is kept off the server. See `portfolio-api/docs/backup-restore.md` |
+| Preview | `v2.joaoabreu.dev` → same VM, nginx site `portfolio-v2` | Serves `/var/www/portfolio-v2` with `noindex`; useful for testing a build before release |
 | Firewall | Lightsail networking tab | 22 (SSH): any IPv4/IPv6 + browser SSH; 80/443: Cloudflare IPv4/IPv6 ranges only |
-| DNS | Cloudflare | `A @` → static IP, `CNAME www` → `joaoabreu.dev`, both proxied |
+| DNS | Cloudflare | `A @` and `A v2` → static IP, `CNAME www` → `joaoabreu.dev`, all proxied; Browser Cache TTL "Respect Existing Headers" |
 | TLS | Cloudflare Origin CA certificate on nginx | `/etc/ssl/cloudflare/joaoabreu.dev.{pem,key}`, valid until 2041 |
 | Web server | [`nginx/portfolio.conf`](nginx/portfolio.conf) | `/etc/nginx/sites-available/portfolio` |
 
@@ -23,7 +28,7 @@ The origin IP is not written here on purpose: with the proxy on, it stays hidden
 
 ## Accounts and costs
 
-- **AWS Free plan** until **2027-04-21** (US$ 100 in credits). The instance costs about US$ 5/month, paid by the credits. Before that date, either upgrade to the Paid plan and set a **spend limit** (minimum US$ 20), or move the site elsewhere. Without the upgrade, AWS closes the account and the server with it.
+- **AWS Free plan** until **2027-04-21** (US$ 100 in credits). The 2 GB instance and the US$ 1 backup bucket are paid by the credits; the first 512 MB server (`portfolio`, `portfolio-ip`) is kept only as a rollback until it is removed. Before that date, either upgrade to the Paid plan and set a **spend limit** (minimum US$ 20), or move the site elsewhere. Without the upgrade, AWS closes the account and the server with it.
 - The AWS account uses the 2026 "projects" model: it is owned by an AWS Builder ID (sign-in through GitHub, MFA on the Builder ID). Do **not** choose "Activate advanced features": it is irreversible and not needed here.
 - **Plan B:** Oracle Cloud (Always Free A1.Flex). The stack `portfolio-vm` is saved in Resource Manager and the quota policy `free-tier-only` blocks anything outside Always Free. It was never applied because A1 had no capacity.
 
@@ -95,7 +100,7 @@ Run on your machine unless the step says *on the server*. `<ip>` is the static I
 
 ## Automatic deploys
 
-[`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) builds the site and copies `dist/` with rsync on every push to `main`, every day at 06:00 (Rio) to refresh the GitHub snapshot, and on demand (*Actions → Deploy → Run workflow*). It needs three repository secrets (*Settings → Secrets and variables → Actions*):
+[`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml) builds the site and copies `dist/` with rsync on every push to `main`, every day at 06:00 (Rio) to refresh the GitHub snapshot, and on demand (*Actions → Deploy → Run workflow*). The build reads published projects and recommendations from `https://joaoabreu.dev/api/...` and enables the visit counter and contact form; if the API is unreachable the build fails and the live site stays. The API can also trigger it after a publication (`PUBLICATION_ENABLED` with a token limited to Actions on this repository). It needs three repository secrets (*Settings → Secrets and variables → Actions*):
 
 | Secret | Value |
 |---|---|
@@ -115,7 +120,7 @@ curl -sI https://joaoabreu.dev/nope    # 404 (the Astro 404 once the site is dep
 
 ## Changing the nginx config
 
-Edit [`nginx/portfolio.conf`](nginx/portfolio.conf) here, then repeat step 9 (`scp`, `install`, `nginx -t && reload`). Always run `nginx -t` before reloading: a reload with a broken file is refused, but a restart would take the site down.
+The main-domain server block proxies `/api/`, `/oauth2/`, `/login/oauth2/` and `/admin` to the API, allows same-origin framing for the résumé PDF and accepts bodies up to 3 MB for covers. Edit [`nginx/portfolio.conf`](nginx/portfolio.conf) here, then repeat step 9 (`scp`, `install`, `nginx -t && reload`). Always run `nginx -t` before reloading: a reload with a broken file is refused, but a restart would take the site down.
 
 ## HSTS rollout
 
@@ -148,7 +153,7 @@ When rebuilding, replace the initial public web rules with the complete lists fr
 
 Astro generates a CSP meta element for content pages at build time, configured in `astro.config.mjs`. It permits same-origin resources, GitHub and the contributions API for browser connections, and hashes for inline scripts/styles. The manually rendered reveal bootstrap, font definitions and JSON-LD register hashes of their exact payloads. Build-time LeetCode requests are not browser requests and need no CSP allowance.
 
-Inline style attributes remain allowed for sonar timing, reveal effects and Shiki syntax highlighting. Inline JavaScript and eval are not broadly allowed. Astro emits general warnings about Shiki and separately scoped style attributes; `style-src-attr 'unsafe-inline'` deliberately supports those attributes while style elements use hashes. Framing remains blocked by nginx's `X-Frame-Options: DENY`; `frame-ancestors` cannot be enforced through a CSP meta element.
+Inline style attributes remain allowed for sonar timing, reveal effects and Shiki syntax highlighting. Inline JavaScript and eval are not broadly allowed. Astro emits general warnings about Shiki and separately scoped style attributes; `style-src-attr 'unsafe-inline'` deliberately supports those attributes while style elements use hashes. Framing is limited to the same origin by nginx's `X-Frame-Options: SAMEORIGIN` (the résumé page embeds the PDF); `frame-ancestors` cannot be enforced through a CSP meta element.
 
 Use `npm run build` and `npm run preview` to verify CSP (the dev server does not enforce Astro's generated policy). Check EN, PT, case studies and the 404 page for CSP console errors, working fonts, sonar/reveals and GitHub updates. The generated root redirect has no content layout; production `/` is redirected by nginx.
 
