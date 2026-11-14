@@ -1,3 +1,4 @@
+import { parseProfiles } from "../lib/project-profiles";
 import { clearBuildStatus, updateBuildStatus } from '../lib/publication-status';
 import type { AdminLabels } from "../i18n/admin";
 
@@ -8,7 +9,10 @@ type Copy = {
   decisions: string;
   result: string;
   body: string;
+  coverAlt: string;
 };
+type DraftRole = "FEATURED" | "SECONDARY" | "SIGNAL";
+type Profile = { label: string; url: string };
 type DraftStatus = "DRAFT" | "ARCHIVED";
 type Publication = { projectId: number; revision: string; draftVersion: number };
 type InboxMessage = {
@@ -32,6 +36,10 @@ type Draft = {
   status: DraftStatus;
   en: Copy;
   pt: Copy;
+  role: DraftRole;
+  inProgress: boolean;
+  coverKey: string;
+  profiles: Profile[];
   updatedAt: string;
 };
 
@@ -56,6 +64,47 @@ function initialize(root: HTMLElement) {
   const form = q<HTMLFormElement>("[data-project-form]");
   const formMessage = q<HTMLElement>("[data-form-message]");
   const saveButton = q<HTMLButtonElement>("[data-save]");
+  const coverPreview = q<HTMLImageElement>("[data-cover-preview]");
+  const coverFile = q<HTMLInputElement>("[data-cover-file]");
+  function showCover() {
+    const key = (form.elements.namedItem("coverKey") as HTMLInputElement).value;
+    coverFile.value = "";
+    if (/^[0-9a-f]{64}\.png$/.test(key)) {
+      coverPreview.src = `/api/admin/recommendation-images/${key}`;
+      coverPreview.hidden = false;
+    } else {
+      coverPreview.removeAttribute("src");
+      coverPreview.hidden = true;
+    }
+  }
+  q<HTMLButtonElement>("[data-cover-upload]").addEventListener("click", async () => {
+    const image = coverFile.files?.[0];
+    if (busy) return;
+    if (!image || !["image/png", "image/jpeg"].includes(image.type) || image.size > 2 * 1024 * 1024) {
+      formMessage.textContent = labels.coverInvalid;
+      return;
+    }
+    busy = true;
+    try {
+      const body = new FormData();
+      body.append("image", image);
+      const result = await mutate("/api/admin/recommendation-images", "POST", body);
+      if (!isObject(result) || typeof result.key !== "string" || !/^[0-9a-f]{64}\.png$/.test(result.key))
+        throw new Error("Invalid image response");
+      (form.elements.namedItem("coverKey") as HTMLInputElement).value = result.key;
+      showCover();
+      formMessage.textContent = labels.coverUploaded;
+    } catch (error) {
+      formMessage.textContent = errorMessage(error);
+    } finally {
+      busy = false;
+    }
+  });
+  q<HTMLButtonElement>("[data-cover-remove]").addEventListener("click", () => {
+    if (busy) return;
+    (form.elements.namedItem("coverKey") as HTMLInputElement).value = "";
+    showCover();
+  });
   const list = q<HTMLElement>("[data-project-list]");
   const empty = q<HTMLElement>("[data-empty]");
   const search = q<HTMLInputElement>("[data-search]");
@@ -145,13 +194,14 @@ function initialize(root: HTMLElement) {
       csrf.headerName !== "X-CSRF-TOKEN"
     )
       throw new Error("Invalid CSRF response");
+    const multipart = typeof FormData !== "undefined" && body instanceof FormData;
     return request(path, {
       method,
       headers: {
         [csrf.headerName]: csrf.token,
-        ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+        ...(body === undefined || multipart ? {} : { "Content-Type": "application/json" }),
       },
-      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+      ...(body === undefined ? {} : { body: multipart ? body : JSON.stringify(body) }),
     });
   }
 
@@ -343,6 +393,7 @@ function initialize(root: HTMLElement) {
     const field = form.elements.namedItem(name);
     if (!(
       field instanceof HTMLInputElement || field instanceof HTMLTextAreaElement
+      || field instanceof HTMLSelectElement
     ))
       throw new Error("Missing field");
     return field;
@@ -394,7 +445,12 @@ function initialize(root: HTMLElement) {
       for (const language of ["en", "pt"] as const)
         for (const field of Object.keys(draft[language]) as (keyof Copy)[])
           input(`${language}.${field}`).value = draft[language][field];
+      input("role").value = draft.role;
+      (input("inProgress") as HTMLInputElement).checked = draft.inProgress;
+      input("coverKey").value = draft.coverKey;
+      input("profiles").value = draft.profiles.map((profile) => `${profile.label} | ${profile.url}`).join("\n");
     }
+    showCover();
     chooseLocale(locale);
     baseline = snapshot();
     editor.showModal();
@@ -458,7 +514,14 @@ function initialize(root: HTMLElement) {
       decisions: input(`${language}.decisions`).value,
       result: input(`${language}.result`).value,
       body: input(`${language}.body`).value,
+      coverAlt: input(`${language}.coverAlt`).value.trim(),
     });
+    const profiles = parseProfiles(input("profiles").value);
+    if (!profiles) {
+      formMessage.textContent = labels.profilesInvalid;
+      input("profiles").focus();
+      return;
+    }
     const payload = {
       version: current?.version ?? 0,
       slug: input("slug").value,
@@ -468,6 +531,10 @@ function initialize(root: HTMLElement) {
       displayOrder: Number(input("displayOrder").value),
       en: copy("en"),
       pt: copy("pt"),
+      role: input("role").value,
+      inProgress: (input("inProgress") as HTMLInputElement).checked,
+      coverKey: input("coverKey").value,
+      profiles,
     };
     busy = true;
     saveButton.disabled = true;
@@ -752,7 +819,7 @@ function isInboxDetail(value: unknown): value is InboxDetail {
 function isCopy(value: unknown): value is Copy {
   return (
     isObject(value) &&
-    ["title", "tagline", "problem", "decisions", "result", "body"].every(
+    ["title", "tagline", "problem", "decisions", "result", "body", "coverAlt"].every(
       (field) => typeof value[field] === "string",
     )
   );
@@ -772,6 +839,12 @@ function isDraft(value: unknown): value is Draft {
     (value.status === "DRAFT" || value.status === "ARCHIVED") &&
     isCopy(value.en) &&
     isCopy(value.pt) &&
+    (value.role === "FEATURED" || value.role === "SECONDARY" || value.role === "SIGNAL") &&
+    typeof value.inProgress === "boolean" &&
+    typeof value.coverKey === "string" &&
+    /^(|[0-9a-f]{64}\.png)$/.test(value.coverKey) &&
+    Array.isArray(value.profiles) &&
+    value.profiles.every((profile) => isObject(profile) && typeof profile.label === "string" && typeof profile.url === "string") &&
     typeof value.updatedAt === "string" &&
     Number.isFinite(Date.parse(value.updatedAt))
   );

@@ -305,6 +305,34 @@ const fields = [
                 />
                 <small id="stack-hint">{t.stackHint}</small>
               </label>
+              <label>
+                {t.role}
+                <select name="role">
+                  <option value="FEATURED">{t.roleFeatured}</option>
+                  <option value="SECONDARY" selected>{t.roleSecondary}</option>
+                  <option value="SIGNAL">{t.roleSignal}</option>
+                </select>
+              </label>
+              <label class="check">
+                <input type="checkbox" name="inProgress" />
+                {t.inProgress}
+              </label>
+              <label class="wide">
+                {t.profiles}
+                <textarea name="profiles" rows="3" maxlength="2400" aria-describedby="profiles-hint"></textarea>
+                <small id="profiles-hint">{t.profilesHint}</small>
+              </label>
+              <div class="wide cover-field">
+                <span>{t.cover}</span>
+                <img data-cover-preview alt="" hidden />
+                <input type="file" accept="image/png,image/jpeg" data-cover-file aria-describedby="cover-hint" />
+                <input type="hidden" name="coverKey" />
+                <div class="cover-actions">
+                  <button class="button secondary" type="button" data-cover-upload>{t.coverUpload}</button>
+                  <button class="quiet" type="button" data-cover-remove>{t.coverRemove}</button>
+                </div>
+                <small id="cover-hint">{t.coverHint}</small>
+              </div>
             </div>
           </fieldset>
           <div class="locale-heading">
@@ -337,6 +365,11 @@ const fields = [
                 {t.projectTitle}
                 <span class="required">{t.required}</span>
                 <input name={`${l}.title`} required maxlength="150" />
+              </label>
+              <label>
+                {t.coverAlt}
+                <input name={`${l}.coverAlt`} maxlength="300" aria-describedby={`cover-alt-hint-${l}`} />
+                <small id={`cover-alt-hint-${l}`}>{t.coverAltHint}</small>
               </label>
               {fields.map((field) => (
                 <label>
