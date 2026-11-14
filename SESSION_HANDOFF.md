@@ -1,5 +1,13 @@
 # Retomada — 2026-11-11
 
+## Continuidade — testes no Chrome do João em 14/11
+
+- Chrome real controlado por Windows sky/node_repl, sem mocks neste percurso. Turnos anteriores barrados pela confiança da URL foram encerrados. Janela retornada: 265278; reobservar antes de reutilizar o alvo. Rolagem resolveu controles fora da captura. Ao final: admin PT deslogado, zoom 100%, aba duplicada de teste fechada e aba Online C preservada.
+- Home EN, tema/reload, popup/pastas/Escape e caso EN foram revistos antes; nesta retomada o caso PT confirmou a troca de idioma na mesma página. Blog PT/artigo completo, Recomendações vazia, Pipeline local e Contato desativado conferidos. Download CV PT: 46865 bytes e SHA-256 igual ao original. Download EN, viewer PDF, links externos e layout nativo completo a 200%/360 px não foram esgotados. Zoom chegou a 200% e voltou a 100%; a inspeção foi parcial. O foco da árvore de acessibilidade era inconsistente, sem certificação de foco nativo.
+- Assistente PT real: tecnologias com fonte Technical knowledge e versão 2026-11-12.1; salário com fallback sem valor inventado. Duas perguntas na UI, sem instrumentar tentativas internas do provedor. Escape fechou o diálogo e o formulário foi liberado. Nenhum segredo ou contato enviado.
+- Login GitHub voltou ao admin EN sem interação de autenticação. Rascunho privado teste-manual-v2-20261114 salvo em EN/PT; reload/reabertura preservaram valores. Keep editing/Discard e arquivo/restauração passaram. Duas abas: A salvou Java, Spring Boot, saved-in-tab-a; B recebeu conflito e preservou PRIVATE-UNSAVED-TAB-B. Reabrir confirmou o valor A. Rascunho terminou arquivado, Drafts 0/Archived 1, sem seleção pública. Não houve captura do status HTTP; o comportamento foi observado na UI real/API.
+- Logout, reload, outra aba e Voltar mostraram login sem dados privados. Documentação atualizada, sem código funcional. Observação de clareza do Pipeline: handoff chama o SHA de commit na main embora o build seja local/feat/v2; não corrigido, nem confirmado como defeito em produção. Próximo: limites nativos restantes se necessário, aprovação final e etapas manuais de credenciais/receiver/backup/servidor. Nenhum merge, deploy, e-mail ou publicação nesta rodada.
+
 ## Continuidade — card em blocos aprovado em 14/11
 
 - João rejeitou o visual anterior e indicou github.com/buraksocial. README público atual consultado sem executar tracker; SVG de referência developer.org.tr/api/v5/svg-profile baixado e rasterizado para inspeção. Novo desenho original900×720: fundo quase preto, painéis de métricas/stack/educação/projetos/foco/disponibilidade e monogramaJA. Nenhuma foto, experiência, métrica ou serviço externo do outro desenvolvedor copiado.
