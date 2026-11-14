@@ -14,6 +14,8 @@ Uploaded images use SHA-256 content keys ending in `.png`. The build downloads o
 
 ## Current stage
 
+João confirmed on 2026-11-14 that the initial V2 release should keep the public catalogue empty; he will add his recommendations later. Existing synthetic book/upload exercises remain private test evidence and must not be promoted as his endorsements. Performance and accessibility with the future real covers must be checked when that content is added.
+
 ### Approved book-cover search
 
 João approved Google Books on 2026-11-13. In the admin, entering a book title and choosing **Search covers** will list available covers alongside title, author and edition information. João selects the correct edition before the cover is attached to the draft. Manual upload remains available when no suitable result exists. Gemini integration is deferred.

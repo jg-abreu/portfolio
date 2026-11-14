@@ -1,5 +1,14 @@
 # Retomada — 2026-11-11
 
+## Continuidade — aceitação local fechada em 14/11
+
+- João confirmou lançamento de Recomendações vazia; cadastra itens depois. Não publicar exemplos sintéticos como indicação pessoal. Checklist separa aceitação local concluída do release ainda pendente.
+- Assistente em Chrome isolado360×653/reduced motion, EN/PT e light/dark:48estados controlados (answered/fallback,8códigos,rede/malformed), input/busy/retry429/rendertext/safeURL/Escape/foco aprovados. Nenhum Gemini real, e-mail ou contato no teste. Capturas de falha ENlight/PTdark inspecionadas; não é falha induzida no provedor real.
+- PDFs existentes EN/PT renderizados1,5× e inspecionados: uma A4 cada, tagged/textoextraível/7links/semclippingvisível; não provaPDF/UA ou atualizaçãofactual. Páginas360px e URLs iframe/download bilíngues certas, Content-TypePDF, bytes iguais ao source. Nenhum PDF editado. Bibliotecas PyMuPDF1.28.2/pypdf7.1.0 só .codex-stage/pdf-tools, sem dependência do site nova.
+- Site64/64 e API133/133 completos passaram. VerifyAPI falhou no repackage por JAR Windows em uso; primeiro guard não parou nada por comparação de barras, depois caminho normalizado/PID26364 conferido e parado. Verify-DskipTests final BUILD SUCCESS sem repetir133. APIreiniciadaPID28896/timeout30m comGemini; intake/mail/retenção/visitas/dispatch/cardfalse. HealthUP/site4321=200. Revalidar PIDs.
+- Card preview13/11 mostrado ao João e aprovação visual solicitada; não presumir resposta. Ainda faltam credencial mínima/refreshlive,receiver/infra/backup externos,aprovaçãofinal e lançamento conjunto. Código main/VM/deploy preservados, sem PRV2contraMain. Não declarar V2 publicada ou integralmente concluída.
+- Artefatos ignorados audit-assistant-states.cjs/assistant-browser-states.json/assistant-final-*.png; review-resume-pdfs.py/pdf-review; audit-resume-page.cjs/resume-page-audit.json. Nenhuma mudança funcional nesta sessão; documentação registra limites. Servidor estático4323 de aceitação deve ser encerrado ao finalizar.
+
 ## Continuidade — fallback das 22 rotas públicas em 13/11
 
 - Build estático atual servido apenas em loopback4323; Chrome isolado360×653/DPR1/reduced motion, toda requisição externa e /api bloqueada. Todas22rotas públicas EN/PT retornaram200 com h1/main/rodapé, document/scrollWidth360 e zero exceções JS não tratadas. Home, projetos/cases, blog/artigos, Pipeline, contato, recomendações e currículo cobertos. Bloquear imagens externas não garante imagem disponível; não é inspeção/render do PDF nem catálogo real de capas.

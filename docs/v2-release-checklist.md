@@ -2,13 +2,16 @@
 
 This is the ordered remaining acceptance work, not authorization to deploy. Both code repositories stay on `feat/v2`; no V2 PR targets `main` during development. João reviews and merges. Infrastructure and the release cutover remain his manual work.
 
+Local acceptance for the current content scope is complete as recorded below (2026-11-14). This is not a completed release: section 2's dedicated credential/receiver, section 3's manual infrastructure recovery checks and section 4's approvals/live verification remain gates. No production endpoint, token or workflow should be assumed ready from a passing local test.
+
 ## 1. Finish local acceptance
 
 - [x] Inspect the enabled numeric visit footer at 360 × 653 in EN/PT and light/dark themes. A synthetic transport total verified formatting and placement; real registration/deduplication/API-failure checks remain separate evidence. Bottom spacing keeps the number above the assistant launcher. See [visits](visits.md).
 - [x] Exercise project-editor conflict, transport failure and expiry in two isolated browser tabs in EN/PT at 360 px with synthetic HTTP responses. Conflicts/network failures preserved unsaved input; expiry cleared private state. Native dialog keyboard traversal returned to the dialog without focusing background controls. This is frontend acceptance, not a new real OAuth/API/database conflict test.
 - [x] Load all 22 built public routes at 360 px/reduced motion with external and API requests blocked; verify content, no horizontal overflow and no uncaught exceptions, then preserve loaded text after switching offline. Check assistant network-failure input preservation and Escape/focus restoration in EN/PT. This does not provide new-page offline loading, external images or complete keyboard/provider-state coverage.
-- [ ] Complete remaining keyboard/focus and provider-failure interactions across other flows. Keep fixture-based browser evidence distinct from real-provider/session checks.
-- [ ] Review actual recommendation content/covers and the intended resume PDF, then check their performance and accessibility. Empty-catalogue scores do not cover loaded media.
+- [x] Complete the assistant's controlled response-state review in EN/PT and light/dark mobile layouts: 48 cases covered answers, missing information, all eight contract errors, network failure and malformed responses; rate-limit recovery, safe rendering, input preservation and Escape/focus restoration passed. Other recorded editor/contact/recommendation reviews remain separate evidence; this is representative acceptance, not exhaustive assistive-technology certification.
+- [x] Review the existing EN/PT resume PDFs and their local page/download integration. Both one-page PDFs rendered without visible clipping, contain extractable text and a structure tree, and were served byte-for-byte with the correct locale and PDF content type. Content claims were not reverified or rewritten; final preview approval remains below.
+- [x] Confirm initial recommendation content: João chose an empty catalogue on 2026-11-14 and will add his items later. Real-content cover performance review becomes a gate for that later content change; test fixtures are not personal recommendations.
 - [x] Run the bounded two-instance/concurrency exercise locally with synthetic data and outbound providers disabled: 96 concurrent posts, 16 new counts, both nodes total 17; cross-node/failover CSRF rejection and recovery checked. Details/resources/limits: portfolio-api/docs/local-two-instance.md. This short burst does not certify sustained load, real nginx/Cloudflare or VM capacity.
 - [x] Run resolved Maven advisory checks and V2 CodeQL analysis, review findings and record results. Guava was updated; repeat OSV query had no matches. Fixes/triage and scope are in [dependency security](dependency-security.md). Dependabot version monitoring remains prepared, not active.
 
@@ -36,4 +39,4 @@ This is the ordered remaining acceptance work, not authorization to deploy. Both
 
 ## Next session starting point
 
-Start with the remaining local interaction checks in section 1. Independent work can continue while deployment credentials are unavailable. Do not invent credentials, personal recommendation content or successful scan/deploy results. Evidence and scope live in [validation](validation.md), module documentation and `SESSION_HANDOFF.md`.
+Start with João's final preview/card approval, then the dedicated card credential and the manual receiving-workflow/backup/infrastructure sequence in sections 2–4. Use the existing `docs/publication.md` and API `docs/profile-card.md`, `docs/backup-restore.md` and `docs/visits.md` as the concrete guides. Do not register the receiver on main or enable workers merely to clear a checklist. Do not invent credentials, personal recommendation content or successful scan/deploy results. Evidence and scope live in [validation](validation.md), module documentation and `SESSION_HANDOFF.md`.
