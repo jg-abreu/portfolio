@@ -1012,3 +1012,41 @@ legend {
     margin-bottom: 15px;
   }
 }
+
+select[name="role"] {
+  width: 100%;
+  margin-top: 8px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 10px 12px;
+  font: inherit;
+}
+.check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  align-self: end;
+}
+.check input {
+  width: auto;
+  margin: 0;
+}
+.cover-field {
+  display: grid;
+  gap: 10px;
+}
+.cover-field img {
+  max-width: 100%;
+  max-height: 220px;
+  object-fit: contain;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--bg);
+}
+.cover-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}

@@ -27,9 +27,8 @@ When a decision is needed, ask **one question at a time**. Use concepts and tool
 ```
 src/
   content.config.ts         content collections and their schemas
-  content/projects.yaml     language-neutral project data (repo, role, order, stack, cover)
-  content/projects/<locale>/<id>.md  project text per locale; the Markdown body is the case study
-  assets/case-studies/      case study covers (SVG or raster, optimized by astro:assets)
+  content/projects.yaml     optional file-based projects (empty: projects are managed in the admin)
+  assets/case-studies/      optional repository covers; admin covers download to assets/projects-generated/ (git-ignored)
   content/contacts.yaml     contact channels (https links only)
   content/about/<locale>.md about paragraphs and "in progress" list per locale
   content/stack.yaml        stack groups (names translated as stack.<id> in ui.ts)
@@ -40,6 +39,8 @@ src/
   lib/activity.ts           contribution stats, year heatmap layout, recent repos (shared by build and browser)
   lib/calendar.ts           Rio and UTC dates
   lib/content.ts            merges and cross-checks content; fails the build if locales diverge
+  lib/covers.ts             resolves a project cover from the repository or the downloaded admin covers
+  lib/project-profiles.ts   parses the admin's "Label | https://address" profile lines
   lib/github-data.ts        endpoints, types and validators for GitHub and DEV data (shared by build and browser)
   lib/github.ts             reads and revalidates the snapshot at build time (null parts = no data, never invented)
   lib/blog.ts               validates and synchronizes the configured author's full DEV articles

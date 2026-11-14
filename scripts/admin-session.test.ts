@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { runInNewContext } from 'node:vm';
 import { clearBuildStatus, updateBuildStatus } from '../src/lib/publication-status.ts';
+import { parseProfiles } from '../src/lib/project-profiles.ts';
 import ts from 'typescript';
 
 const source = ts.transpileModule(readFileSync(new URL('../src/scripts/admin.ts', import.meta.url), 'utf8'), {
@@ -49,7 +50,7 @@ async function workspace() {
   };
   runInNewContext(source, {
     exports: {},
-    require: () => ({ clearBuildStatus, updateBuildStatus }),
+    require: (name: string) => name.includes('project-profiles') ? { parseProfiles } : { clearBuildStatus, updateBuildStatus },
     document: { querySelector: () => root, visibilityState: 'visible',
       createElement: () => element(`[created-${created++}]`) },
     window: { addEventListener() {}, setInterval(callback: Function) { refresh = callback; } },
