@@ -1,0 +1,139 @@
+---
+import Admin from '../../../layouts/Admin.astro';
+import { locales, type Locale } from '../../../i18n/ui';
+import { cardAdminUi } from '../../../i18n/card-admin';
+import { cardAccents, cardBlocks, cardThemes, maxStack } from '../../../lib/card-admin';
+export function getStaticPaths() { return locales.map(locale => ({ params: { locale } })); }
+const locale = Astro.params.locale as Locale;
+const t = cardAdminUi[locale];
+const other = locale === 'en' ? 'pt' : 'en';
+const identity = [
+  { name: 'name', label: t.name, max: 30 }, { name: 'role', label: t.role, max: 40 },
+  { name: 'monogram', label: t.monogram, max: 3 }, { name: 'headline', label: t.headline, max: 70 },
+];
+const content = [
+  { name: 'educationTitle', label: t.educationTitle }, { name: 'educationDetail', label: t.educationDetail },
+  { name: 'projectTitle', label: t.projectTitle }, { name: 'projectStack', label: t.projectStack },
+  { name: 'projectNote', label: t.projectNote }, { name: 'focus', label: t.focus }, { name: 'opportunity', label: t.opportunity },
+];
+---
+<Admin locale={locale}>
+  <div data-card-admin data-locale={locale} data-labels={JSON.stringify(t)}>
+    <header class="studio-header">
+      <a class="studio-brand" href={`/${locale}/admin/`}><span class="monogram">JA</span><span>{t.title}</span></a>
+      <div class="header-actions"><a class="quiet" href={`/${locale}/admin/`}>{t.back}</a>
+        <a class="quiet" href={`/${other}/admin/card/`} lang={other} hreflang={other}>{other.toUpperCase()}</a>
+      </div>
+    </header>
+    <main class="card-admin-main">
+      <p data-notice role="status" aria-live="polite">{t.checking}</p>
+      <section data-login hidden>
+        <h1>{t.title}</h1><p>{t.loginBody}</p>
+        <a class="button primary" href="/oauth2/authorization/github">{t.login}</a>
+      </section>
+      <button class="button secondary" type="button" data-retry>{t.retry}</button>
+      <div data-workspace hidden>
+        <div class="card-toolbar"><h1>{t.title}</h1><span data-username></span>
+          <button class="button secondary" type="button" data-logout>{t.logout}</button>
+        </div>
+        <p class="muted">{t.intro}</p>
+        <p data-state></p>
+        <div class="card-layout">
+          <form data-form novalidate>
+            <fieldset data-fields>
+              <fieldset class="card-group">
+                <legend>{t.look}</legend>
+                <div class="choice-row" role="radiogroup" aria-label={t.theme}>
+                  <span class="choice-label">{t.theme}</span>
+                  {cardThemes.map(theme => <label class="choice"><input type="radio" name="theme" value={theme} />{t.themes[theme]}</label>)}
+                </div>
+                <div class="choice-row" role="radiogroup" aria-label={t.accent}>
+                  <span class="choice-label">{t.accent}</span>
+                  {cardAccents.map(accent => <label class="choice"><input type="radio" name="accent" value={accent} />
+                    <span class={`swatch swatch-${accent.toLowerCase()}`} aria-hidden="true"></span>{t.accents[accent]}</label>)}
+                </div>
+              </fieldset>
+              <fieldset class="card-group">
+                <legend>{t.identity}</legend>
+                <div class="form-grid">
+                  {identity.map(field => <label class:list={{ wide: field.name === 'headline' }}>{field.label}
+                    <input name={field.name} maxlength={field.max} required autocomplete="off" /></label>)}
+                </div>
+              </fieldset>
+              <fieldset class="card-group">
+                <legend>{t.blocks}</legend>
+                <p class="muted">{t.blocksHelp}</p>
+                <ol class="block-list" data-blocks>
+                  {cardBlocks.map(block => <li data-block={block}>
+                    <label class="choice"><input type="checkbox" data-block-visible value={block} />{t.blockNames[block]}</label>
+                    <span class="block-actions">
+                      <button type="button" class="icon-button" data-move="-1" aria-label={`${t.up}: ${t.blockNames[block]}`}>↑</button>
+                      <button type="button" class="icon-button" data-move="1" aria-label={`${t.down}: ${t.blockNames[block]}`}>↓</button>
+                    </span>
+                  </li>)}
+                </ol>
+              </fieldset>
+              <fieldset class="card-group">
+                <legend>{t.content}</legend>
+                <div class="form-grid">
+                  <label class="wide">{t.stack}<input name="stack" maxlength={maxStack * 18} required autocomplete="off" aria-describedby="stack-help" />
+                    <small id="stack-help">{t.stackHelp}</small></label>
+                  {content.map(field => <label>{field.label}<input name={field.name} maxlength="40" required autocomplete="off" /></label>)}
+                </div>
+              </fieldset>
+              <div class="card-toolbar">
+                <button class="button primary" type="submit" data-save>{t.save}</button>
+                <button class="button primary" type="button" data-publish>{t.publish}</button>
+                <button class="button secondary" type="button" data-revert>{t.revert}</button>
+                <button class="quiet" type="button" data-defaults>{t.defaults}</button>
+                <button class="button secondary" type="button" data-reload hidden>{t.reload}</button>
+              </div>
+            </fieldset>
+          </form>
+          <section class="card-preview" aria-labelledby="card-preview-heading">
+            <h2 id="card-preview-heading">{t.preview}</h2>
+            <p class="muted">{t.previewHelp}</p>
+            <img data-preview alt={t.previewAlt} width="900" height="720" />
+            <p data-preview-message role="status"></p>
+          </section>
+        </div>
+      </div>
+      <dialog data-discard aria-labelledby="card-discard-heading"><h2 id="card-discard-heading">{t.discardTitle}</h2><div class="card-toolbar">
+        <button class="button secondary" type="button" data-keep>{t.keep}</button>
+        <button class="button primary" type="button" data-confirm-discard>{t.discard}</button></div></dialog>
+    </main>
+  </div>
+  <script>import '../../../scripts/card-admin';</script>
+</Admin>
+<style>
+  .card-admin-main { max-width: 80rem; margin: auto; padding: 1.5rem; }
+  .card-toolbar { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; margin-block: 1rem; }
+  .card-toolbar h1 { margin-right: auto; }
+  .card-layout { display: grid; gap: 1.5rem; align-items: start; }
+  .card-group { border: 1px solid var(--line); border-radius: 1rem; padding: 1rem 1.25rem; margin: 0 0 1rem; background: var(--panel); min-width: 0; }
+  .card-group legend { font-weight: 700; padding-inline: .25rem; }
+  .card-group label { display: block; margin-bottom: .75rem; min-width: 0; }
+  .card-group input:not([type=radio], [type=checkbox]) { margin-top: .4rem; }
+  .card-group input[aria-invalid="true"] { border-color: #ef4444; box-shadow: 0 0 0 2px #ef444455; }
+  fieldset[data-fields] { border: 0; padding: 0; margin: 0; min-width: 0; }
+  .choice-row { display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; margin-bottom: .75rem; }
+  .choice-label { width: 100%; color: var(--muted); font-size: .9rem; }
+  .card-group .choice { display: inline-flex; gap: .45rem; align-items: center; margin: 0; cursor: pointer; min-width: 0; }
+  .card-group input[type=radio], .card-group input[type=checkbox] { flex: none; width: 1.1rem; height: 1.1rem; margin: 0; padding: 0; accent-color: var(--blue); }
+  .swatch { display: inline-block; flex: none; width: .9rem; height: .9rem; border-radius: 50%; }
+  .swatch-blue { background: #3b82f6; } .swatch-green { background: #22c55e; }
+  .swatch-violet { background: #8b5cf6; } .swatch-orange { background: #f97316; }
+  .block-list { list-style: none; margin: 0; padding: 0; display: grid; gap: .5rem; }
+  .block-list li { display: flex; justify-content: space-between; align-items: center; gap: .75rem; border: 1px solid var(--line);
+    border-radius: .75rem; padding: .5rem .75rem; background: var(--bg); }
+  .block-actions { display: inline-flex; gap: .35rem; flex-shrink: 0; }
+  .card-preview { min-width: 0; }
+  .card-preview img { display: block; width: 100%; height: auto; border-radius: 1rem; border: 1px solid var(--line); background: var(--bg); }
+  dialog { color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 1rem; max-width: calc(100% - 2rem); }
+  dialog::backdrop { background: #0008; }
+  @media (min-width: 64rem) {
+    .card-layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); }
+    .card-preview { position: sticky; top: 1rem; }
+  }
+  @media (max-width: 40rem) { .card-admin-main { padding: 1rem; } .card-group { padding: .75rem; } .header-actions { flex-wrap: wrap; } }
+</style>

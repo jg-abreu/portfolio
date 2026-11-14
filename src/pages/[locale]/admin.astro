@@ -4,6 +4,7 @@ import Admin from "../../layouts/Admin.astro";
 import { locales, localeNames, type Locale } from "../../i18n/ui";
 import { adminUi } from "../../i18n/admin";
 import { recommendationUi } from "../../i18n/recommendations";
+import { cardAdminUi } from "../../i18n/card-admin";
 
 export function getStaticPaths() {
   return locales.map((locale) => ({ params: { locale } }));
@@ -109,6 +110,7 @@ const fields = [
               {t.inbox}
             </button>
             <a href={`/${locale}/admin/recommendations/`}>{recommendationUi[locale].title}</a>
+            <a href={`/${locale}/admin/card/`}>{cardAdminUi[locale].nav}</a>
           </nav>
         </div>
         <div class="account">
