@@ -44,7 +44,8 @@ Local acceptance for the current content scope is complete as recorded below (20
 - [x] Visit counter enabled on v2 (API `1777edf`): HMAC key generated on the server only, `CLOUDFLARE_PROXY` with the Docker gateway `172.18.0.1/32` (subnet pinned in compose) and the 22 Cloudflare ranges, forward headers `NONE`. Through Cloudflare: first visit counted, repeat within 30 minutes not counted, tool user agent skipped; footer shows the total. GitHub login re-checked after the header change.
 - [x] Fixed shared rate limits: assistant and contact limits keyed on the Docker gateway (one bucket for every visitor). A shared `ClientAddressKey` now uses `CF-Connecting-IP` only through the trusted nginx → Cloudflare chain. 152 API tests passed.
 - [x] Lighthouse mobile on v2 (`/en/`, `/pt/projects/`, `/en/resume/`): performance 93–97, accessibility 100, best practices 100. SEO 66–69 only because of the deliberate preview `X-Robots-Tag: noindex` (`is-crawlable`); every other SEO audit passed. Recheck SEO after the domain switch.
-- [ ] Still disabled on v2: contact intake/SMTP/retention (needs João's SMTP settings and a real delivery check), profile card (needs a minimal GitHub token), publication dispatch (needs the receiving workflow on `main`).
+- [x] Contact enabled on v2 (API `1258830`): João copied his SMTP settings to `/opt/portfolio-api/smtp.env` (mode 600, read through the optional compose `env_file`); intake, delivery worker and 90-day retention on; site built with `PUBLIC_CONTACT_ENABLED=true`. A synthetic message sent through the real v2 form was stored, marked sent on the first attempt and confirmed received by João.
+- [ ] Still disabled on v2: profile card (needs a minimal GitHub token), publication dispatch (needs the receiving workflow on `main`).
 
 ## 4. Joint release gate
 
