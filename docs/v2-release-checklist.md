@@ -25,7 +25,7 @@ Local acceptance for the current content scope is complete as recorded below (20
 - [x] Configure the key privately and audit a real PT/EN sample: four service/provider requests plus two through Astro/Spring HTTP passed, with approved sources and exact missing-information fallbacks. No contacts or credentials in prompts/logs. Broader UI/provider-failure and deployment quota acceptance remains separate.
 - [x] Verify a real public card query/parse/render locally using existing authorized CLI authentication in memory only. This did not configure a deployment token or test live scheduled failure/recovery.
 - [x] Obtain João's visual approval for the dark modular card inspired by buraksocial's README (2026-11-14). Warm/cold/long-data renderer previews and 10 focused tests passed after the change. This is approval of composition, not publication.
-- [ ] Configure a dedicated minimal card deployment credential and check live refresh/cache/fallback. Profile README integration waits for the authorized release.
+- [x] Configure a dedicated minimal card deployment credential and check live refresh/cache/fallback (v2, 2026-11-14). Profile README integration waits for the authorized release.
 - [ ] Complete the receiving-workflow handoff and live publication checks when release authorization permits default-branch registration. Verify project and recommendation manifests against selected revisions, failed builds and rollback. Dispatch acceptance alone is not publication. See [publication](publication.md).
 
 ## 3. Manual infrastructure acceptance — João
@@ -45,7 +45,9 @@ Local acceptance for the current content scope is complete as recorded below (20
 - [x] Fixed shared rate limits: assistant and contact limits keyed on the Docker gateway (one bucket for every visitor). A shared `ClientAddressKey` now uses `CF-Connecting-IP` only through the trusted nginx → Cloudflare chain. 152 API tests passed.
 - [x] Lighthouse mobile on v2 (`/en/`, `/pt/projects/`, `/en/resume/`): performance 93–97, accessibility 100, best practices 100. SEO 66–69 only because of the deliberate preview `X-Robots-Tag: noindex` (`is-crawlable`); every other SEO audit passed. Recheck SEO after the domain switch.
 - [x] Contact enabled on v2 (API `1258830`): João copied his SMTP settings to `/opt/portfolio-api/smtp.env` (mode 600, read through the optional compose `env_file`); intake, delivery worker and 90-day retention on; site built with `PUBLIC_CONTACT_ENABLED=true`. A synthetic message sent through the real v2 form was stored, marked sent on the first attempt and confirmed received by João.
-- [ ] Still disabled on v2: profile card (needs a minimal GitHub token), publication dispatch (needs the receiving workflow on `main`).
+- [x] Profile card enabled on v2: João created a fine-grained token (public repositories read-only, no permissions, expires 2027) and stored it in `.env`. Public `/api/profile-card.svg` through Cloudflare: 200 with real data (693 contributions, latest repository), ETag and 304 on revalidation; rendered card inspected. Cloudflare's Browser Cache TTL currently rewrites `max-age` to 14400 (4 h) for every response; consider "Respect existing headers" or a cache rule for the card before the profile README points to it.
+- [x] Section 2.4 (card credential and live refresh) satisfied on v2. Profile README integration still waits for the domain switch.
+- [ ] Still disabled on v2: publication dispatch (needs the receiving workflow registered on `main`).
 
 ## 4. Joint release gate
 
