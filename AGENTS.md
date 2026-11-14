@@ -36,6 +36,7 @@ src/
   data/github-snapshot.json written by scripts/github-snapshot.ts on every build (git-ignored)
   i18n/ui.ts                UI strings per locale; English defines the shape
   i18n/admin.ts             typed EN/PT strings for the private admin workspace
+  i18n/card-admin.ts        typed EN/PT strings for the admin profile-card editor
   lib/activity.ts           contribution stats, year heatmap layout, recent repos (shared by build and browser)
   lib/calendar.ts           Rio and UTC dates
   lib/content.ts            merges and cross-checks content; fails the build if locales diverge
@@ -64,6 +65,8 @@ src/
   scripts/mobile-menu.ts    closes the phone menu on navigation, resize to desktop and page hide; syncs aria-expanded
   layouts/Admin.astro       private workspace shell (noindex); authenticated data loads only in the browser
   scripts/admin.ts          GitHub session, CSRF, project drafts and private contact inbox
+  scripts/card-admin.ts     profile-card editor: blocks, palette and text with live preview, draft and publish
+  lib/card-admin.ts         card settings validators, block reordering and base64url preview encoding
   lib/contact.ts            same-origin CSRF contact client and acknowledged receipt
   scripts/contact.ts        optional contact submission, retry keys and bilingual feedback
   lib/visits.ts             same-origin CSRF visit registration and validated real total
@@ -71,6 +74,7 @@ src/
   styles/admin.css          responsive light/dark admin styles
   pages/admin.astro         static entry to /en/admin/
   pages/[locale]/admin.astro  EN/PT project drafts and inbox; excluded from the sitemap
+  pages/[locale]/admin/card.astro  EN/PT editor for the GitHub profile card served by the API
   pages/index.astro         redirects / to /en/ (static fallback)
   pages/404.astro           bilingual 404 (noindex); nginx should serve it with `error_page 404 /404.html`
   pages/[locale]/           Home, Projects, Pipeline, Blog, Resume and Contact, generated for every locale
