@@ -26,6 +26,7 @@ function initialize(root: HTMLElement) {
   let baseline = '';
   let busy = false;
   let loggingOut = false;
+  let signedIn = false;
   let pendingDiscard: (() => void) | null = null;
   let previewTimer = 0;
   const client = new AdminClient(clear);
@@ -131,7 +132,8 @@ function initialize(root: HTMLElement) {
       void invalidField().then(markInvalid);
       return;
     }
-    notice(cause instanceof AdminRequestError && (cause.status === 401 || cause.status === 403) ? labels.expired : labels.error);
+    const unauthorized = cause instanceof AdminRequestError && (cause.status === 401 || cause.status === 403);
+    notice(unauthorized ? signedIn ? labels.expired : '' : labels.error);
   }
 
   async function execute(action: () => Promise<void>) {
@@ -151,6 +153,7 @@ function initialize(root: HTMLElement) {
     client.assertCurrent(version);
     q<HTMLElement>('[data-username]').textContent = session.username;
     workspace.hidden = false; login.hidden = true; q<HTMLElement>('[data-retry]').hidden = true;
+    signedIn = true;
     showView(next);
   }
 
