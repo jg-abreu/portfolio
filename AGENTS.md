@@ -53,6 +53,7 @@ src/
   components/ContactForm.astro   contact form (PUBLIC_CONTACT_ENABLED stays false by default)
   components/ContactIcon.astro   contact channel icons
   components/VisitCounter.astro  optional approximate-visit footer, excluded from admin and 404
+  components/MobileMenu.astro    phone navigation: a menu button opens a popover panel with every page
   scripts/theme.ts          light/dark switch with a circular reveal (View Transitions API)
   scripts/loader.ts         intro loader on entry and reload; the percentage follows real milestones
   scripts/scroll-fx.ts      progress bar, see-through header over the wallpaper, reveal on scroll
@@ -60,6 +61,7 @@ src/
   scripts/journey.ts        pipeline page: packet on the rail, visit timings, headers, Cloudflare trace, last deploy
   scripts/project-popup.ts  opens and animates the project popups, browses folders via the GitHub API
   scripts/card-glow.ts      pointer glow on cards
+  scripts/mobile-menu.ts    closes the phone menu on navigation, resize to desktop and page hide; syncs aria-expanded
   layouts/Admin.astro       private workspace shell (noindex); authenticated data loads only in the browser
   scripts/admin.ts          GitHub session, CSRF, project drafts and private contact inbox
   lib/contact.ts            same-origin CSRF contact client and acknowledged receipt

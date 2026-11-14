@@ -14,6 +14,7 @@ import {
 } from '../i18n/ui';
 import Assistant from '../components/Assistant.astro';
 import VisitCounter from '../components/VisitCounter.astro';
+import MobileMenu from '../components/MobileMenu.astro';
 import { recommendationUi } from '../i18n/recommendations';
 import { rioDate } from '../lib/calendar';
 import { getContacts } from '../lib/content';
@@ -199,6 +200,7 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 						</svg>
 						<span class="visually-hidden">{t('nav.theme')}</span>
 					</button>
+					<MobileMenu locale={locale} pages={pages} />
 				</div>
 			</div>
 		</header>
@@ -1041,6 +1043,9 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 		.sections a { width: 2rem; min-width: 0; padding-inline: 0; justify-content: center; }
 		.sections a[aria-current] { width: 100%; padding-inline: .5rem; }
 		.sections a[aria-current] .label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+		@supports selector(:popover-open) {
+			.sections { display: none; }
+		}
 	}
 
 	.site-footer {
