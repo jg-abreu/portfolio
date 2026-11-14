@@ -1,0 +1,428 @@
+---
+import PublicationStatus from '../../components/PublicationStatus.astro';
+import Admin from "../../layouts/Admin.astro";
+import { locales, localeNames, type Locale } from "../../i18n/ui";
+import { adminUi } from "../../i18n/admin";
+import { recommendationUi } from "../../i18n/recommendations";
+import { cardAdminUi } from "../../i18n/card-admin";
+
+export function getStaticPaths() {
+  return locales.map((locale) => ({ params: { locale } }));
+}
+const locale = Astro.params.locale as Locale;
+const t = adminUi[locale];
+const other = locale === "en" ? "pt" : "en";
+const fields = [
+  { id: "tagline", label: t.tagline, max: 300, rows: 2 },
+  { id: "problem", label: t.problem, max: 5000, rows: 4 },
+  { id: "decisions", label: t.decisions, max: 10000, rows: 4 },
+  { id: "result", label: t.result, max: 5000, rows: 4 },
+  { id: "body", label: t.caseStudy, max: 50000, rows: 8 },
+];
+---
+
+<Admin locale={locale}>
+  <div data-admin data-labels={JSON.stringify(t)} data-locale={locale}>
+    <header class="studio-header">
+      <a class="studio-brand" href={`/${locale}/admin/`}>
+        <span class="monogram">JA</span>
+        <span>
+          {t.title}
+          <small>{t.private}</small>
+        </span>
+      </a>
+      <div class="header-actions">
+        <a
+          class="quiet"
+          href={`/${other}/admin/`}
+          lang={other}
+          hreflang={other}
+        >
+          {other.toUpperCase()}
+        </a>
+        <button
+          class="icon-button"
+          type="button"
+          data-theme
+          aria-label={t.theme}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6 7 7m10 10 1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z" />
+          </svg>
+        </button>
+        <a class="quiet site-link" href={`/${locale}/`}>
+          {t.site} ↗
+        </a>
+      </div>
+    </header>
+    <div class="connection" data-connection>
+      <p role="status" data-connection-message>
+        {t.checking}
+      </p>
+      <button class="button secondary" type="button" data-retry hidden>
+        {t.retry}
+      </button>
+    </div>
+    <section
+      class="login-screen"
+      data-login
+      hidden
+      aria-labelledby="login-heading"
+    >
+      <div class="login-art" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+        <b>JA</b>
+      </div>
+      <p class="eyebrow">{t.private}</p>
+      <h1 id="login-heading">{t.loginTitle}</h1>
+      <p class="muted">{t.loginBody}</p>
+      <a
+        class="button primary github-login"
+        href="/oauth2/authorization/github"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.3-3.4-1.3-.4-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.4 1.1 3 .8.1-.6.4-1.1.6-1.3-2.2-.3-4.6-1.1-4.6-5a3.9 3.9 0 0 1 1-2.7c-.1-.3-.5-1.3.1-2.7 0 0 .8-.3 2.8 1a9.6 9.6 0 0 1 5 0c1.9-1.3 2.8-1 2.8-1 .5 1.4.2 2.4.1 2.7a3.9 3.9 0 0 1 1 2.7c0 3.9-2.3 4.7-4.6 5 .4.3.7 1 .7 2v2.8c0 .3.2.6.7.5A10 10 0 0 0 12 2Z" />
+        </svg>
+        {t.login}
+      </a>
+      <small class="muted">{t.loginNote}</small>
+    </section>
+    <div class="workspace" data-workspace hidden>
+      <aside class="sidebar">
+        <div>
+          <p class="eyebrow">{t.content}</p>
+          <nav aria-label={t.content}>
+            <a
+              class="nav-current"
+              data-open-projects
+              href={`/${locale}/admin/`}
+              aria-current="page"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M3 7h6l2-2h10v15H3Z" />
+              </svg>
+              {t.projects}
+              <span>01</span>
+            </a>
+            <button type="button" class="workspace-nav" data-open-inbox aria-pressed="false">
+              {t.inbox}
+            </button>
+            <a class="workspace-nav" href={`/${locale}/admin/recommendations/`}>{recommendationUi[locale].title}</a>
+            <a class="workspace-nav" href={`/${locale}/admin/card/`}>{cardAdminUi[locale].nav}</a>
+          </nav>
+        </div>
+        <div class="account">
+          <span class="avatar" aria-hidden="true">
+            JA
+          </span>
+          <div>
+            <strong data-username></strong>
+            <small>GitHub</small>
+          </div>
+          <button
+            type="button"
+            class="icon-button"
+            data-logout
+            aria-label={t.signOut}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M9 4H4v16h5m5-13 5 5-5 5m-6-5h11" />
+            </svg>
+          </button>
+        </div>
+      </aside>
+      <main id="main" class="studio-main">
+        <PublicationStatus locale={locale} />
+        <div data-projects-screen>
+        <div class="page-title">
+          <div>
+            <p class="eyebrow">{t.projects}</p>
+            <h1>{t.heading}</h1>
+            <p class="muted">{t.body}</p>
+          </div>
+          <button class="button primary" type="button" data-new>
+            <span aria-hidden="true">＋</span>
+            {t.new}
+          </button>
+        </div>
+        <p class="draft-note">
+          <span aria-hidden="true">◌</span>
+          {t.draftNote}
+        </p>
+        <div class="toolbar">
+          <div class="filters" role="group" aria-label={t.projects}>
+            <button type="button" data-filter="DRAFT" aria-pressed="true">
+              {t.drafts}
+              <span data-count="DRAFT">0</span>
+            </button>
+            <button type="button" data-filter="ARCHIVED" aria-pressed="false">
+              {t.archived}
+              <span data-count="ARCHIVED">0</span>
+            </button>
+          </div>
+          <label class="search">
+            <span class="sr-only">{t.search}</span>
+            <input type="search" data-search placeholder={t.search} />
+          </label>
+        </div>
+        <p class="notice" data-notice role="status" hidden></p>
+        <a
+          class="quiet"
+          data-reauth
+          href="/oauth2/authorization/github"
+          target="_blank"
+          rel="noopener"
+          hidden
+        >
+          {t.reauth} ↗
+        </a>
+        <div class="project-list" data-project-list></div>
+        <div class="empty" data-empty hidden>
+          <div class="empty-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M3 7h6l2-2h10v15H3Zm9 3v7m-3-3.5h6" />
+            </svg>
+          </div>
+          <h2 data-empty-title>{t.empty}</h2>
+          <p class="muted" data-empty-body>
+            {t.emptyBody}
+          </p>
+          <button class="button secondary" type="button" data-new>
+            {t.new} →
+          </button>
+        </div>
+        </div>
+        <section data-inbox-screen hidden aria-labelledby="inbox-heading">
+          <div class="page-title">
+            <div>
+              <p class="eyebrow">{t.inbox}</p>
+              <h1 id="inbox-heading" tabindex="-1">{t.inbox}</h1>
+              <p class="muted">{t.inboxBody}</p>
+            </div>
+            <button class="button secondary" type="button" data-inbox-refresh>{t.inboxRefresh}</button>
+          </div>
+          <div class="toolbar">
+            <div class="filters" role="group" aria-label={t.inbox}>
+              <button type="button" data-inbox-filter="false" aria-pressed="true">{t.inbox}</button>
+              <button type="button" data-inbox-filter="true" aria-pressed="false">{t.archived}</button>
+            </div>
+          </div>
+          <p role="status" data-inbox-status></p>
+          <div class="inbox-list" data-inbox-list></div>
+          <div class="inbox-pagination">
+            <button class="button secondary" type="button" data-inbox-previous disabled>{t.inboxPrevious}</button>
+            <button class="button secondary" type="button" data-inbox-next disabled>{t.inboxNext}</button>
+          </div>
+          <article class="inbox-detail" data-inbox-detail hidden>
+            <h2 data-inbox-sender tabindex="-1"></h2>
+            <p><strong>{t.inboxEmail}: </strong><span data-inbox-email></span></p>
+            <h3>{t.inboxMessage}</h3>
+            <p class="inbox-body" data-inbox-body></p>
+            <div class="inbox-pagination">
+              <button class="button secondary" type="button" data-inbox-read></button>
+              <button class="button secondary" type="button" data-inbox-archive></button>
+            </div>
+          </article>
+        </section>
+      </main>
+    </div>
+    <dialog class="editor" data-editor aria-labelledby="editor-heading">
+      <form data-project-form>
+        <div class="editor-header">
+          <div>
+            <p class="eyebrow">{t.projects}</p>
+            <h2 id="editor-heading" data-editor-heading>
+              {t.editorNew}
+            </h2>
+            <p class="muted">{t.editorBody}</p>
+          </div>
+          <button
+            class="icon-button"
+            type="button"
+            data-close
+            aria-label={t.close}
+          >
+            ✕
+          </button>
+        </div>
+        <div class="editor-scroll">
+          <fieldset>
+            <legend>{t.details}</legend>
+            <div class="form-grid">
+              <label>
+                {t.slug}
+                <input
+                  name="slug"
+                  required
+                  maxlength="100"
+                  pattern="[a-z0-9]+(-[a-z0-9]+)*"
+                  autocomplete="off"
+                  aria-describedby="slug-hint"
+                />
+                <small id="slug-hint">{t.slugHint}</small>
+              </label>
+              <label>
+                {t.order}
+                <input
+                  name="displayOrder"
+                  type="number"
+                  min="0"
+                  max="2147483647"
+                  step="1"
+                  value="0"
+                  required
+                />
+              </label>
+              <label class="wide">
+                {t.repository}
+                <input
+                  name="repositoryUrl"
+                  type="url"
+                  required
+                  maxlength="300"
+                  pattern="https://github\.com/[A-Za-z0-9][A-Za-z0-9\-]*/[A-Za-z0-9._\-]+/?"
+                  placeholder="https://github.com/…/…"
+                />
+              </label>
+              <label>
+                {t.live}
+                <input
+                  name="liveUrl"
+                  type="url"
+                  maxlength="500"
+                  pattern="https://[^\s]+"
+                  placeholder="https://…"
+                />
+              </label>
+              <label>
+                {t.stack}
+                <input
+                  name="stack"
+                  maxlength="1000"
+                  aria-describedby="stack-hint"
+                />
+                <small id="stack-hint">{t.stackHint}</small>
+              </label>
+            </div>
+          </fieldset>
+          <div class="locale-heading">
+            <h3>{t.copy}</h3>
+            <div class="locale-tabs" role="tablist" aria-label={t.copy}>
+              {locales.map((l) => (
+                <button
+                  type="button"
+                  id={`tab-${l}`}
+                  role="tab"
+                  data-copy-tab={l}
+                  aria-controls={`copy-${l}`}
+                  aria-selected={l === locale ? "true" : "false"}
+                  tabindex={l === locale ? 0 : -1}
+                >
+                  {localeNames[l]}
+                </button>
+              ))}
+            </div>
+          </div>
+          {locales.map((l) => (
+            <section
+              id={`copy-${l}`}
+              role="tabpanel"
+              aria-labelledby={`tab-${l}`}
+              data-copy-panel={l}
+              hidden={l !== locale}
+            >
+              <label>
+                {t.projectTitle}
+                <span class="required">{t.required}</span>
+                <input name={`${l}.title`} required maxlength="150" />
+              </label>
+              {fields.map((field) => (
+                <label>
+                  {field.label}
+                  <textarea
+                    name={`${l}.${field.id}`}
+                    maxlength={field.max}
+                    rows={field.rows}
+                  ></textarea>
+                  {field.id === "decisions" && <small>{t.decisionsHint}</small>}
+                </label>
+              ))}
+            </section>
+          ))}
+        </div>
+        <div class="editor-footer">
+          <div>
+            <p data-form-message role="status"></p>
+            <a
+              class="quiet"
+              data-form-reauth
+              href="/oauth2/authorization/github"
+              target="_blank"
+              rel="noopener"
+              hidden
+            >
+              {t.reauth} ↗
+            </a>
+          </div>
+          <button class="button secondary" type="button" data-close>
+            {t.cancel}
+          </button>
+          <button class="button primary" type="submit" data-save>
+            {t.save}
+          </button>
+        </div>
+      </form>
+    </dialog>
+    <dialog
+      class="discard-dialog"
+      data-discard
+      aria-labelledby="discard-heading"
+    >
+      <h2 id="discard-heading">{t.unsaved}</h2>
+      <p class="muted">{t.discardBody}</p>
+      <div>
+        <button class="button secondary" type="button" data-keep>
+          {t.keepEditing}
+        </button>
+        <button class="button primary" type="button" data-discard-confirm>
+          {t.discard}
+        </button>
+      </div>
+    </dialog>
+    <template data-project-template>
+      <article class="project-card">
+        <div class="project-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <path d="M3 7h6l2-2h10v15H3Z" />
+          </svg>
+        </div>
+        <div class="project-copy">
+          <span class="project-status" data-project-status></span>
+          <h2 data-project-title></h2>
+          <p data-project-description></p>
+          <div class="project-meta">
+            <span data-project-stack></span>
+            <time data-project-date></time>
+          </div>
+        </div>
+        <div class="project-actions">
+          <button class="button primary" type="button" data-publish></button>
+          <button class="quiet" type="button" data-withdraw></button>
+          <button class="button secondary" type="button" data-edit>
+            {t.edit} ↗
+          </button>
+          <button class="quiet" type="button" data-archive></button>
+        </div>
+      </article>
+    </template>
+    <noscript>
+      <p class="connection">{t.js}</p>
+    </noscript>
+  </div>
+</Admin>
+
+<script>
+  import "../../scripts/admin";
+</script>

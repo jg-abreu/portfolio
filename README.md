@@ -70,6 +70,16 @@ Then open **http://localhost:4321** (it redirects to `/en/`).
 
 Set `GITHUB_TOKEN` before building for a higher GitHub API rate limit (the deploy workflow does this).
 
+## Admin project publication (V2)
+
+The private workspace saves bilingual drafts in the Spring Boot API. **Prepare publication** copies a complete draft into the public build source; subsequent edits remain private. **Prepare removal** excludes that copy from the next build while keeping the draft. Archiving a draft leaves its selected public copy intact.
+
+Set `PROJECTS_API_URL` to the API's `/api/projects` URL before running `npm run build` (local example: `http://localhost:8080/api/projects`). The build validates the snapshot and generates static EN/PT pages and `/project-publications.json`. When a configured source fails, the build stops instead of publishing incomplete content. Without the variable, the build includes only the existing file-based content.
+
+The admin shows a version as published only when its revision matches the manifest served by the site, checked on load and every 30 seconds while the workspace is visible. This marker confirms the site's built files, not a GitHub Actions job status. Automatic deploy triggering and production API routing still require infrastructure setup; preparing a version does not currently start a deploy. Existing file-based projects require a separate migration before they can be managed in the admin. Slugs shared by a file-based project and an API project fail the build.
+
+Publication checks: `node --test scripts/project-publications.test.ts`. After `npm run publications`, run `node --test scripts/project-publications.integration.test.ts` to test the API-to-static-build flow; it restores the previous snapshot and rebuilds without its temporary project.
+
 ## Project structure
 
 ```

@@ -1,0 +1,115 @@
+---
+import PublicationStatus from '../../../components/PublicationStatus.astro';
+import Admin from '../../../layouts/Admin.astro';
+import { locales, type Locale } from '../../../i18n/ui';
+import { recommendationUi } from '../../../i18n/recommendations';
+import { recommendationAdminUi } from '../../../i18n/recommendation-admin';
+import { recommendationCategories } from '../../../lib/recommendations';
+export function getStaticPaths() { return locales.map(locale => ({ params: { locale } })); }
+const locale = Astro.params.locale as Locale;
+const t = recommendationAdminUi[locale];
+const other = locale === 'en' ? 'pt' : 'en';
+---
+<Admin locale={locale}>
+  <div data-recommendation-admin data-locale={locale} data-labels={JSON.stringify(t)}>
+    <header class="studio-header">
+      <a class="studio-brand" href={`/${locale}/admin/`}><span class="monogram">JA</span><span>{t.title}</span></a>
+      <div class="header-actions"><a class="quiet" href={`/${locale}/admin/`}>{t.back}</a>
+        <a class="quiet" href={`/${other}/admin/recommendations/`} lang={other} hreflang={other}>{other.toUpperCase()}</a>
+      </div>
+    </header>
+    <main class="recommendation-admin-main">
+      <p data-notice role="status" aria-live="polite">{t.checking}</p>
+      <section data-login hidden>
+        <h1>{t.title}</h1><p>{t.loginBody}</p>
+        <a class="button primary" href="/oauth2/authorization/github">{t.login}</a>
+      </section>
+      <button class="button secondary" type="button" data-retry>{t.retry}</button>
+      <div data-workspace hidden>
+        <div class="recommendation-toolbar"><h1>{t.title}</h1><span data-username></span>
+          <button class="button secondary" type="button" data-logout>{t.logout}</button>
+        </div>
+        <p class="muted">{t.publicationHelp}</p>
+        <PublicationStatus locale={locale} />
+        <div class="recommendation-toolbar">
+          <button class="button primary" type="button" data-new>{t.newItem}</button>
+          <button class="button secondary" type="button" data-refresh>{t.refresh}</button>
+        </div>
+        <p data-empty hidden>{t.empty}</p><ul class="recommendation-drafts" data-list></ul>
+        <section class="recommendation-editor" data-editor hidden aria-labelledby="recommendation-editor-heading">
+          <h2 id="recommendation-editor-heading" tabindex="-1">{t.editor}</h2>
+          <form data-form>
+            <fieldset data-fields>
+              <div class="form-grid">
+                <label>{t.slug}<input name="slug" required maxlength="100" pattern="[a-z0-9]+(-[a-z0-9]+)*" /></label>
+                <label>{t.category}<select name="category">{recommendationCategories.map(category => <option value={category}>{recommendationUi[locale].categories[category]}</option>)}</select></label>
+                <label>{t.order}<input name="displayOrder" type="number" min="0" max="2147483647" step="1" required value="0" /></label>
+                <label>{t.url}<input name="url" type="url" maxlength="1000" /></label>
+              </div>
+              <section class="recommendation-cover">
+                <div data-book-search>
+                  <label>{t.bookQuery}<input data-book-query minlength="2" maxlength="150" /></label>
+                  <div class="recommendation-toolbar"><button class="button secondary" type="button" data-search-books>{t.bookSearch}</button>
+                    <img class="google-attribution" src="https://books.google.com/googlebooks/images/poweredby.png" alt={t.poweredBy} width="62" height="30" loading="lazy" referrerpolicy="no-referrer" /></div>
+                  <p class="muted">{t.bookHelp}</p>
+                  <section data-book-results-section hidden aria-labelledby="book-results-heading">
+                    <h3 id="book-results-heading">{t.bookResults}</h3><p data-book-message role="status"></p>
+                    <ul class="book-results" data-book-results></ul>
+                  </section>
+                </div>
+                <h3>{t.cover}</h3><p class="muted">{t.uploadHelp}</p>
+                <label>{t.cover}<input data-file type="file" accept="image/png,image/jpeg" /></label>
+                <div class="recommendation-toolbar"><button class="button secondary" type="button" data-upload>{t.upload}</button>
+                  <button class="button secondary" type="button" data-remove-image>{t.removeImage}</button></div>
+                <img data-preview hidden alt="" width="160" height="200" />
+                <a class="quiet" data-book-source hidden target="_blank" rel="noopener noreferrer">{t.bookOpen}</a>
+                <input name="imageKey" type="hidden" />
+                <input name="googleBooksId" type="hidden" />
+              </section>
+              <div class="form-grid">{locales.map(language => <fieldset lang={language}>
+                <legend>{t[language]}</legend>
+                <label>{t.titleField}<input name={`${language}.title`} maxlength="150" /></label>
+                <label>{t.description}<textarea name={`${language}.description`} maxlength="3000" rows="5"></textarea></label>
+                <label>{t.imageAlt}<input name={`${language}.imageAlt`} maxlength="200" /></label>
+              </fieldset>)}</div>
+              <div class="recommendation-toolbar"><button class="button primary" type="submit">{t.save}</button>
+                <button class="button secondary" type="button" data-close>{t.close}</button></div>
+            </fieldset>
+          </form>
+          <p data-publication-status></p>
+          <div class="recommendation-toolbar" data-actions hidden>
+            <button class="button secondary" type="button" data-select>{t.select}</button>
+            <button class="button secondary" type="button" data-withdraw>{t.withdraw}</button>
+            <button class="button secondary" type="button" data-archive>{t.archive}</button>
+          </div>
+        </section>
+      </div>
+      <dialog data-discard><h2>{t.discardTitle}</h2><div class="recommendation-toolbar">
+        <button class="button secondary" type="button" data-keep>{t.keep}</button>
+        <button class="button primary" type="button" data-confirm-discard>{t.discard}</button></div></dialog>
+    </main>
+  </div>
+  <script>import '../../../scripts/recommendation-admin';</script>
+</Admin>
+<style>
+  .recommendation-admin-main { max-width: 72rem; margin: auto; padding: 1.5rem; }
+  .recommendation-toolbar { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; margin-block: 1rem; }
+  .recommendation-toolbar h1 { margin-right: auto; }
+  .recommendation-drafts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); gap: .75rem; list-style: none; padding: 0; }
+  .recommendation-drafts :global(button) { width: 100%; text-align: left; border: 1px solid var(--line); background: var(--panel); border-radius: .75rem; padding: 1rem; overflow-wrap: anywhere; }
+  .recommendation-drafts :global(small) { display: block; color: var(--muted); margin-top: .5rem; }
+  .recommendation-editor { border: 1px solid var(--line); border-radius: 1rem; padding: 1.5rem; margin-block: 2rem; background: var(--panel); }
+  .recommendation-editor label { display: block; margin-bottom: 1rem; }
+  .recommendation-editor input, .recommendation-editor textarea, .recommendation-editor select { margin-top: .5rem; }
+  select { width: 100%; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 7px; padding: 10px 12px; font: inherit; }
+  .recommendation-cover { margin-block: 1.5rem; }
+  .recommendation-cover img { object-fit: contain; max-width: 100%; }
+  .recommendation-cover .google-attribution { width: 62px; height: 30px; }
+  .book-results { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: 1rem; list-style: none; padding: 0; }
+  .book-results :global(li) { min-width: 0; border: 1px solid var(--line); padding: 1rem; border-radius: .75rem; overflow-wrap: anywhere; }
+  .book-results :global(img) { display: block; height: 10rem; width: 8rem; object-fit: contain; margin-bottom: .75rem; }
+  .book-results :global(a) { display: block; color: var(--blue); margin-block: .75rem; }
+  dialog { color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 1rem; max-width: calc(100% - 2rem); }
+  dialog::backdrop { background: #0008; }
+  @media (max-width: 40rem) { .recommendation-admin-main { padding: 1rem; } .recommendation-editor { padding: 1rem; } .header-actions { flex-wrap: wrap; } }
+</style>

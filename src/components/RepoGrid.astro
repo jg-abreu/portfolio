@@ -1,0 +1,160 @@
+---
+// Public repositories from the build snapshot as cards: name, description, language, stars and last push.
+import type { Repo } from '../lib/github-data';
+
+interface Props {
+	repos: Repo[];
+	/** Repo descriptions in the page's language, by repo name, where a project has its own text. */
+	descriptions: Record<string, string>;
+	localeTag: string;
+	pushedLabel: string;
+	starsLabel: string;
+}
+
+const { repos, descriptions, localeTag, pushedLabel, starsLabel } = Astro.props;
+const dateFormat = new Intl.DateTimeFormat(localeTag, { dateStyle: 'medium', timeZone: 'UTC' });
+
+// Same hues GitHub uses for these languages; anything else gets a neutral dot.
+const languageColors: Record<string, string> = {
+	Java: '#b07219',
+	Python: '#3572A5',
+	TypeScript: '#3178c6',
+	JavaScript: '#f1e05a',
+	HTML: '#e34c26',
+	CSS: '#663399',
+	'C++': '#f34b7d',
+	C: '#555555',
+	Astro: '#ff5a03',
+	Shell: '#89e051',
+};
+---
+
+<ul class="grid repos">
+	{
+		repos.map((repo) => (
+			<li class="card">
+				<a class="name" href={repo.url}>
+					<svg viewBox="0 0 24 24" aria-hidden="true">
+						<path d="M4 5a2 2 0 0 1 2-2h12v15H6a2 2 0 0 0-2 2V5Zm0 15a2 2 0 0 0 2 2h12v-4" />
+					</svg>
+					<span>{repo.name}</span>
+				</a>
+				<p class="description">{descriptions[repo.name] ?? repo.description ?? ''}</p>
+				<p class="meta">
+					{repo.language && (
+						<span>
+							<span class="dot" style={`--lang: ${languageColors[repo.language] ?? 'var(--fg-muted)'}`} aria-hidden="true" />
+							{repo.language}
+						</span>
+					)}
+					<span title={starsLabel}>
+						<svg viewBox="0 0 24 24" aria-hidden="true">
+							<path d="m12 3 2.8 5.8 6.2.9-4.5 4.4 1 6.2L12 17.4l-5.5 2.9 1-6.2L3 9.7l6.2-.9Z" />
+						</svg>
+						<span class="visually-hidden">{starsLabel}:</span> {repo.stars}
+					</span>
+					<span>
+						{pushedLabel} <time datetime={repo.pushedAt}>{dateFormat.format(new Date(`${repo.pushedAt}T00:00:00Z`))}</time>
+					</span>
+				</p>
+			</li>
+		))
+	}
+</ul>
+
+<style>
+	.repos li {
+		display: grid;
+		grid-template-rows: auto 1fr auto;
+		gap: 0.6rem;
+		padding: 1.25rem;
+	}
+
+	.name {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		min-width: 0;
+		font-weight: 600;
+		text-decoration: none;
+	}
+
+	.name span {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.name:hover span {
+		text-decoration: underline;
+	}
+
+	.name::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+	}
+
+	svg {
+		flex-shrink: 0;
+		width: 1rem;
+		height: 1rem;
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 1.75;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+	}
+
+	.description {
+		display: -webkit-box;
+		margin: 0;
+		overflow: hidden;
+		color: var(--fg-muted);
+		font-size: 0.875rem;
+		line-height: 1.5;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 2;
+		line-clamp: 2;
+	}
+
+	.meta {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem 1rem;
+		margin: 0;
+		color: var(--fg-muted);
+		font-size: 0.8rem;
+	}
+
+	.meta > span {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+	}
+
+	.meta svg {
+		width: 0.85rem;
+		height: 0.85rem;
+	}
+
+	.dot {
+		width: 0.6rem;
+		height: 0.6rem;
+		border-radius: 50%;
+		background: var(--lang);
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		.repos li {
+			transition:
+				transform 0.25s var(--ease),
+				border-color 0.2s;
+		}
+
+		.repos li:hover {
+			border-color: var(--fg-muted);
+			transform: translateY(-2px);
+		}
+	}
+</style>

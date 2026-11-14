@@ -1,0 +1,71 @@
+---
+import { useTranslations, type Locale } from '../i18n/ui';
+import { errorCodes } from '../lib/assistant';
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+const messages = {
+	...Object.fromEntries(errorCodes.map(code => [code, t(`assistant.error.${code}`)])),
+	NETWORK_ERROR: t('assistant.error.NETWORK_ERROR'),
+	loading: t('assistant.loading'),
+	answered: t('assistant.answered'),
+	insufficient_knowledge: t('assistant.insufficient'),
+	version: t('assistant.version'),
+	retryAfter: t('assistant.retryAfter'),
+};
+---
+<div data-assistant data-locale={locale} data-messages={JSON.stringify(messages)}>
+	<button class="assistant-launch" type="button" data-assistant-open aria-haspopup="dialog" aria-controls="assistant-dialog" hidden>
+		<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v12H9l-5 4V4Zm4 5h8m-8 3h5" /></svg>
+		{t('assistant.open')}
+	</button>
+	<dialog id="assistant-dialog" aria-labelledby="assistant-title" aria-describedby="assistant-description">
+		<header>
+			<div><span class="eyebrow">{t('assistant.eyebrow')}</span><h2 id="assistant-title">{t('assistant.title')}</h2></div>
+			<button type="button" class="dismiss" data-assistant-close aria-label={t('assistant.close')}>×</button>
+		</header>
+		<p id="assistant-description" class="muted">{t('assistant.description')}</p>
+		<div class="suggestions">
+			{(['profile', 'projects', 'availability'] as const).map(topic =>
+				<button type="button" data-question={t(`assistant.question.${topic}`)}>{t(`assistant.topic.${topic}`)}</button>
+			)}
+		</div>
+		<form>
+			<label for="assistant-question">{t('assistant.questionLabel')}</label>
+			<textarea id="assistant-question" name="question" rows="3" maxlength="4000" required aria-describedby="assistant-limit"></textarea>
+			<div class="form-bottom"><small id="assistant-limit" class="muted">{t('assistant.limit')}</small><button type="submit" class="btn btn-primary">{t('assistant.send')}</button></div>
+		</form>
+		<p class="notice" tabindex="-1" role="status" aria-live="polite" aria-atomic="true" data-assistant-notice></p>
+		<section class="response" tabindex="-1" data-assistant-output aria-label={t('assistant.response')} hidden>
+			<p class="answer" data-assistant-answer></p>
+			<ul data-assistant-sources aria-label={t('assistant.sources')}></ul>
+			<small class="muted" data-assistant-version></small>
+		</section>
+		<a class="contact" href={`/${locale}/contact/`}>{t('assistant.contact')}</a>
+	</dialog>
+</div>
+<script>import '../scripts/assistant';</script>
+<style>
+	.assistant-launch { position: fixed; right: 1.25rem; bottom: max(1.25rem, env(safe-area-inset-bottom)); z-index: 10; display: flex; align-items: center; gap: .55rem; padding: .8rem 1rem; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--fg); box-shadow: 0 .5rem 2rem #0003; font: inherit; cursor: pointer; }
+	.assistant-launch[hidden], [hidden] { display: none; }
+	svg { width: 1.25rem; height: 1.25rem; fill: none; stroke: var(--accent); stroke-width: 1.7; }
+	dialog { width: min(34rem, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem); margin: auto; padding: 1.5rem; overflow-y: auto; overflow-wrap: anywhere; color: var(--fg); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 1rem 4rem #0005; }
+	dialog::backdrop { background: #0008; }
+	header { display: flex; align-items: start; justify-content: space-between; gap: 1rem; }
+	h2 { margin: .3rem 0 0; font-size: 1.4rem; letter-spacing: -.03em; }
+	.eyebrow { font: .7rem var(--font-mono); text-transform: uppercase; letter-spacing: .12em; color: var(--brand); }
+	.dismiss { min-width: 2.75rem; min-height: 2.75rem; background: var(--surface-2); border: 1px solid var(--line); border-radius: .6rem; color: var(--fg); font-size: 1.5rem; cursor: pointer; }
+	.suggestions { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1.25rem 0; }
+	.suggestions button { min-height: 2.75rem; padding: .4rem .75rem; border: 1px solid var(--line); border-radius: 999px; background: var(--surface-2); color: var(--fg); font: inherit; font-size: .8rem; cursor: pointer; }
+	label { display: block; margin-bottom: .5rem; font-size: .9rem; font-weight: 500; }
+	textarea { box-sizing: border-box; width: 100%; resize: vertical; min-height: 6rem; max-height: 16rem; border: 1px solid var(--line); border-radius: .6rem; background: var(--bg); color: var(--fg); padding: .75rem; font: inherit; }
+	.form-bottom { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .75rem; margin-top: .65rem; }
+	[type=submit]:disabled { opacity: .55; cursor: wait; }
+	.notice { font-size: .85rem; color: var(--fg-muted); }
+	.notice:empty { display: none; }
+	.response { margin-block: 1rem; padding: 1rem; background: var(--bg); border: 1px solid var(--line); border-radius: .6rem; }
+	.answer { white-space: pre-wrap; margin-top: 0; }
+	ul { padding-left: 1.25rem; font-size: .85rem; }
+	ul:empty { display: none; }
+	.contact { display: inline-block; margin-top: .5rem; font-size: .85rem; }
+</style>

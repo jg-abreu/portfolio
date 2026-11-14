@@ -1,0 +1,110 @@
+---
+import { useTranslations, type Locale } from '../i18n/ui';
+
+interface Props {
+  locale: Locale;
+  pages: { href: string; label: string; icon: string; current: boolean }[];
+}
+
+const { locale, pages } = Astro.props;
+const t = useTranslations(locale);
+---
+
+<button class="mobile-menu-toggle" type="button" popovertarget="mobile-navigation" aria-controls="mobile-navigation" aria-label={t('nav.menu')} data-mobile-menu-toggle>
+  <svg class="menu-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
+  <svg class="close-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6" /></svg>
+</button>
+<nav id="mobile-navigation" class="mobile-menu" popover="auto" aria-label={t('nav.main')} data-mobile-menu>
+  <ul>
+    {pages.map((page, index) => (
+      <li>
+        <a href={page.href} aria-current={page.current ? 'page' : undefined} autofocus={index === 0}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d={page.icon} /></svg>
+          <span>{page.label}</span>
+        </a>
+      </li>
+    ))}
+  </ul>
+</nav>
+
+<script>
+  import '../scripts/mobile-menu';
+</script>
+
+<style>
+  .mobile-menu-toggle { display: none; }
+  .mobile-menu { display: none; }
+  .mobile-menu-toggle svg, .mobile-menu svg {
+    width: 1.2rem;
+    height: 1.2rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .mobile-menu-toggle .close-icon { display: none; }
+
+  @supports selector(:popover-open) {
+    @media (max-width: 40rem) {
+      .mobile-menu-toggle {
+        display: inline-grid;
+        place-items: center;
+        flex-shrink: 0;
+        width: 2.75rem;
+        height: 2.75rem;
+        padding: 0;
+        border: 1px solid var(--line);
+        border-radius: 50%;
+        background: var(--surface);
+        color: var(--fg);
+        cursor: pointer;
+      }
+      .mobile-menu:popover-open {
+        display: block;
+        position: fixed;
+        inset: var(--header-height) 0 auto;
+        width: 100%;
+        max-width: none;
+        max-height: calc(100dvh - var(--header-height));
+        margin: 0;
+        padding: .75rem var(--gutter) 1rem;
+        overflow: auto;
+        overscroll-behavior: contain;
+        border: 0;
+        border-bottom: 1px solid var(--line);
+        background: var(--surface);
+        color: var(--fg);
+        box-shadow: 0 1.5rem 3rem rgb(0 0 0 / .12);
+      }
+      .mobile-menu::backdrop {
+        inset: var(--header-height) 0 0;
+        background: rgb(0 0 0 / .45);
+      }
+      .mobile-menu ul { display: grid; gap: .2rem; margin: 0; padding: 0; list-style: none; }
+      .mobile-menu a {
+        display: flex;
+        align-items: center;
+        gap: .8rem;
+        min-height: 3rem;
+        padding: .7rem .85rem;
+        border-radius: .75rem;
+        color: var(--fg-muted);
+        font: inherit;
+        font-size: .95rem;
+        text-decoration: none;
+      }
+      .mobile-menu a:hover, .mobile-menu a:focus-visible { color: var(--fg); background: var(--surface-2); }
+      .mobile-menu a[aria-current] { color: var(--fg); background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--line); }
+      .mobile-menu a[aria-current] svg { stroke: var(--brand); }
+      :global(.site-header:has(.mobile-menu:popover-open)) .menu-icon { display: none; }
+      :global(.site-header:has(.mobile-menu:popover-open)) .close-icon { display: block; }
+      :global(html:has(.mobile-menu:popover-open)) { overflow: hidden; }
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) and (max-width: 40rem) {
+    .mobile-menu:popover-open { animation: menu-enter .18s ease-out; }
+    @keyframes menu-enter { from { opacity: 0; transform: translateY(-.5rem); } to { opacity: 1; transform: translateY(0); } }
+  }
+</style>

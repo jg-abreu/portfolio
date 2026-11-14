@@ -1,0 +1,543 @@
+---
+// Repository popup for a project card, modeled on developer.org.tr: avatar and owner/repo with
+// "Public", GitHub link, language, stars and forks, the GitHub description, "View on GitHub" and
+// the files at the repository root. Folders open inside the popup (scripts/project-popup.ts reads
+// them live from the GitHub API, with a Back link); every row also links to GitHub.
+// Everything shown comes from the build snapshot or the API, never invented.
+import type { Repo, TreeEntry } from '../lib/github-data';
+import { GITHUB_USER } from '../lib/github-data';
+
+interface Props {
+	id: string;
+	name: string;
+	repoUrl: string;
+	repo: Repo | undefined;
+	tree: TreeEntry[] | null;
+	avatarUrl: string | null;
+	fallbackDescription: string;
+	labels: {
+		public: string;
+		stars: string;
+		forks: string;
+		github: string;
+		viewGitHub: string;
+		back: string;
+		moreFiles: string;
+		files: string;
+		folderError: string;
+		close: string;
+		openOnGitHub: string;
+	};
+}
+
+const { id, name, repoUrl, repo, tree, avatarUrl, fallbackDescription, labels } = Astro.props;
+const MAX = 8;
+// GitHub's colors for the languages in these repositories.
+const langColors: Record<string, string> = {
+	Java: '#b07219',
+	TypeScript: '#3178c6',
+	JavaScript: '#f1e05a',
+	Python: '#3572A5',
+	HTML: '#e34c26',
+	CSS: '#663399',
+	Astro: '#ff5a03',
+};
+const folderIcon = 'M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.7-.9l-.8-1.2A2 2 0 0 0 7.9 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z';
+const fileIcon = 'M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Zm-1 0v5h6';
+const extIcon = 'M15 3h6v6M10 14 21 3M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6';
+---
+
+<dialog class="pop" id={`pop-${id}`} aria-labelledby={`pop-${id}-title`}>
+	<div class="pop-card" tabindex="-1" data-card>
+		<div class="pop-head">
+			<a class="who" href={repoUrl}>
+				{
+					avatarUrl ? (
+						<img class="avatar" src={avatarUrl} width="32" height="32" alt="" loading="lazy" referrerpolicy="no-referrer" />
+					) : (
+						<span class="avatar mark" aria-hidden="true">
+							JA
+						</span>
+					)
+				}
+				<h2 id={`pop-${id}-title`}>
+					{GITHUB_USER}<span class="repo">/{name}</span>
+				</h2>
+				<span class="public">{labels.public}</span>
+			</a>
+			<div class="meta">
+				<a class="gh" href={repoUrl} aria-label={labels.github}>
+					<svg viewBox="0 0 24 24" aria-hidden="true">
+						<path d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.3-3.4-1.3-.4-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.4 1.1 3 .8.1-.6.4-1.1.6-1.3-2.2-.3-4.6-1.1-4.6-5a3.9 3.9 0 0 1 1-2.7c-.1-.3-.5-1.3.1-2.7 0 0 .8-.3 2.8 1a9.6 9.6 0 0 1 5 0c1.9-1.3 2.8-1 2.8-1 .5 1.4.2 2.4.1 2.7a3.9 3.9 0 0 1 1 2.7c0 3.9-2.3 4.7-4.6 5 .4.3.7 1 .7 2v2.8c0 .3.2.6.7.5A10 10 0 0 0 12 2Z" />
+					</svg>
+				</a>
+				{
+					repo?.language && (
+						<span>
+							<svg class="lang" viewBox="0 0 10 10" aria-hidden="true" style={`color: ${langColors[repo.language] ?? 'currentColor'}`}>
+								<circle cx="5" cy="5" r="4" />
+							</svg>
+							{repo.language}
+						</span>
+					)
+				}
+				{
+					repo && (
+						<span>
+							<svg viewBox="0 0 24 24" aria-hidden="true">
+								<path d="M11.5 2.3a.5.5 0 0 1 1 0l2.3 4.7a2 2 0 0 0 1.6 1.1l5.2.8a.5.5 0 0 1 .3.9l-3.8 3.7a2 2 0 0 0-.6 1.9l.9 5.2a.5.5 0 0 1-.8.6l-4.6-2.5a2 2 0 0 0-2 0l-4.6 2.5a.5.5 0 0 1-.8-.6l.9-5.2a2 2 0 0 0-.6-1.9L1.1 9.8a.5.5 0 0 1 .3-.9l5.2-.8A2 2 0 0 0 8.2 7Z" />
+							</svg>
+							{repo.stars}
+							<span class="visually-hidden">{labels.stars}</span>
+						</span>
+					)
+				}
+				{
+					repo && repo.forks !== null && (
+						<span>
+							<svg viewBox="0 0 24 24" aria-hidden="true">
+								<circle cx="12" cy="18" r="3" />
+								<circle cx="6" cy="6" r="3" />
+								<circle cx="18" cy="6" r="3" />
+								<path d="M18 9v2c0 .6-.4 1-1 1H7c-.6 0-1-.4-1-1V9m6 3v3" />
+							</svg>
+							{repo.forks}
+							<span class="visually-hidden">{labels.forks}</span>
+						</span>
+					)
+				}
+			</div>
+		</div>
+
+		<p class="desc">{repo?.description ?? fallbackDescription}</p>
+
+		<div class="bar">
+			<button class="back" type="button" data-back hidden>
+				<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 19-7-7 7-7m7 7H5" /></svg>
+				{labels.back}
+			</button>
+			<span></span>
+			<a class="view" href={repoUrl} data-view>
+				<svg viewBox="0 0 24 24" aria-hidden="true"><path d={extIcon} /></svg>
+				{labels.viewGitHub}
+			</a>
+		</div>
+
+		{
+			tree && tree.length > 0 && (
+				<div
+					class="files"
+					role="list"
+					aria-label={labels.files}
+					data-files
+					data-repo={name}
+					data-repo-url={repoUrl}
+					data-more={labels.moreFiles}
+					data-error={labels.folderError}
+					data-open={labels.openOnGitHub}
+				>
+					{tree.slice(0, MAX).map((e) => (
+						<div class="row" role="listitem">
+							{e.kind === 'dir' ? (
+								<button class="open" type="button" data-dir={e.name}>
+									<svg class="icon dir" viewBox="0 0 24 24" aria-hidden="true">
+										<path d={folderIcon} />
+									</svg>
+									<span>{e.name}</span>
+								</button>
+							) : (
+								<a class="open" href={e.url}>
+									<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+										<path d={fileIcon} />
+									</svg>
+									<span>{e.name}</span>
+								</a>
+							)}
+							<a class="ext" href={e.url} aria-label={`${labels.openOnGitHub}: ${e.name}`}>
+								<svg viewBox="0 0 24 24" aria-hidden="true">
+									<path d={extIcon} />
+								</svg>
+							</a>
+						</div>
+					))}
+					{tree.length > MAX && (
+						<a class="more" href={repoUrl} role="listitem">
+							{labels.moreFiles.replace('{n}', String(tree.length - MAX))}
+						</a>
+					)}
+				</div>
+			)
+		}
+
+		<button class="close visually-hidden" type="button" data-close>{labels.close}</button>
+	</div>
+</dialog>
+
+<script>
+	import '../scripts/project-popup';
+</script>
+
+<style>
+	/* Sizes and colors follow developer.org.tr's popup (max 640 px, 24 px padding, 16 px radius). */
+	.pop {
+		width: min(40rem, calc(100vw - 2.5rem));
+		max-width: none;
+		max-height: 90vh;
+		margin: auto;
+		padding: 0;
+		overflow: visible;
+		background: transparent;
+		border: 0;
+		color: var(--fg);
+	}
+
+	/* On open, focus goes to the card itself (project-popup.ts), so no link starts outlined. */
+	.pop-card:focus {
+		outline: none;
+	}
+
+	.pop::backdrop {
+		background: rgb(0 0 0 / 0.2);
+		backdrop-filter: blur(4px);
+	}
+
+	.pop-card {
+		max-height: 90vh;
+		padding: 1.5rem;
+		overflow-y: auto;
+		background: var(--surface);
+		border: 1px solid var(--line);
+		border-radius: 1rem;
+		box-shadow:
+			0 20px 25px -5px rgb(0 0 0 / 0.25),
+			0 8px 10px -6px rgb(0 0 0 / 0.2);
+	}
+
+	.pop-head {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem 1rem;
+	}
+
+	.who {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		min-width: 0;
+		color: var(--fg);
+		text-decoration: none;
+		transition: opacity 0.15s;
+	}
+
+	.who:hover {
+		opacity: 0.8;
+	}
+
+	.avatar {
+		flex-shrink: 0;
+		width: 2rem;
+		height: 2rem;
+		background: var(--surface-2);
+		border-radius: 50%;
+	}
+
+	.mark {
+		display: grid;
+		place-items: center;
+		background: linear-gradient(135deg, var(--brand-2), var(--accent) 55%, #6366f1);
+		color: #fff;
+		font-size: 0.7rem;
+		font-weight: 800;
+	}
+
+	h2 {
+		display: -webkit-box;
+		margin: 0;
+		overflow: hidden;
+		font-size: 1rem;
+		font-weight: 500;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 1;
+		line-clamp: 1;
+		overflow-wrap: anywhere;
+	}
+
+	.repo {
+		color: var(--brand);
+		font-weight: 600;
+	}
+
+	.public {
+		flex-shrink: 0;
+		padding: 1px 0.5rem;
+		background: var(--surface-2);
+		border: 1px solid var(--line);
+		border-radius: 0.375rem;
+		color: var(--fg-muted);
+		font-size: 0.625rem;
+		font-weight: 500;
+	}
+
+	.meta {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		color: var(--fg-muted);
+		font-size: 0.875rem;
+	}
+
+	.meta > span {
+		display: inline-flex;
+		align-items: center;
+	}
+
+	.meta svg {
+		width: 0.875rem;
+		height: 0.875rem;
+		margin-right: 0.375rem;
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 2;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+	}
+
+	.meta .lang {
+		width: 0.625rem;
+		height: 0.625rem;
+		fill: currentColor;
+		stroke: none;
+	}
+
+	.gh {
+		display: inline-flex;
+		color: var(--fg-muted);
+		transition: color 0.15s;
+	}
+
+	.gh:hover {
+		color: var(--brand);
+	}
+
+	.gh svg {
+		width: 1.125rem;
+		height: 1.125rem;
+		margin: 0;
+		fill: currentColor;
+		stroke: none;
+	}
+
+	.desc {
+		margin: 1rem 0 1.25rem;
+		color: var(--fg-muted);
+		font-size: 0.875rem;
+		line-height: 1.625;
+	}
+
+	.bar {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: 0.75rem;
+	}
+
+	.back,
+	.view {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.375rem;
+		padding: 0;
+		background: none;
+		border: 0;
+		font: inherit;
+		font-size: 0.75rem;
+		font-weight: 500;
+		text-decoration: none;
+		cursor: pointer;
+	}
+
+	.back {
+		color: var(--brand);
+	}
+
+	.back[hidden] {
+		display: none;
+	}
+
+	.view {
+		color: var(--fg);
+		opacity: 0.85;
+	}
+
+	.view:hover {
+		color: var(--brand);
+		opacity: 1;
+	}
+
+	.back svg,
+	.view svg {
+		width: 0.875rem;
+		height: 0.875rem;
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 2;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+	}
+
+	.files {
+		overflow: hidden;
+		background: color-mix(in srgb, var(--surface) 50%, transparent);
+		border: 1px solid var(--line);
+		border-radius: 0.75rem;
+		transition: opacity 0.2s;
+	}
+
+	.files[aria-busy='true'] {
+		opacity: 0.55;
+	}
+
+	.files :global(.row) {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		padding: 0.625rem 1rem;
+		transition: background-color 0.15s;
+	}
+
+	.files :global(.row + .row),
+	.files :global(.row + .more),
+	.files :global(.note) {
+		border-top: 1px solid var(--line);
+	}
+
+	.files :global(.row:hover) {
+		background: var(--surface-2);
+	}
+
+	.files :global(.open) {
+		display: flex;
+		flex: 1;
+		align-items: center;
+		gap: 0.75rem;
+		min-width: 0;
+		padding: 0;
+		background: none;
+		border: 0;
+		color: var(--fg);
+		font: inherit;
+		font-size: 0.875rem;
+		font-weight: 500;
+		text-align: left;
+		text-decoration: none;
+		cursor: pointer;
+		opacity: 0.85;
+	}
+
+	.files :global(.open span) {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.files :global(.icon) {
+		flex-shrink: 0;
+		width: 1rem;
+		height: 1rem;
+		fill: none;
+		stroke: var(--fg-muted);
+		stroke-width: 2;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+	}
+
+	.files :global(.icon.dir) {
+		stroke: #3b82f6;
+	}
+
+	.files :global(.ext) {
+		display: inline-flex;
+		flex-shrink: 0;
+		color: var(--fg-muted);
+	}
+
+	.files :global(.ext:hover) {
+		color: var(--brand);
+	}
+
+	.files :global(.ext svg) {
+		width: 0.875rem;
+		height: 0.875rem;
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 2;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+	}
+
+	.files :global(.more),
+	.files :global(.note) {
+		display: block;
+		padding: 0.625rem 1rem;
+		background: var(--surface-2);
+		color: var(--fg-muted);
+		font-size: 0.75rem;
+		font-weight: 500;
+		text-align: center;
+		text-decoration: none;
+	}
+
+	.files :global(.more:hover) {
+		color: var(--fg);
+	}
+
+	/*
+	 * Open and close: the card rises and grows slightly while the backdrop fades in; closing plays
+	 * it in reverse, a little faster (scripts/project-popup.ts waits for it before closing).
+	 */
+	@media (prefers-reduced-motion: no-preference) {
+		.pop[open] {
+			animation: pop-in 0.42s cubic-bezier(0.16, 1, 0.3, 1);
+		}
+
+		.pop[open]::backdrop {
+			animation: backdrop-in 0.35s ease-out;
+		}
+
+		.pop.closing {
+			animation: pop-out 0.24s cubic-bezier(0.4, 0, 1, 1) forwards;
+		}
+
+		.pop.closing::backdrop {
+			animation: backdrop-out 0.24s ease-in forwards;
+		}
+	}
+
+	@keyframes pop-in {
+		from {
+			opacity: 0;
+			transform: translateY(16px) scale(0.96);
+		}
+	}
+
+	@keyframes pop-out {
+		to {
+			opacity: 0;
+			transform: translateY(10px) scale(0.97);
+		}
+	}
+
+	@keyframes backdrop-in {
+		from {
+			opacity: 0;
+		}
+	}
+
+	@keyframes backdrop-out {
+		to {
+			opacity: 0;
+		}
+	}
+</style>

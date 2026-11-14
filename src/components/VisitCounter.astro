@@ -1,0 +1,20 @@
+---
+import { useTranslations, type Locale } from '../i18n/ui';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const t = useTranslations(locale);
+const enabled = import.meta.env.PUBLIC_VISITS_ENABLED === 'true';
+---
+
+{enabled && <p class="visit-counter" data-visits data-locale={locale} hidden title={t('visits.explanation')}>
+  {t('visits.label')}: <span data-visits-total></span>
+</p>}
+
+<script>
+  import '../scripts/visits';
+</script>
+
+<style>
+  .visit-counter { margin: .6rem auto 0; padding: 0 var(--gutter) 6rem; text-align: center; color: var(--fg-muted); font-size: .75rem; }
+</style>

@@ -8,7 +8,12 @@
 const root = document.documentElement;
 
 const bar = document.querySelector<HTMLElement>('.progress');
-const links = [...document.querySelectorAll<HTMLAnchorElement>('.sections a')];
+// The header stays see-through over the wallpaper and gets its backdrop once the wallpaper has
+// mostly faded out (about half its height, see the mask in Base.astro).
+const header = document.querySelector<HTMLElement>('.site-header');
+const wallpaper = document.querySelector<HTMLElement>('.wallpaper');
+// Only in-page section links; links to other pages get aria-current from the layout instead.
+const links = [...document.querySelectorAll<HTMLAnchorElement>('.sections a[href*="#"]')];
 const targets = links.map((a) => document.getElementById(a.hash.slice(1)));
 
 let ticking = false;
@@ -16,6 +21,7 @@ function update() {
 	ticking = false;
 	const max = root.scrollHeight - innerHeight;
 	if (bar) bar.style.transform = `scaleX(${max > 0 ? Math.min(scrollY / max, 1) : 0})`;
+	if (header && wallpaper) header.toggleAttribute('data-clear', scrollY < wallpaper.offsetHeight * 0.45);
 
 	// The current section is the last one whose top has passed 40% of the viewport.
 	let current = -1;
@@ -42,6 +48,8 @@ function requestUpdate() {
 addEventListener('scroll', requestUpdate, { passive: true });
 addEventListener('resize', requestUpdate);
 update();
+// Fade the header only on later changes, not on the first state set above.
+requestAnimationFrame(() => header?.setAttribute('data-ready', ''));
 
 if (root.classList.contains('fx')) {
 	// Wrap each word so it can rise from behind its own mask; the text stays readable as-is.

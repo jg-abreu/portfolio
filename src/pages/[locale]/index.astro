@@ -2,21 +2,15 @@
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import { createHash } from 'node:crypto';
 import Base from '../../layouts/Base.astro';
-import HeroContacts from '../../components/HeroContacts.astro';
-import ContactForm from '../../components/ContactForm.astro';
-import DeployPipeline from '../../components/DeployPipeline.astro';
 import Heatmap from '../../components/Heatmap.astro';
-import RadarScope from '../../components/RadarScope.astro';
-import RecentRepos from '../../components/RecentRepos.astro';
-import SonarDisplay from '../../components/SonarDisplay.astro';
-import SonarIcon from '../../components/SonarIcon.astro';
-import { localeTags, locales, useTranslations, type Locale, type UiKey } from '../../i18n/ui';
-import { activityStats, heatmapCells, recentRepos } from '../../lib/activity';
+import RepoGrid from '../../components/RepoGrid.astro';
+import TechGrid from '../../components/TechGrid.astro';
+import { localeTags, locales, useTranslations, type Locale } from '../../i18n/ui';
+import { heatmapCells, recentRepos } from '../../lib/activity';
 import { rioDate } from '../../lib/calendar';
-import { getAbout, getContacts, getProjects, getStack } from '../../lib/content';
+import { getContacts, getProjects, getStack } from '../../lib/content';
 import { getGitHubSnapshot } from '../../lib/github';
-import { practiceStats } from '../../lib/github-data';
-import { toRadarContacts } from '../../lib/radar';
+import { GITHUB_USER, practiceStats } from '../../lib/github-data';
 
 export function getStaticPaths() {
 	return locales.map((locale) => ({ params: { locale } }));
@@ -24,41 +18,28 @@ export function getStaticPaths() {
 
 const locale = Astro.params.locale as Locale;
 const t = useTranslations(locale);
-
-// Each section after the hero has its own sonar display, numbered in page order.
-const projects = await getProjects(locale);
-const workProjects = projects.filter((p) => p.role !== 'signal');
-const signals = projects.filter((p) => p.role === 'signal');
-const radarContacts = toRadarContacts(workProjects);
-const contacts = await getContacts();
-
-// Build snapshot of GitHub data; the browser refreshes it live.
-const snapshot = getGitHubSnapshot();
-const numberFormat = new Intl.NumberFormat(localeTags[locale]);
-const dateFormat = new Intl.DateTimeFormat(localeTags[locale], { dateStyle: 'medium', timeZone: 'UTC' });
-const contributionsTotal = snapshot?.contributions?.total ?? null;
-const publicRepos = snapshot?.profile?.publicRepos ?? null;
-const practiceDays = snapshot?.practiceDays ?? [];
 const localeTag = localeTags[locale];
+const numberFormat = new Intl.NumberFormat(localeTag);
+const dateFormat = new Intl.DateTimeFormat(localeTag, { dateStyle: 'medium', timeZone: 'UTC' });
 
-const about = await getAbout(locale);
-const stack = (await getStack()).map((g) => {
-	const label = t(`stack.${g.id}` as UiKey);
-	if (!label) throw new Error(`Missing UI string stack.${g.id} for the stack group in src/content/stack.yaml`);
-	return { ...g, label };
-});
-const instrumentCount = stack.reduce((n, g) => n + g.items.length, 0);
+const projects = await getProjects(locale);
+const practiceProject = projects.find((p) => p.id === 'leetcode');
+const contacts = await getContacts();
+const stackItems = (await getStack()).flatMap((g) => g.items);
 
-// Activity: statistics and heatmap as of the snapshot day; the browser recomputes them live.
+// Build snapshot of GitHub data; the browser refreshes the contributions live.
+const snapshot = getGitHubSnapshot();
 const today = snapshot?.generatedAt ?? '';
 const contributions = snapshot?.contributions ?? null;
-const stats = contributions ? activityStats(contributions, today) : null;
+const cells = contributions ? heatmapCells(contributions, today) : [];
+const practiceDays = snapshot?.practiceDays ?? [];
 // Practice days are days in Rio, so the streak is measured against today in Rio.
 const practice = practiceStats(practiceDays, rioDate());
-const cells = contributions ? heatmapCells(contributions, today) : [];
-const recent = snapshot?.repos ? recentRepos(snapshot.repos, 8) : [];
-// Repo descriptions in the page's language where the project has its own text.
+const repos = snapshot?.repos ? recentRepos(snapshot.repos, 6) : [];
 const descriptions = Object.fromEntries(projects.map((p) => [p.repo, p.tagline]));
+
+const count = (key: Parameters<typeof t>[0], n: number) => t(key).replace('{n}', String(n));
+const dayCount = (n: number) => (n === 1 ? t('leetcode.day') : count('leetcode.days', n));
 
 // Structured data for search engines: who this page is about, with the public profiles.
 const personJsonLd = JSON.stringify({
@@ -68,443 +49,189 @@ const personJsonLd = JSON.stringify({
 	url: new URL(getRelativeLocaleUrl(locale), Astro.site).href,
 	jobTitle: t('home.role'),
 	address: { '@type': 'PostalAddress', addressLocality: 'Rio de Janeiro', addressCountry: 'BR' },
-	knowsAbout: stack.flatMap((g) => g.items),
+	knowsAbout: stackItems,
 	sameAs: contacts.filter((c) => c.kind !== 'email').map((c) => c.url),
 }).replace(/</g, '\\u003c');
 
 Astro.csp?.insertScriptHash(`sha256-${createHash('sha256').update(personJsonLd).digest('base64')}`);
-
-// The real path a commit takes to the visitor (see deploy/README.md and .github/workflows/deploy.yml).
-const pipelineStages = (['commit', 'build', 'ship', 'serve', 'edge', 'you'] as const).map((id) => ({
-	id,
-	name: t(`pipeline.${id}.name`),
-	body: t(`pipeline.${id}.body`),
-}));
-// This page is rebuilt on every deploy, so the build date is the date of the last deploy.
-const builtOn = new Intl.DateTimeFormat(localeTags[locale], { dateStyle: 'medium', timeZone: 'America/Sao_Paulo' }).format(new Date());
-
-const SECTION_COUNT = 7;
-const count = (key: Parameters<typeof t>[0], n: number) => t(key).replace('{n}', String(n));
-const dayCount = (n: number) => (n === 1 ? t('leetcode.day') : count('leetcode.days', n));
-const age = (days: number | null) =>
-	days === null ? t('radar.noData') : days === 0 ? t('radar.today') : days === 1 ? t('radar.day') : count('radar.days', days);
 ---
 
-<Base>
+<Base title={`${t('nav.home')} - João Abreu`} shareTitle={t('site.title')}>
 	<script slot="head" type="application/ld+json" is:inline set:html={personJsonLd} />
-	<main id="main">
+	<main id="main" class="page">
+		<!-- Clean entry: who and what; contacts live on the Contact page and in the footer. The headline is the page's LCP element. -->
 		<section class="hero">
-			<div class="hero-text">
-				<p class="label" data-reveal>{t('home.status')}</p>
-				<h1 data-split>{t('home.heading')}</h1>
-				<HeroContacts locale={locale} />
-				<!-- Role and intro are visible from the first paint: the intro is the page's LCP element. -->
-				<p class="role">{t('home.role')}</p>
-				<p class="muted">{t('home.body')}</p>
-				<ul class="stats" data-reveal style="--d: 300ms">
-					<li data-live-block hidden={contributionsTotal === null}>
-						<strong data-live="contributions" data-value={contributionsTotal ?? 0}>
-							{contributionsTotal === null ? '' : numberFormat.format(contributionsTotal)}
-						</strong>
-						<span>{t('stats.contributions')}</span>
-					</li>
-					<li data-live-block hidden={publicRepos === null}>
-						<strong data-live="repos" data-value={publicRepos ?? 0}>
-							{publicRepos === null ? '' : numberFormat.format(publicRepos)}
-						</strong>
-						<span>{t('stats.repos')}</span>
-					</li>
-				</ul>
-			</div>
-			<div class="hero-scope" data-reveal style="--d: 200ms">
-				<RadarScope />
-				<p class="caption" aria-hidden="true">
-					<span class="accent">{t('radar.active')}</span>
-					<span>{t('panel.position')}</span>
-					<span data-clock-line hidden>{t('clock.label')} <time data-clock></time></span>
-				</p>
-			</div>
+			<p class="greeting" data-reveal>{t('home.greeting')}</p>
+			<h1>{t('home.headline')}</h1>
+			<p class="badges" data-reveal style="--d: 150ms">
+				<span class="badge"><span class="dot" aria-hidden="true"></span>{t('home.status')}</span>
+				<span class="badge">{t('home.location')}</span>
+			</p>
 		</section>
 
-		{
-			recent.length > 0 && (
-				<RecentRepos
-					variant="ticker"
-					repos={recent}
-					descriptions={descriptions}
-					localeTag={localeTag}
-					pushedLabel={t('activity.pushed')}
-					pauseLabel={t('ticker.pause')}
-					playLabel={t('ticker.play')}
-				/>
-			)
-		}
-
-		<section id="projects" class="split" aria-labelledby="projects-heading">
-			<div class="aside">
-				<SonarDisplay
-					index={1}
-					total={SECTION_COUNT}
-					sectionWord={t('display.section')}
-					label={t('nav.projects')}
-					detail={count(radarContacts.length === 1 ? 'display.project' : 'display.projects', radarContacts.length)}
-				>
-					<RadarScope contacts={radarContacts} />
-					<Fragment slot="readout">
-						<ol
-							class="contacts"
-							aria-hidden="true"
-							data-age-today={t('radar.today')}
-							data-age-day={t('radar.day')}
-							data-age-days={t('radar.days')}
-						>
-							{
-								radarContacts.map((c) => (
-									<li data-contact={c.id} data-repo={c.repo}>
-										<span class="title">
-											<span class="num">{c.number}</span> {c.title}
-										</span>
-										<span class="age">{age(c.days)}</span>
-									</li>
-								))
-							}
-						</ol>
-						<p class="meta">{t('radar.legend')}</p>
-						<p class="meta hint">{t('radar.hint')}</p>
-					</Fragment>
-				</SonarDisplay>
-			</div>
-			<div class="body">
-				<p class="label" data-reveal>01 · {t('projects.heading')}</p>
-				<h2 id="projects-heading" data-split>{t('projects.title')}</h2>
-				{
-					workProjects.map((p) => (
-						<article class:list={['card', { featured: p.role === 'featured' }]} data-reveal data-project={p.id}>
-							{p.role === 'featured' && <p class="label">{t('projects.featured')}</p>}
-							{p.inProgress && <p class="label">{t('projects.inProgress')}</p>}
-							<h3>{p.title}</h3>
-							<p class="muted">{p.tagline}</p>
-							<h4>{t('projects.problem')}</h4>
-							<p>{p.problem}</p>
-							<h4>{t('projects.decisions')}</h4>
-							<ul>
-								{p.decisions?.map((d) => (
-									<li>{d}</li>
-								))}
-							</ul>
-							<h4>{t('projects.result')}</h4>
-							<p>{p.result}</p>
-							<ul class="stack" aria-label={t('projects.stack')}>
-								{p.stack.map((s) => (
-									<li>{s}</li>
-								))}
-							</ul>
-							<p class="card-links">
-								{p.caseStudy && (
-									<a class="btn btn-primary" href={getRelativeLocaleUrl(locale, `projects/${p.id}/`)}>
-										{t('caseStudy.read')} →
-									</a>
-								)}
-								<a class="btn" href={p.repoUrl}>
-									{t('projects.repo')} ↗
-								</a>
-							</p>
-						</article>
-					))
-				}
-			</div>
-		</section>
-
-		<section id="about" class="split" aria-labelledby="about-heading">
-			<div class="aside">
-				<SonarDisplay
-					index={2}
-					total={SECTION_COUNT}
-					sectionWord={t('display.section')}
-					label={t('nav.about')}
-					detail={t('display.about')}
-				>
-					<SonarIcon name="anchor" />
-				</SonarDisplay>
-			</div>
-			<div class="body">
-				<p class="label" data-reveal>02 · {t('about.heading')}</p>
-				<h2 id="about-heading" data-split>{t('about.title')}</h2>
-				{
-					about.paragraphs.map((p) => (
-						<p class="lead" data-reveal>
-							{p}
-						</p>
-					))
-				}
-				<div class="card now" data-reveal>
-					<h3 class="label">{t('about.now')}</h3>
-					<ul>
-						{about.now.map((item) => <li>{item}</li>)}
-					</ul>
-				</div>
-			</div>
-		</section>
-
-		<section id="stack" class="split" aria-labelledby="stack-heading">
-			<div class="aside">
-				<SonarDisplay
-					index={3}
-					total={SECTION_COUNT}
-					sectionWord={t('display.section')}
-					label={t('nav.stack')}
-					detail={count('display.stack', instrumentCount)}
-				>
-					<SonarIcon name="bars" />
-				</SonarDisplay>
-			</div>
-			<div class="body">
-				<p class="label" data-reveal>03 · {t('stack.heading')}</p>
-				<h2 id="stack-heading" data-split>{t('stack.title')}</h2>
-				<div class="stack-groups">
+		<section class="band" aria-labelledby="contrib-heading">
+			<div class="card contrib" data-reveal>
+				<div class="card-head">
+					<h2 id="contrib-heading">
+						<svg viewBox="0 0 24 24" aria-hidden="true">
+							<path d="M9 21v-3c-4 1-4-2-6-2m12 5v-4c0-1-.3-1.5-1-2 3-.4 6-1.5 6-6a5 5 0 0 0-1-3c.2-1 .2-2-.2-3-1.4-.1-2.8.7-3.8 1.3a12 12 0 0 0-6 0C8 3.7 6.6 2.9 5.2 3c-.4 1-.4 2-.2 3a5 5 0 0 0-1 3c0 4.5 3 5.6 6 6-.7.5-1 1-1 2" />
+						</svg>
+						{t('home.contribTitle')}
+					</h2>
 					{
-						stack.map((g, i) => (
-							<div class="card" data-reveal style={`--d: ${(i % 2) * 120}ms`}>
-								<h3>{g.label}</h3>
-								<ul class="stack">
-									{g.items.map((item) => (
-										<li>{item}</li>
-									))}
-								</ul>
-							</div>
-						))
+						contributions && (
+							<p class="pill" data-live-block>
+								<strong data-live="contributions" data-value={contributions.total}>
+									{numberFormat.format(contributions.total)}
+								</strong>{' '}
+								{t('stats.contributions')}
+							</p>
+						)
 					}
 				</div>
-			</div>
-		</section>
-
-		<section id="activity" class="split" aria-labelledby="activity-heading">
-			<div class="aside">
-				<SonarDisplay
-					index={4}
-					total={SECTION_COUNT}
-					sectionWord={t('display.section')}
-					label={t('nav.activity')}
-					detail={stats ? count('display.activity', stats.activeDays) : t('radar.noData')}
-				>
-					<SonarIcon name="pulse" />
-				</SonarDisplay>
-			</div>
-			<div class="body">
-				<p class="label" data-reveal>04 · {t('activity.heading')}</p>
-				<h2 id="activity-heading" data-split>{t('activity.title')}</h2>
 				{
-					stats ? (
-						<>
-							<dl
-								class="readings activity-stats"
-								data-reveal
-								data-activity-stats
-								data-day-one={t('leetcode.day')}
-								data-day-many={t('leetcode.days')}
-							>
-								<div>
-									<dt>{t('activity.total')}</dt>
-									<dd>
-										<strong data-stat="total">{numberFormat.format(stats.total)}</strong>
-									</dd>
-								</div>
-								<div>
-									<dt>{t('activity.activeDays')}</dt>
-									<dd>
-										<strong data-stat="activeDays">{numberFormat.format(stats.activeDays)}</strong>
-									</dd>
-								</div>
-								<div>
-									<dt>{t('activity.currentStreak')}</dt>
-									<dd>
-										<strong data-stat="currentStreak">{dayCount(stats.currentStreak)}</strong>
-									</dd>
-								</div>
-								<div>
-									<dt>{t('activity.longestStreak')}</dt>
-									<dd>
-										<strong data-stat="longestStreak">{dayCount(stats.longestStreak)}</strong>
-									</dd>
-								</div>
-								{stats.bestDay && (
-									<div>
-										<dt>{t('activity.bestDay')}</dt>
-										<dd>
-											<strong data-stat="bestCount">{numberFormat.format(stats.bestDay.count)}</strong>
-											<span data-stat="bestDate">
-												{dateFormat.format(new Date(`${stats.bestDay.date}T00:00:00Z`))}
-											</span>
-										</dd>
-									</div>
-								)}
-							</dl>
-							<div class="card heat-card" data-reveal>
-								<Heatmap
-									cells={cells}
-									today={today}
-									localeTag={localeTag}
-									labelOne={t('activity.cellOne')}
-									labelMany={t('activity.cellMany')}
-									summary={t('activity.summary')}
-								>
-									{t('activity.legend')}
-								</Heatmap>
-							</div>
-						</>
+					contributions ? (
+						<Heatmap
+							cells={cells}
+							today={today}
+							localeTag={localeTag}
+							labelOne={t('activity.cellOne')}
+							labelMany={t('activity.cellMany')}
+							summary={t('activity.summary')}
+						/>
 					) : (
 						<p class="muted">{t('activity.noData')}</p>
 					)
 				}
-				{
-					recent.length > 0 && (
-						<>
-							<h3 class="label recent-title" data-reveal>
-								{t('activity.recent')}
-							</h3>
-							<div data-reveal>
-								<RecentRepos
-									variant="cards"
-									repos={recent.slice(0, 4)}
-									descriptions={descriptions}
-									localeTag={localeTag}
-									pushedLabel={t('activity.pushed')}
-								/>
-							</div>
-						</>
-					)
-				}
 			</div>
 		</section>
 
-		<section id="signals" class="split" aria-labelledby="signals-heading">
-			<div class="aside">
-				<SonarDisplay
-					index={5}
-					total={SECTION_COUNT}
-					sectionWord={t('display.section')}
-					label={t('nav.signals')}
-					detail={count('display.signals', signals.length)}
-				>
-					<SonarIcon name="dial" />
-				</SonarDisplay>
-			</div>
-			<div class="body">
-				<p class="label" data-reveal>05 · {t('signals.heading')}</p>
-				<h2 id="signals-heading" data-split>{t('signals.title')}</h2>
-				<ul class="signals">
+		{
+			practiceProject && practice && (
+				<section class="band" aria-labelledby="practice-heading">
+					<div class="card practice" data-reveal>
+						<div class="card-head">
+							<h2 id="practice-heading">
+								<svg viewBox="0 0 24 24" aria-hidden="true">
+									<path d="m8 7-5 5 5 5M16 7l5 5-5 5" />
+								</svg>
+								{t('home.practiceTitle')}
+							</h2>
+							<a class="btn btn-ghost" href={practiceProject.repoUrl}>
+								{practiceProject.title} ↗
+							</a>
+						</div>
+						<dl
+							class="readings"
+							data-practice={JSON.stringify(practiceDays)}
+							data-day-one={t('leetcode.day')}
+							data-day-many={t('leetcode.days')}
+						>
+							<div>
+								<dt>{t('practice.activeDays')}</dt>
+								<dd>
+									<strong data-stat="practiceDays">{numberFormat.format(practice.activeDays)}</strong>
+								</dd>
+							</div>
+							<div>
+								<dt>{t('practice.currentStreak')}</dt>
+								<dd>
+									<strong data-stat="practiceCurrent">{dayCount(practice.currentStreak)}</strong>
+								</dd>
+							</div>
+							<div>
+								<dt>{t('practice.longestStreak')}</dt>
+								<dd>
+									<strong data-stat="practiceStreak">{dayCount(practice.longestStreak)}</strong>
+								</dd>
+							</div>
+							<div>
+								<dt>{t('practice.last')}</dt>
+								<dd>
+									<strong>
+										<time data-stat="practiceLast" datetime={practice.lastDay}>
+											{dateFormat.format(new Date(`${practice.lastDay}T00:00:00Z`))}
+										</time>
+									</strong>
+								</dd>
+							</div>
+						</dl>
+						<p class="note">{t('practice.note')}</p>
+						{
+							practiceProject.profiles && (
+								<ul class="profiles" aria-label={t('practice.profiles')}>
+									{practiceProject.profiles.map((p) => (
+										<li>
+											<a class="btn" href={p.url}>
+												{p.label} ↗
+											</a>
+										</li>
+									))}
+								</ul>
+							)
+						}
+					</div>
+				</section>
+			)
+		}
+
+		<!-- The site's flagship: how this page reached the visitor (pages/[locale]/pipeline.astro). -->
+		<section class="band" aria-labelledby="journey-heading">
+			<a class="card journey-teaser" href={getRelativeLocaleUrl(locale, 'pipeline/')} data-reveal>
+				<p class="journey-kicker">{t('journey.kicker')}</p>
+				<h2 id="journey-heading">{t('pipeline.heading')}</h2>
+				<p class="muted">{t('home.journeyBody')}</p>
+				<ol class="route" aria-hidden="true">
 					{
-						signals.map((s, i) => (
-							<li class="card" data-reveal style={`--d: ${i * 120}ms`}>
-								<a href={s.repoUrl}>{s.title} ↗</a>
-								<p class="muted">{s.tagline}</p>
-								{s.id === 'leetcode' && practice && (
-									<>
-										<dl
-											class="readings"
-											data-practice={JSON.stringify(practiceDays)}
-											data-day-one={t('leetcode.day')}
-											data-day-many={t('leetcode.days')}
-										>
-											<div>
-												<dt>{t('practice.activeDays')}</dt>
-												<dd>
-													<strong data-stat="practiceDays">{numberFormat.format(practice.activeDays)}</strong>
-												</dd>
-											</div>
-											<div>
-												<dt>{t('practice.currentStreak')}</dt>
-												<dd>
-													<strong data-stat="practiceCurrent">{dayCount(practice.currentStreak)}</strong>
-												</dd>
-											</div>
-											<div>
-												<dt>{t('practice.longestStreak')}</dt>
-												<dd>
-													<strong data-stat="practiceStreak">{dayCount(practice.longestStreak)}</strong>
-												</dd>
-											</div>
-											<div>
-												<dt>{t('practice.last')}</dt>
-												<dd>
-													<strong>
-														<time data-stat="practiceLast" datetime={practice.lastDay}>
-															{dateFormat.format(new Date(`${practice.lastDay}T00:00:00Z`))}
-														</time>
-													</strong>
-												</dd>
-											</div>
-										</dl>
-										<p class="note">
-											<span>{t('practice.note')}</span>
-										</p>
-									</>
-								)}
-								{s.profiles && (
-									<div class="profiles">
-										<span id={`profiles-${s.id}`}>{t('practice.profiles')}</span>
-										<ul aria-labelledby={`profiles-${s.id}`}>
-											{s.profiles.map((p) => (
-												<li>
-													<a class="btn" href={p.url}>
-														{p.label} ↗
-													</a>
-												</li>
-											))}
-										</ul>
-									</div>
-								)}
-							</li>
+						(['commit', 'build', 'ship', 'serve', 'edge', 'you'] as const).map((id) => (
+							<li>{t(`pipeline.${id}.name`)}</li>
 						))
 					}
-				</ul>
-			</div>
+				</ol>
+				<span class="btn btn-primary">{t('home.journeyCta')} →</span>
+			</a>
 		</section>
 
-		<section id="pipeline" class="split" aria-labelledby="pipeline-heading">
-			<div class="aside">
-				<SonarDisplay
-					index={6}
-					total={SECTION_COUNT}
-					sectionWord={t('display.section')}
-					label={t('nav.pipeline')}
-					detail={count('display.pipeline', pipelineStages.length).replace('{date}', builtOn)}
-				>
-					<SonarIcon name="route" />
-				</SonarDisplay>
-			</div>
-			<div class="body">
-				<p class="label" data-reveal>06 · {t('pipeline.heading')}</p>
-				<h2 id="pipeline-heading" data-split>{t('pipeline.title')}</h2>
-				<div data-reveal>
-					<DeployPipeline stages={pipelineStages} />
-				</div>
-				<div class="card pipeline-note" data-reveal style="--d: 150ms">
-					<p>{t('pipeline.when')}</p>
-					<p class="card-links">
-						<a class="btn" href="https://github.com/jg-abreu/portfolio/blob/main/.github/workflows/deploy.yml">
-							{t('pipeline.workflow')} ↗
+		{
+			repos.length > 0 && (
+				<section class="band" aria-labelledby="repos-heading">
+					<header class="band-head split-head" data-reveal>
+						<div>
+							<h2 id="repos-heading">
+								<svg viewBox="0 0 24 24" aria-hidden="true">
+									<path d="M9 21v-3c-4 1-4-2-6-2m12 5v-4c0-1-.3-1.5-1-2 3-.4 6-1.5 6-6a5 5 0 0 0-1-3c.2-1 .2-2-.2-3-1.4-.1-2.8.7-3.8 1.3a12 12 0 0 0-6 0C8 3.7 6.6 2.9 5.2 3c-.4 1-.4 2-.2 3a5 5 0 0 0-1 3c0 4.5 3 5.6 6 6-.7.5-1 1-1 2" />
+								</svg>
+								{t('home.reposTitle')}
+							</h2>
+							<p>{t('home.reposBody')}</p>
+						</div>
+						<a class="btn" href={`https://github.com/${GITHUB_USER}?tab=repositories`}>
+							{t('home.reposAll')} ↗
 						</a>
-						<a class="btn" href="https://github.com/jg-abreu/portfolio/blob/main/deploy/README.md">
-							{t('pipeline.server')} ↗
-						</a>
-					</p>
-				</div>
-			</div>
-		</section>
+					</header>
+					<div data-reveal>
+						<RepoGrid
+							repos={repos}
+							descriptions={descriptions}
+							localeTag={localeTag}
+							pushedLabel={t('activity.pushed')}
+							starsLabel={t('home.stars')}
+						/>
+					</div>
+				</section>
+			)
+		}
 
-
-		<section id="contact" class="split" aria-labelledby="contact-heading">
-			<div class="aside">
-				<SonarDisplay index={7} total={SECTION_COUNT} sectionWord={t('display.section')} label={t('nav.contact')} detail={t('contact.direct')}>
-					<SonarIcon name="antenna" />
-				</SonarDisplay>
-			</div>
-			<div class="body">
-				<p class="label" data-reveal>07 · {t('contact.heading')}</p>
-				<h2 id="contact-heading" data-split>{t('contact.title')}</h2>
-				<p class="muted">{t('contact.intro')}</p>
-				<ContactForm locale={locale} />
+		<section class="band" aria-labelledby="tech-heading">
+			<header class="band-head" data-reveal>
+				<h2 id="tech-heading">
+					<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4Z"></path></svg>
+					{t('home.techTitle')}
+				</h2>
+				<p>{t('home.techBody')}</p>
+			</header>
+			<div data-reveal>
+				<TechGrid items={stackItems} />
 			</div>
 		</section>
 	</main>
@@ -516,447 +243,192 @@ const age = (days: number | null) =>
 </script>
 
 <style>
-	main {
-		max-width: var(--page-width);
-		margin: 0 auto;
-		padding: 0 var(--gutter) 6rem;
-		overflow-wrap: anywhere;
+	/* Pipeline teaser: a card with the six stops of the journey, the whole card is the link. */
+	.journey-teaser {
+		display: block;
+		padding: clamp(1.5rem, 4vw, 2.5rem);
+		overflow: hidden;
+		background:
+			radial-gradient(80% 120% at 100% 0%, color-mix(in srgb, var(--accent) 22%, transparent), transparent 60%),
+			color-mix(in srgb, var(--surface) 92%, transparent);
+		color: var(--fg);
+		text-decoration: none;
 	}
 
-	/* Hero: text and a live scope side by side on wide screens. */
+	.journey-kicker {
+		margin: 0 0 0.5rem;
+		color: var(--brand);
+		font-size: 0.75rem;
+		font-weight: 700;
+		letter-spacing: 0.14em;
+		text-transform: uppercase;
+	}
+
+	.journey-teaser h2 {
+		margin: 0 0 0.5rem;
+		font-size: clamp(1.5rem, 3.5vw, 2.2rem);
+		letter-spacing: -0.03em;
+		line-height: 1.15;
+	}
+
+	.journey-teaser .muted {
+		margin: 0;
+		max-width: 55ch;
+	}
+
+	.route {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.5rem;
+		margin: 1.5rem 0;
+		padding: 0;
+		list-style: none;
+		font-size: 0.8rem;
+		font-weight: 600;
+	}
+
+	.route li {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.route li:not(:last-child)::after {
+		content: '→';
+		color: var(--brand);
+	}
+
+	.route li::before {
+		content: '';
+		width: 0.5rem;
+		height: 0.5rem;
+		border-radius: 50%;
+		background: var(--accent);
+		box-shadow: 0 0 8px var(--brand);
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		.journey-teaser {
+			transition:
+				transform 0.25s var(--ease),
+				border-color 0.2s;
+		}
+
+		.journey-teaser:hover {
+			border-color: var(--brand);
+			transform: translateY(-2px);
+		}
+	}
+
 	.hero {
 		display: grid;
-		align-items: center;
-		gap: 2.5rem;
+		align-content: center;
+		min-height: min(70vh, 40rem);
 		padding-block: 4rem 3rem;
 	}
 
-	.hero-scope {
-		width: min(100%, 22rem);
-		justify-self: center;
-	}
-
-	.caption {
-		display: grid;
-		gap: 0.25rem;
-		margin: 1rem 0 0;
+	.greeting {
+		margin: 0 0 0.5rem;
 		color: var(--fg-muted);
-		font-family: var(--font-mono);
-		font-size: 0.7rem;
-		letter-spacing: 0.15em;
-		text-align: center;
-	}
-
-	.accent {
-		color: var(--accent);
-	}
-
-	/* Section: sticky sonar display on the left that leaves with its section, content on the right. */
-	/* minmax(0, …): wide content (the year heatmap) scrolls inside its card instead of widening the page. */
-	.split {
-		display: grid;
-		grid-template-columns: minmax(0, 1fr);
-		gap: 2rem;
-		padding-block: 5rem;
-		/* The browser skips style and layout for sections far from the screen (hundreds of SVG dots
-		   and heatmap cells) until they approach; `auto` remembers each section's real height. */
-		content-visibility: auto;
-		contain-intrinsic-size: auto 60rem;
-	}
-
-	.aside {
-		width: min(100%, 22rem);
-		justify-self: center;
-	}
-
-	.label {
-		margin: 0 0 1rem;
-		color: var(--accent);
-		font-family: var(--font-mono);
-		font-size: 0.75rem;
-		font-weight: 400;
-		letter-spacing: 0.15em;
-		text-transform: uppercase;
-	}
-
-	h1,
-	h2 {
-		margin: 0;
-		font-weight: 700;
-		letter-spacing: -0.02em;
-		line-height: 1.1;
+		font-size: clamp(1.1rem, 2.5vw, 1.35rem);
 	}
 
 	h1 {
-		font-size: clamp(2.5rem, 8vw, 4.5rem);
-	}
-
-	h2 {
-		margin-bottom: 2rem;
-		font-size: clamp(2rem, 5vw, 3rem);
-	}
-
-	.role {
-		margin: 1rem 0 0;
-		font-size: 1.2rem;
-	}
-
-	.muted {
-		color: var(--fg-muted);
-	}
-
-	.card {
-		position: relative;
-		isolation: isolate;
-		margin-block: 1.25rem;
-		padding: 1.5rem;
-		background: var(--surface);
-		border: 1px solid var(--line);
-		border-radius: 0.75rem;
-	}
-
-	.card :global(.card-glow) {
-		display: none;
-		position: absolute;
-		inset: 0 auto auto 0;
-		width: 320px;
-		height: 320px;
-		z-index: -1;
-		pointer-events: none;
-		opacity: 0;
-		background: radial-gradient(circle, color-mix(in srgb, var(--accent) 12%, transparent), transparent 70%);
-	}
-
-	@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-		.card {
-			overflow: clip;
-		}
-		.card :global(.card-glow) {
-			display: block;
-			transition: opacity 180ms ease;
-		}
-		.card :global(.card-glow.is-active) {
-			opacity: 1;
-		}
-	}
-
-	.featured {
-		border-color: var(--accent);
-	}
-
-	h3 {
+		max-width: 16ch;
 		margin: 0;
-		font-size: 1.35rem;
+		font-size: clamp(2.6rem, 7.5vw, 4.25rem);
+		font-weight: 800;
+		letter-spacing: -0.04em;
+		line-height: 1.05;
 	}
 
-	h4 {
-		margin: 1.25rem 0 0.25rem;
-		color: var(--fg-muted);
-		font-family: var(--font-mono);
-		font-size: 0.75rem;
-		font-weight: 400;
-		letter-spacing: 0.1em;
-		text-transform: uppercase;
-	}
-
-	h4 + p {
-		margin-top: 0;
-	}
-
-	.stack {
+	.badges {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.5rem;
-		margin: 1.25rem 0;
-		padding: 0;
-		list-style: none;
-		font-family: var(--font-mono);
-		font-size: 0.75rem;
+		margin: 1.75rem 0 0;
 	}
 
-	.stack li {
-		padding: 0.15rem 0.5rem;
-		border: 1px solid var(--line);
-		border-radius: 999px;
-		color: var(--fg-muted);
-	}
-
-	.card-links {
+	.card-head,
+	.split-head {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 0.75rem;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem 1rem;
+	}
+
+	.card-head {
+		margin-bottom: 1.25rem;
+	}
+
+	.card-head h2 {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
 		margin: 0;
-	}
-
-	.signals {
-		margin: 0;
-		padding: 0;
-		list-style: none;
-	}
-
-	.signals .muted {
-		margin: 0.25rem 0 0;
-	}
-
-	.lead {
-		margin: 0 0 1.25rem;
 		font-size: 1.1rem;
-		line-height: 1.7;
 	}
 
-	.now ul {
-		display: grid;
-		gap: 0.5rem;
+	.card-head h2 svg {
+		width: 1.15rem;
+		height: 1.15rem;
+		fill: none;
+		stroke: var(--brand);
+		stroke-width: 1.75;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+	}
+
+	.pill {
 		margin: 0;
-		padding-left: 1.1rem;
-	}
-
-	.now li::marker {
-		color: var(--accent);
-	}
-
-	.stack-groups {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
-		gap: 1rem;
-	}
-
-	.stack-groups .card {
-		margin: 0;
-	}
-
-	.stack-groups h3 {
-		font-size: 1rem;
-	}
-
-	.stack-groups .stack {
-		margin-bottom: 0;
-	}
-
-	.activity-stats {
-		margin: 0 0 1.25rem;
-	}
-
-	.heat-card {
-		margin-top: 0;
-	}
-
-	.recent-title {
-		margin-top: 2rem;
-	}
-
-	/* Hero counters: real numbers from the snapshot, refreshed live. */
-	.stats {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 1rem 2.5rem;
-		margin: 2rem 0 0;
-		padding: 0;
-		list-style: none;
-	}
-
-	.stats li {
-		display: grid;
-	}
-
-	.stats li[hidden] {
-		display: none;
-	}
-
-	.stats strong {
-		color: var(--fg);
-		font-size: clamp(1.75rem, 4vw, 2.25rem);
-		font-variant-numeric: tabular-nums;
-		line-height: 1.1;
-	}
-
-	.stats span {
+		padding: 0.2rem 0.75rem;
+		background: var(--surface-2);
+		border: 1px solid var(--line);
+		border-radius: 0.5rem;
 		color: var(--fg-muted);
-		font-family: var(--font-mono);
-		font-size: 0.75rem;
-		letter-spacing: 0.08em;
+		font-size: 0.8rem;
 	}
 
-	/* Practice readings inside the consistency card. */
+	.pill strong {
+		color: var(--fg);
+	}
+
 	.readings {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
+		grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
 		gap: 1rem;
-		margin: 1.25rem 0 0;
+		margin: 0;
 	}
 
 	.readings dt {
 		color: var(--fg-muted);
-		font-family: var(--font-mono);
-		font-size: 0.7rem;
-		letter-spacing: 0.1em;
-		text-transform: uppercase;
+		font-size: 0.8rem;
 	}
 
 	.readings dd {
-		display: grid;
-		margin: 0.2rem 0 0;
+		margin: 0.15rem 0 0;
 	}
 
 	.readings strong {
-		font-size: 1.25rem;
+		font-size: 1.4rem;
 		font-variant-numeric: tabular-nums;
+		letter-spacing: -0.02em;
 	}
 
-	.readings span,
-	.note span {
+	.note {
+		margin: 1.25rem 0 0;
 		color: var(--fg-muted);
 		font-size: 0.85rem;
 	}
 
-	.note {
-		display: flex;
-		flex-wrap: wrap;
-		justify-content: space-between;
-		gap: 0.5rem 1rem;
-		margin: 1.25rem 0 0;
-		font-family: var(--font-mono);
-		font-size: 0.8rem;
-	}
-
-	/* Profiles on the platforms where the practice repo's solutions are submitted. */
 	.profiles {
-		display: grid;
-		gap: 0.6rem;
-		margin: 1.25rem 0 0;
-	}
-
-	.profiles > span {
-		color: var(--fg-muted);
-		font-family: var(--font-mono);
-		font-size: 0.7rem;
-		letter-spacing: 0.1em;
-		text-transform: uppercase;
-	}
-
-	.profiles ul {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 0.6rem;
-		margin: 0;
+		margin: 1.25rem 0 0;
 		padding: 0;
 		list-style: none;
-	}
-
-	/* Radar readout inside the projects display. */
-	.contacts {
-		display: grid;
-		grid-template-columns: minmax(0, 1fr);
-		gap: 0.35rem;
-		letter-spacing: 0.02em;
-		margin: 0.25rem 0 0;
-		padding: 0;
-		list-style: none;
-		color: var(--fg-muted);
-	}
-
-	/* One line per contact: number and name on the left, time since the last push on the right. */
-	.contacts li {
-		display: flex;
-		justify-content: space-between;
-		gap: 1rem;
-		padding-left: 0.75rem;
-		border-left: 1px solid var(--line);
-		white-space: nowrap;
-	}
-
-	.contacts .title {
-		min-width: 0;
-		overflow: hidden;
-		color: var(--fg);
-		text-overflow: ellipsis;
-		text-transform: uppercase;
-	}
-
-	.contacts .num,
-	.contacts .age {
-		color: var(--fg-muted);
-	}
-
-	.contacts .age {
-		flex-shrink: 0;
-	}
-
-	.contacts li:global(.is-focus) {
-		border-left-color: var(--accent);
-	}
-
-	.contacts li:global(.is-focus) .num,
-	.contacts li:global(.is-focus) .age {
-		color: var(--accent);
-	}
-
-	.meta {
-		color: var(--fg-muted);
-	}
-
-	.pipeline-note {
-		margin-top: 2rem;
-	}
-
-	.pipeline-note > p:first-child {
-		margin: 0 0 1rem;
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		.hint {
-			display: none;
-		}
-	}
-
-	/* Phones: a smaller display above the section, without the contact list (the cards follow). */
-	@media (max-width: 59.99rem) {
-		.aside {
-			width: min(100%, 17rem);
-		}
-
-		.contacts,
-		.meta {
-			display: none;
-		}
-	}
-
-	@media (min-width: 60rem) {
-		.hero {
-			grid-template-columns: 3fr 2fr;
-			min-height: calc(100vh - var(--header-height));
-			padding-block: 2rem;
-		}
-
-		.hero-scope {
-			width: min(100%, 26rem);
-		}
-
-		.split {
-			grid-template-columns: minmax(18rem, 5fr) minmax(0, 7fr);
-			gap: 4rem;
-			align-items: start;
-		}
-
-		.aside {
-			width: 100%;
-			max-width: 25rem;
-		}
-
-		/* The screen's drawing shrinks on shorter screens so the whole display fits while sticky;
-		   the readout keeps the full column width so project names stay readable. */
-		.aside :global([data-scope]),
-		.aside :global(.icon) {
-			max-width: clamp(12rem, calc(100vh - 28rem), 100%);
-			margin-inline: auto;
-		}
-	}
-
-	/* Only stick when the display fits on screen; otherwise it simply scrolls with its section. */
-	@media (min-width: 60rem) and (min-height: 43rem) {
-		.aside {
-			position: sticky;
-			top: calc(var(--header-height) + 1.5rem);
-		}
 	}
 </style>

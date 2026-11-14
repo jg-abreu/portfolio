@@ -4,7 +4,7 @@ Project rules for Claude Code in this repository. Machine-specific instructions 
 
 ## Project
 
-Personal portfolio of João Abreu: a static, bilingual (EN/PT) site with a sonar/radar visual theme and real GitHub data. Audience: recruiters arriving from GitHub and LinkedIn, so the essentials go on the first screen and the site must load fast and never stutter.
+Personal portfolio of João Abreu: a static, bilingual (EN/PT) site with real GitHub data. The look (V2) follows two references: developer.org.tr (pages, cards, popups, dark theme under blue wallpapers) and augustogalego.com (header pill, intro loader, light theme). Audience: recruiters arriving from GitHub and LinkedIn, so the essentials go on the first screen and the site must load fast and never stutter.
 
 - **Stack:** Astro (static output), TypeScript (strict). Zero JavaScript by default; JS only in interactive islands.
 - **Hosting:** own VM (AWS Lightsail, Ubuntu, nginx) behind Cloudflare, deployed by GitHub Actions (build + rsync over SSH) on every push to `main` and once a day.
@@ -14,62 +14,95 @@ Personal portfolio of João Abreu: a static, bilingual (EN/PT) site with a sonar
 
 | Area | Who does the work | Claude's role |
 |---|---|---|
-| Front-end (Astro, layout, radar, sections, i18n, content, GitHub data script) | Claude | Writes the code and runs the build |
+| Front-end (Astro, layout, pages, i18n, content, GitHub data script) | Claude | Writes the code and runs the build |
 | Deploy and infrastructure (VM, SSH, firewall, nginx, DNS/Cloudflare, HTTPS, `deploy/`, `.github/workflows/deploy.yml`, Secrets) | João, by hand | **Guides only**: explains the concept, gives the next step, reviews and helps debug. Never writes these files nor runs commands on the VM for him |
-| Back-end (Spring Boot API, V2) | João, by hand | Guides only, no ready-made code |
+| Back-end (Spring Boot API) | Coding assistant | Implements and tests in small parts; João reviews the code and the flow |
 | Git and GitHub (branches, commits, messages, push, PR description and opening) | Claude, in every stage, including João's | Creates the branch, commits (including files João wrote), pushes and opens the PR |
 | Review and merge | João | Claude **never merges or approves a PR** |
 
-When a decision is needed, ask **one question at a time**.
+When a decision is needed, ask **one question at a time**. Use concepts and tools João already knows; ask before introducing unfamiliar ones. Explain the implementation during review, outside the code, and keep new code free of explanatory comments.
 
 ## Project structure
 
 ```
 src/
   content.config.ts         content collections and their schemas
-  content/projects.yaml     language-neutral project data (repo, role, order, stack)
+  content/projects.yaml     language-neutral project data (repo, role, order, stack, cover)
   content/projects/<locale>/<id>.md  project text per locale; the Markdown body is the case study
-  assets/case-studies/      case study cover images (optimized by astro:assets)
+  assets/case-studies/      case study covers (SVG or raster, optimized by astro:assets)
   content/contacts.yaml     contact channels (https links only)
   content/about/<locale>.md about paragraphs and "in progress" list per locale
   content/stack.yaml        stack groups (names translated as stack.<id> in ui.ts)
-  lib/activity.ts           contribution stats, year heatmap layout, recent repos (shared by build and browser)
-  components/Heatmap.astro      year of contributions, one square per day
-  components/RecentRepos.astro  recently pushed repos as cards or as the hero ticker
-  lib/content.ts            merges and cross-checks content; fails the build if locales diverge
-  lib/github-data.ts        endpoints, types and validators for GitHub data (shared by build and browser)
-  lib/github.ts             reads and revalidates the snapshot at build time (null parts = no data, never invented)
-  lib/radar-geometry.ts     contact position from days since push (shared by build and browser)
   data/github-snapshot.json written by scripts/github-snapshot.ts on every build (git-ignored)
   i18n/ui.ts                UI strings per locale; English defines the shape
-  lib/radar.ts              projects → radar contacts (bearing spread evenly, distance = days since last push)
-  lib/sonar-icons.ts        section icons as dot predicates on a 25 × 25 grid, with scatter offsets
-  components/RadarScope.astro   CSS sweep scope; optional project blips
-  components/SonarDisplay.astro sticky per-section display: screen slot + readout card ("SECTION 01 / 03")
-  components/SonarIcon.astro    dot-matrix icon that assembles when its display is on
-  scripts/sonar.ts          displays on/off by visibility, scopes pause off-screen, ping on click, card ↔ contact highlight
-  scripts/scroll-fx.ts      progress bar, active nav link, reveal on scroll ([data-reveal], [data-split])
-  scripts/github-live.ts    live GitHub data in the browser (30-min localStorage cache); updates counters and radar
-  layouts/Base.astro        <html lang>, hreflang, Open Graph, palette tokens, fonts, full-width header nav
+  i18n/admin.ts             typed EN/PT strings for the private admin workspace
+  i18n/card-admin.ts        typed EN/PT strings for the admin profile-card editor
+  lib/activity.ts           contribution stats, year heatmap layout, recent repos (shared by build and browser)
+  lib/calendar.ts           Rio and UTC dates
+  lib/content.ts            merges and cross-checks content; fails the build if locales diverge
+  lib/github-data.ts        endpoints, types and validators for GitHub and DEV data (shared by build and browser)
+  lib/github.ts             reads and revalidates the snapshot at build time (null parts = no data, never invented)
+  lib/blog.ts               validates and synchronizes the configured author's full DEV articles
+  lib/blog-data.ts          reads the public article snapshot for static page generation
+  layouts/Base.astro        <html lang>, hreflang, Open Graph, CSP-hashed head scripts, palette tokens, wallpapers,
+                            intro loader, header pill, footer, page transitions
+  components/Heatmap.astro       year of contributions, GitHub-style
+  components/RepoGrid.astro      recently pushed repositories (home)
+  components/TechGrid.astro      technologies with simple-icons logos (home)
+  components/ProjectPopup.astro  repository popup on the projects page (root files, folders browsable)
+  components/Handoff.astro       what each pipeline stage receives and hands on
+  components/ContactForm.astro   contact form (PUBLIC_CONTACT_ENABLED stays false by default)
+  components/ContactIcon.astro   contact channel icons
+  components/VisitCounter.astro  optional approximate-visit footer, excluded from admin and 404
+  components/MobileMenu.astro    phone navigation: a menu button opens a popover panel with every page
+  scripts/theme.ts          light/dark switch with a circular reveal (View Transitions API)
+  scripts/loader.ts         intro loader on entry and reload; the percentage follows real milestones
+  scripts/scroll-fx.ts      progress bar, see-through header over the wallpaper, reveal on scroll
+  scripts/github-live.ts    live contributions and practice data (30-min localStorage cache)
+  scripts/journey.ts        pipeline page: packet on the rail, visit timings, headers, Cloudflare trace, last deploy
+  scripts/project-popup.ts  opens and animates the project popups, browses folders via the GitHub API
+  scripts/card-glow.ts      pointer glow on cards
+  scripts/mobile-menu.ts    closes the phone menu on navigation, resize to desktop and page hide; syncs aria-expanded
+  layouts/Admin.astro       private workspace shell (noindex); authenticated data loads only in the browser
+  scripts/admin.ts          GitHub session, CSRF, project drafts and private contact inbox
+  scripts/card-admin.ts     profile-card editor: blocks, palette and text with live preview, draft and publish
+  lib/card-admin.ts         card settings validators, block reordering and base64url preview encoding
+  lib/contact.ts            same-origin CSRF contact client and acknowledged receipt
+  scripts/contact.ts        optional contact submission, retry keys and bilingual feedback
+  lib/visits.ts             same-origin CSRF visit registration and validated real total
+  scripts/visits.ts         optional public-page tracking after load; hides unavailable totals
+  styles/admin.css          responsive light/dark admin styles
+  pages/admin.astro         static entry to /en/admin/
+  pages/[locale]/admin.astro  EN/PT project drafts and inbox; excluded from the sitemap
+  pages/[locale]/admin/card.astro  EN/PT editor for the GitHub profile card served by the API
   pages/index.astro         redirects / to /en/ (static fallback)
   pages/404.astro           bilingual 404 (noindex); nginx should serve it with `error_page 404 /404.html`
-  pages/[locale]/           pages, generated for every locale
-  pages/[locale]/projects/[id].astro  case study page for each project with `caseStudy: true`
-scripts/github-snapshot.ts  build-time fetch of profile, repos, contributions and practice commits; each source keeps
-                            its previous value if it fails (run by `npm run build`; uses GITHUB_TOKEN if set)
+  pages/[locale]/           Home, Projects, Pipeline, Blog, Resume and Contact, generated for every locale
+  pages/[locale]/projects/[id].astro  page for every listed project (problem, decisions, result, case study)
+  pages/[locale]/blog/[slug].astro  internal static article reader; EN/PT UI, original published Markdown
+scripts/blog-snapshot.ts    fetches full DEV article bodies after the metadata snapshot; bounded downloads,
+                            cached-copy fallback, no browser DEV API request (see docs/blog.md)
+scripts/github-snapshot.ts  build-time fetch of profile, repos, contributions, practice commits, DEV articles and
+                            project repository roots; each source keeps its previous value if it fails
+                            (run by `npm run build`; uses GITHUB_TOKEN if set)
 scripts/og-images.ts        `npm run og`: renders public/og/og-<locale>.png (1200 × 630) with headless Chrome;
-                            rerun after changing the name, role or position strings
+                            rerun after changing the name, role or badge strings
 public/                     static files copied as-is (robots.txt points to the sitemap from @astrojs/sitemap)
-  cv/joao-abreu-cv-<locale>.pdf  résumé; the link appears only when the file exists
+  img/wallpapers/*.svg      the blue wallpapers behind the top of every page
+  cv/joao-abreu-cv-<locale>.pdf  résumé; the link and viewer appear only when the file exists
 ```
 
 ```
 deploy/
   README.md                 how the server is built (Lightsail, nginx, Cloudflare) and how to rebuild it
   nginx/portfolio.conf      nginx site; copied to /etc/nginx/sites-available/portfolio with scp
+.github/workflows/deploy.yml  build and rsync to the server on every push to main and once a day
 ```
 
-Planned: `.github/workflows/` (stage 3).
+The admin uses same-origin /api and /oauth2 routes. Astro's dev server proxies them to the local API on port 8080. Production routing is infrastructure work for João. Saving and archiving drafts do not alter their separately selected public copies. The build reads selected copies from PROJECTS_API_URL, fails if that configured source is unavailable, and emits project-publications.json so the admin can distinguish pending versions from deployed ones. Automatic deploy triggering is not connected yet. Existing file-based projects remain independent; a slug collision fails the build until those projects are explicitly migrated.
+
+The resume page embeds the PDF in an iframe, so nginx must allow same-origin framing
+(`X-Frame-Options: SAMEORIGIN` or `frame-ancestors 'self'`); with `DENY` only the "Open" link works.
 
 ## Internationalization
 
@@ -83,7 +116,7 @@ Planned: `.github/workflows/` (stage 3).
 ## Performance rules
 
 - Animate only `transform` and `opacity`.
-- The radar is a light `<canvas>` or SVG, paused when off-screen.
+- Decorative motion (wallpapers, pipeline visuals) is CSS only and never blocks the page; the PDF and live data load after it.
 - Every animation respects `prefers-reduced-motion`.
 - Never show fake data: live GitHub data falls back to the snapshot generated at build time.
 - Validate and sanitize external data (https links only, `YYYY-MM-DD` dates, non-negative numbers, escaped HTML); wrap every `localStorage` access in `try/catch`.
@@ -91,7 +124,8 @@ Planned: `.github/workflows/` (stage 3).
 ## Git workflow
 
 - Everything merged into `main` goes live, so `main` must always be deployable. **No direct commits to `main`.**
-- One branch per stage, prefixed: `chore/`, `ci/`, `feat/`, `fix/`, `docs/`, `perf/`. Before starting a stage, `git pull` on `main` and branch from it.
+- V2 work stays on `feat/v2` in both `portfolio` and `portfolio-api`; keep `main` unchanged until João decides the V2 is ready. Do not open V2 PRs against `main` during development.
+- For independent fixes outside V2, one branch per stage, prefixed: `chore/`, `ci/`, `feat/`, `fix/`, `docs/`, `perf/`. Before starting a stage, `git pull` on `main` and branch from it.
 - Small, frequent commits in English using Conventional Commits (`feat:`, `fix:`, `chore:`, `ci:`, `docs:`, `perf:`, `refactor:`).
 - Branch, file and folder names in English.
 - PR description in English: what changed, why, how to test, and the definition-of-done checklist.
@@ -132,3 +166,7 @@ npm run preview   # serve dist/ locally
 ```
 
 Run the dev server in the background (`astro dev --background`; manage it with `astro dev stop`, `astro dev status` and `astro dev logs`).
+
+## Session context
+
+Use only Google Drive for Second Brain notes; the retired Obsidian app and MCP are not session prerequisites. Read the original `CLAUDE.local.md` for the local Drive path, then the transition, universal rules and project Status. Update Status and Log at an authorized session close, and the transition when passing the baton. Keep historical entries intact.

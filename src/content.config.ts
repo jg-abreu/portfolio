@@ -20,7 +20,7 @@ const projects = defineCollection({
 		// Shown with an "in development" label until the project is live.
 		inProgress: z.boolean().default(false),
 		// File name in src/assets/case-studies/; src/lib/content.ts checks that it exists.
-		cover: z.string().regex(/^[\w-]+\.(png|jpe?g|webp)$/).optional(),
+		cover: z.string().regex(/^[\w-]+\.(png|jpe?g|webp|svg)$/).optional(),
 		// Public profiles on the platforms where the repo's solutions are submitted (brand names, not translated).
 		profiles: z.array(z.object({ label: z.string().min(1), url: httpsUrl })).optional(),
 	}),

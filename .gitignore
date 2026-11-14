@@ -4,6 +4,11 @@ dist/
 .astro/
 # GitHub snapshot, regenerated on every build (scripts/github-snapshot.mjs)
 src/data/github-snapshot.json
+src/data/blog-snapshot.json
+src/data/blog-snapshot.json.tmp
+src/data/project-publications.json
+src/data/project-publications.json.tmp
+.codex-stage/
 
 # dependencies
 node_modules/
@@ -27,3 +32,6 @@ pnpm-debug.log*
 
 # local, machine-specific instructions for Claude Code (not versioned)
 CLAUDE.local.md
+src/data/recommendations.json
+src/data/recommendations.json.tmp
+src/assets/recommendations-generated/

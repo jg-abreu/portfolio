@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { getCollection, type CollectionEntry } from 'astro:content';
 import { locales, type Locale } from '../i18n/ui';
+import { getProjectPublications } from './publication-content';
 
 type ProjectData = CollectionEntry<'projects'>['data'];
 type CopyData = CollectionEntry<'projectCopy'>['data'];
@@ -15,6 +16,7 @@ export type Project = ProjectData & {
 	decisions?: string[];
 	result?: string;
 	coverAlt?: string;
+	publicationBody?: string;
 };
 
 export type Contact = CollectionEntry<'contacts'>['data'] & { id: string };
@@ -65,7 +67,11 @@ export async function getProjects(locale: Locale): Promise<Project[]> {
 	}
 	if (problems.length > 0) throw new Error(`Project content is inconsistent:\n- ${problems.join('\n- ')}`);
 
-	return projects
+	const published = getProjectPublications().projects;
+	for (const project of published) {
+		if (ids.has(project.slug)) throw new Error(`Published project conflicts with local content: ${project.slug}`);
+	}
+	const local: Project[] = projects
 		.map(({ id, data }) => ({
 			...data,
 			...copyByLocale.get(`${locale}/${id}`)!,
@@ -73,6 +79,20 @@ export async function getProjects(locale: Locale): Promise<Project[]> {
 			repoUrl: `https://github.com/${GITHUB_USER}/${data.repo}`,
 		}))
 		.sort((a, b) => a.order - b.order);
+	return [...local, ...published.map((project): Project => ({
+		id: project.slug,
+		repo: project.repositoryUrl.replace(/\/$/, '').split('/').pop()!,
+		repoUrl: project.repositoryUrl,
+		role: 'secondary',
+		order: project.displayOrder,
+		stack: project.stack.split(',').map(item => item.trim()).filter(Boolean),
+		homepage: project.liveUrl || undefined,
+		caseStudy: project[locale].body.trim().length > 0,
+		inProgress: false,
+		...project[locale],
+		decisions: project[locale].decisions.split('\n').map(item => item.trim()).filter(Boolean),
+		publicationBody: project[locale].body,
+	}))].sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));
 }
 
 /** The text entry of a project in a locale, for rendering its case study body. */

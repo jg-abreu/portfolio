@@ -6,13 +6,16 @@ import { getRelativeLocaleUrl } from 'astro:i18n';
 import Base from '../../../layouts/Base.astro';
 import { locales, useTranslations, type Locale } from '../../../i18n/ui';
 import { getProjectEntry, getProjects } from '../../../lib/content';
+import { renderPublicationMarkdown } from '../../../lib/publication-markdown';
 
-// One page per locale for every project marked `caseStudy: true` in src/content/projects.yaml.
+// One page per locale for every listed project (not the "signal" ones, which live on Home),
+// modeled on developer.org.tr: title and GitHub button, then Problem, Decisions and Result side by
+// side, then the case study (Markdown body) when the project has one (`caseStudy: true`).
 export async function getStaticPaths() {
 	const paths = [];
 	for (const locale of locales) {
 		for (const project of await getProjects(locale)) {
-			if (project.caseStudy) paths.push({ params: { locale, id: project.id } });
+			if (project.role !== 'signal') paths.push({ params: { locale, id: project.id } });
 		}
 	}
 	return paths;
@@ -21,42 +24,78 @@ export async function getStaticPaths() {
 const locale = Astro.params.locale as Locale;
 const t = useTranslations(locale);
 const project = (await getProjects(locale)).find((p) => p.id === Astro.params.id)!;
-const { Content } = await render(await getProjectEntry(locale, project.id));
+const Content = project.publicationBody === undefined ? (await render(await getProjectEntry(locale, project.id))).Content : null;
+const publicationHtml = project.publicationBody === undefined ? '' : renderPublicationMarkdown(project.publicationBody);
 
 const covers = import.meta.glob<ImageMetadata>('../../../assets/case-studies/*', { eager: true, import: 'default' });
 const cover = project.cover ? covers[`../../../assets/case-studies/${project.cover}`] : undefined;
 ---
 
-<Base title={`${project.title} — João Abreu`} description={project.tagline}>
+<Base title={`${project.title} - João Abreu`} description={project.tagline}>
 	<main id="main">
 		<article class="case">
 			<header class="intro">
-				<a class="btn btn-ghost back" href={`${getRelativeLocaleUrl(locale)}#projects`}>← {t('caseStudy.back')}</a>
-				<p class="label" data-reveal>{t('caseStudy.label')}</p>
-				<h1 data-split>{project.title}</h1>
+				<a class="back" href={getRelativeLocaleUrl(locale, 'projects/')}>← {t('caseStudy.back')}</a>
+				<div class="title-row">
+					<h1 data-split>{project.title}</h1>
+					<a class="btn gh" href={project.repoUrl}>
+						<svg viewBox="0 0 24 24" aria-hidden="true">
+							<path d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.3-3.4-1.3-.4-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.4 1.1 3 .8.1-.6.4-1.1.6-1.3-2.2-.3-4.6-1.1-4.6-5a3.9 3.9 0 0 1 1-2.7c-.1-.3-.5-1.3.1-2.7 0 0 .8-.3 2.8 1a9.6 9.6 0 0 1 5 0c1.9-1.3 2.8-1 2.8-1 .5 1.4.2 2.4.1 2.7a3.9 3.9 0 0 1 1 2.7c0 3.9-2.3 4.7-4.6 5 .4.3.7 1 .7 2v2.8c0 .3.2.6.7.5A10 10 0 0 0 12 2Z" />
+						</svg>
+						GitHub
+					</a>
+				</div>
 				<p class="tagline">{project.tagline}</p>
 				<ul class="stack" aria-label={t('projects.stack')}>
-					{project.stack.map((s) => <li>{s}</li>)}
+					{project.role === 'featured' && <li class="badge">{t('projects.featured')}</li>}
+					{
+						project.inProgress && (
+							<li class="badge">
+								<span class="dot" aria-hidden="true" />
+								{t('projects.inProgress')}
+							</li>
+						)
+					}
+					{project.stack.map((s) => <li class="chip">{s}</li>)}
 				</ul>
-				<p class="links">
-					<a class="btn btn-primary" href={project.repoUrl}>{t('projects.repo')} ↗</a>
-				</p>
 			</header>
 
+			<!-- Problem, decisions and result at a glance. -->
+			<div class="summary">
+				<section class="card" data-reveal>
+					<h2>{t('projects.problem')}</h2>
+					<p>{project.problem}</p>
+				</section>
+				<section class="card" data-reveal style="--d: 100ms">
+					<h2>{t('projects.decisions')}</h2>
+					<ul>{project.decisions?.map((d) => <li>{d}</li>)}</ul>
+				</section>
+				<section class="card" data-reveal style="--d: 200ms">
+					<h2>{t('projects.result')}</h2>
+					<p>{project.result}</p>
+				</section>
+			</div>
+
 			{
-				cover && project.coverAlt && (
-					<figure class="cover" data-reveal>
-						<Image src={cover} alt={project.coverAlt} widths={[640, 960, 1280]} sizes="(min-width: 60rem) 52rem, 100vw" />
-					</figure>
+				project.caseStudy && (
+					<section class="study" aria-labelledby="study-heading">
+						<h2 id="study-heading" class="study-title">
+							{t('caseStudy.label')}
+						</h2>
+						{cover && project.coverAlt && (
+							<figure class="cover" data-reveal>
+								<Image src={cover} alt={project.coverAlt} widths={[640, 960, 1280]} sizes="(min-width: 60rem) 52rem, 100vw" />
+							</figure>
+						)}
+						<div class="prose">
+							{Content ? <Content /> : <div set:html={publicationHtml} />}
+						</div>
+					</section>
 				)
 			}
 
-			<div class="prose">
-				<Content />
-			</div>
-
 			<footer class="outro">
-				<a class="btn btn-ghost" href={`${getRelativeLocaleUrl(locale)}#projects`}>← {t('caseStudy.back')}</a>
+				<a class="btn btn-ghost" href={getRelativeLocaleUrl(locale, 'projects/')}>← {t('caseStudy.back')}</a>
 				<a class="btn btn-primary" href={project.repoUrl}>{t('projects.repo')} ↗</a>
 			</footer>
 		</article>
@@ -71,8 +110,6 @@ const cover = project.cover ? covers[`../../../assets/case-studies/${project.cov
 	}
 
 	.case {
-		max-width: 52rem;
-		margin: 0 auto;
 		overflow-wrap: anywhere;
 	}
 
@@ -80,22 +117,35 @@ const cover = project.cover ? covers[`../../../assets/case-studies/${project.cov
 		padding-block: 3rem 2rem;
 	}
 
-	/* Aligns the ghost button's text with the page edge. */
 	.back {
-		margin: 0 0 1.5rem -0.8rem;
+		display: inline-block;
+		margin-bottom: 1.75rem;
+		color: var(--fg-muted);
+		font-size: 0.875rem;
+		text-decoration: none;
 	}
 
-	.label {
-		margin: 0 0 1rem;
-		color: var(--accent);
-		font-family: var(--font-mono);
-		font-size: 0.75rem;
-		letter-spacing: 0.15em;
+	.back:hover {
+		color: var(--fg);
+	}
+
+	.title-row {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1rem;
+	}
+
+	.gh svg {
+		width: 1.05rem;
+		height: 1.05rem;
+		fill: currentColor;
 	}
 
 	h1 {
 		margin: 0;
-		font-size: clamp(2.25rem, 6vw, 3.75rem);
+		font-size: clamp(2rem, 5vw, 3rem);
 		letter-spacing: -0.02em;
 		line-height: 1.1;
 	}
@@ -113,19 +163,61 @@ const cover = project.cover ? covers[`../../../assets/case-studies/${project.cov
 		margin: 1.5rem 0 0;
 		padding: 0;
 		list-style: none;
-		font-family: var(--font-mono);
+		font-family: var(--font-sans);
 		font-size: 0.75rem;
 	}
 
-	.stack li {
-		padding: 0.15rem 0.5rem;
+	.chip {
+		padding: 0.15rem 0.55rem;
+		background: var(--surface-2);
 		border: 1px solid var(--line);
-		border-radius: 999px;
+		border-radius: 0.4rem;
 		color: var(--fg-muted);
+		font-weight: 600;
 	}
 
-	.links {
-		margin: 1.5rem 0 0;
+	/* Problem, decisions and result side by side on wide screens. */
+	.summary {
+		display: grid;
+		gap: 1rem;
+		align-items: start;
+	}
+
+	.summary h2 {
+		margin: 0 0 0.6rem;
+		font-size: 1rem;
+	}
+
+	.summary p,
+	.summary ul {
+		margin: 0;
+		color: var(--fg-muted);
+		font-size: 0.92rem;
+		line-height: 1.65;
+	}
+
+	.summary ul {
+		display: grid;
+		gap: 0.5rem;
+		padding-left: 1.1rem;
+	}
+
+	@media (min-width: 60rem) {
+		.summary {
+			grid-template-columns: 1fr 1.4fr 1fr;
+		}
+	}
+
+	.study {
+		max-width: 52rem;
+		margin: 4rem auto 0;
+	}
+
+	.study-title {
+		margin: 0 0 1.5rem;
+		color: var(--brand);
+		font-size: 0.8rem;
+		letter-spacing: 0.14em;
 	}
 
 	.cover {
@@ -200,6 +292,8 @@ const cover = project.cover ? covers[`../../../assets/case-studies/${project.cov
 	}
 
 	.outro {
+		max-width: 52rem;
+		margin-inline: auto;
 		display: flex;
 		flex-wrap: wrap;
 		justify-content: space-between;

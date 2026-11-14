@@ -7,6 +7,14 @@ const site = 'https://joaoabreu.dev';
 // https://astro.build/config
 export default defineConfig({
 	site,
+	vite: {
+		server: {
+			proxy: {
+				'/api': 'http://localhost:8080',
+				'/oauth2': 'http://localhost:8080',
+			},
+		},
+	},
 	security: {
 		csp: {
 			directives: [
@@ -14,7 +22,7 @@ export default defineConfig({
 				"base-uri 'none'",
 				"object-src 'none'",
 				"form-action 'none'",
-				"img-src 'self'",
+				"img-src 'self' https://avatars.githubusercontent.com https://media2.dev.to https://books.google.com",
 				"font-src 'self'",
 				"connect-src 'self' https://api.github.com https://github-contributions-api.jogruber.de",
 			],
@@ -39,7 +47,7 @@ export default defineConfig({
 			// Each URL lists its other-language version as an hreflang alternate.
 			i18n: { defaultLocale: 'en', locales: { en: 'en-US', pt: 'pt-BR' } },
 			// The root only redirects and the 404 page is not content.
-			filter: (page) => page !== `${site}/` && !page.includes('/404'),
+			filter: (page) => page !== `${site}/` && !page.includes('/404') && !page.includes('/admin'),
 		}),
 	],
 });

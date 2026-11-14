@@ -1,0 +1,101 @@
+---
+// What one stage of the pipeline page hands to the next. At the top of a stage ("in") it repeats
+// exactly what the previous stage delivered and says how this stage uses it; at the bottom ("out")
+// it names what this stage delivers. The same artifact text appears in both, so the two read as a
+// single thread down the page.
+interface Props {
+	kind: 'in' | 'out';
+	tag: string;
+	artifact: string;
+	/** "in" only: how this stage uses the artifact. */
+	useLabel?: string;
+	use?: string;
+	/** "out" only: the last stage has no next one. */
+	last?: boolean;
+}
+
+const { kind, tag, artifact, useLabel, use, last = false } = Astro.props;
+---
+
+<div class:list={['handoff', kind, { last }]}>
+	<p class="tag">
+		{kind === 'in' && <span aria-hidden="true">↳ </span>}
+		{tag}
+		{kind === 'out' && <span aria-hidden="true">{last ? ' ✓' : ' ↓'}</span>}
+	</p>
+	<p class="artifact">
+		<svg viewBox="0 0 24 24" aria-hidden="true">
+			<path d="M21 8 12 3 3 8v8l9 5 9-5Zm-18 0 9 5 9-5m-9 5v8" />
+		</svg>
+		<span>{artifact}</span>
+	</p>
+	{
+		use && (
+			<p class="use">
+				<strong>{useLabel}</strong> {use}
+			</p>
+		)
+	}
+</div>
+
+<style>
+	.handoff {
+		display: grid;
+		gap: 0.45rem;
+		padding: 0.9rem 1rem;
+		background: color-mix(in srgb, var(--accent) 9%, transparent);
+		border: 1px dashed color-mix(in srgb, var(--brand) 55%, transparent);
+		border-radius: 0.75rem;
+	}
+
+	.in {
+		margin-bottom: 1.5rem;
+	}
+
+	.out {
+		margin-top: 1.75rem;
+	}
+
+	.last {
+		border-style: solid;
+	}
+
+	p {
+		margin: 0;
+	}
+
+	.tag {
+		color: var(--brand);
+		font-size: 0.72rem;
+		font-weight: 700;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+	}
+
+	.artifact {
+		display: flex;
+		align-items: center;
+		gap: 0.55rem;
+		font-weight: 650;
+	}
+
+	.artifact svg {
+		flex-shrink: 0;
+		width: 1.1rem;
+		height: 1.1rem;
+		fill: none;
+		stroke: var(--brand);
+		stroke-width: 1.75;
+		stroke-linejoin: round;
+	}
+
+	.use {
+		color: var(--fg-muted);
+		font-size: 0.9rem;
+		line-height: 1.6;
+	}
+
+	.use strong {
+		color: var(--fg);
+	}
+</style>
