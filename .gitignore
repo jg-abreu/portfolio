@@ -35,3 +35,4 @@ CLAUDE.local.md
 src/data/recommendations.json
 src/data/recommendations.json.tmp
 src/assets/recommendations-generated/
+src/assets/projects-generated/

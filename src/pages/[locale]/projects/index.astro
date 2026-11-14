@@ -2,12 +2,12 @@
 // Projects list, modeled on developer.org.tr: compact cards (cover when there is one, name,
 // GitHub link, one-line tagline, technologies, "View details" and the last push). The problem,
 // decisions and result live on each project's own page.
-import type { ImageMetadata } from 'astro';
 import { Image } from 'astro:assets';
 import { getRelativeLocaleUrl } from 'astro:i18n';
 import Base from '../../../layouts/Base.astro';
 import { localeTags, locales, useTranslations, type Locale } from '../../../i18n/ui';
 import { getProjects } from '../../../lib/content';
+import { projectCover } from '../../../lib/covers';
 import { getGitHubSnapshot } from '../../../lib/github';
 import ProjectPopup from '../../../components/ProjectPopup.astro';
 
@@ -18,7 +18,6 @@ export function getStaticPaths() {
 const locale = Astro.params.locale as Locale;
 const t = useTranslations(locale);
 const projects = (await getProjects(locale)).filter((p) => p.role !== 'signal');
-const covers = import.meta.glob<ImageMetadata>('../../../assets/case-studies/*', { eager: true, import: 'default' });
 // Last push per repository, from the build snapshot; no date is shown when it is missing.
 const snapshot = getGitHubSnapshot();
 const pushed = new Map((snapshot?.repos ?? []).map((r) => [r.name, r.pushedAt]));
@@ -52,7 +51,7 @@ const repoName = (url: string) => url.split('/').pop() ?? '';
 		<ul class="grid projects">
 			{
 				projects.map((p, i) => {
-					const cover = p.cover ? covers[`../../../assets/case-studies/${p.cover}`] : undefined;
+					const cover = projectCover(p.cover);
 					const last = pushed.get(repoName(p.repoUrl));
 					const details = getRelativeLocaleUrl(locale, `projects/${p.id}/`);
 					return (
