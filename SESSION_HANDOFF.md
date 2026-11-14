@@ -1,5 +1,12 @@
 # Retomada — 2026-11-11
 
+## Continuidade — card em blocos aprovado em 14/11
+
+- João rejeitou o visual anterior e indicou github.com/buraksocial. README público atual consultado sem executar tracker; SVG de referência developer.org.tr/api/v5/svg-profile baixado e rasterizado para inspeção. Novo desenho original900×720: fundo quase preto, painéis de métricas/stack/educação/projetos/foco/disponibilidade e monogramaJA. Nenhuma foto, experiência, métrica ou serviço externo do outro desenvolvedor copiado.
+- João aprovou a composição em blocos e perguntou se é fácil mudar: explicado renderer SVG separado de dados/cache. Aprovação é visual, não merge/deploy. API ProfileCardCache.render e docs/profile-card.md alterados. Nomes de repositório monoespaçados limitados32caracteres; count preserva lastyear. Cache/provider/headers/security inalterados.
+- Dez testes focados ProfileCardTests/ProfileCardHttpTests passaram após fonte final;133completos passaram antes dessa mudança visual, não depois. Previews reais do renderer com dados sintéticos, coldcache e countmáximo/nomeWlongo inspecionados semclipping. Sem token/provedor ao gerar previews. Arquivos .codex-stage/profile-bento-*-final.png ignorados. APIhabitualPID28896/JAR empacotado ainda anterior ao novo SVG, cardfalse; classes de testes novas.
+- Credencial mínima/card refreshlive,receiver,backup/infra manual,préviafinal e lançamento conjunto continuam pendentes. Não alterarperfilREADME/main/VM para destravar. Repos continuamfeat/v2, registrar hashes ao salvar notas.
+
 ## Continuidade — aceitação local fechada em 14/11
 
 - João confirmou lançamento de Recomendações vazia; cadastra itens depois. Não publicar exemplos sintéticos como indicação pessoal. Checklist separa aceitação local concluída do release ainda pendente.

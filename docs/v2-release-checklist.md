@@ -19,7 +19,8 @@ Local acceptance for the current content scope is complete as recorded below (20
 
 - [x] Configure the key privately and audit a real PT/EN sample: four service/provider requests plus two through Astro/Spring HTTP passed, with approved sources and exact missing-information fallbacks. No contacts or credentials in prompts/logs. Broader UI/provider-failure and deployment quota acceptance remains separate.
 - [x] Verify a real public card query/parse/render locally using existing authorized CLI authentication in memory only. This did not configure a deployment token or test live scheduled failure/recovery.
-- [ ] Configure a dedicated minimal card deployment credential, check live refresh/cache/fallback and obtain João's visual approval. Profile README integration waits for the authorized release.
+- [x] Obtain João's visual approval for the dark modular card inspired by buraksocial's README (2026-11-14). Warm/cold/long-data renderer previews and 10 focused tests passed after the change. This is approval of composition, not publication.
+- [ ] Configure a dedicated minimal card deployment credential and check live refresh/cache/fallback. Profile README integration waits for the authorized release.
 - [ ] Complete the receiving-workflow handoff and live publication checks when release authorization permits default-branch registration. Verify project and recommendation manifests against selected revisions, failed builds and rollback. Dispatch acceptance alone is not publication. See [publication](publication.md).
 
 ## 3. Manual infrastructure acceptance — João
