@@ -51,9 +51,9 @@ Local acceptance for the current content scope is complete as recorded below (20
 
 ## 4. Joint release gate
 
-- [ ] João approves the final preview and the exact scope/remaining accepted limitations.
+- [x] João approved the final preview on `v2.joaoabreu.dev` (2026-11-14). Accepted limitation: publication dispatch waits for the workflow on `main`.
 - [ ] Reconcile final changes and run the relevant checks against the actual release candidates; record commit IDs and results. Do not repeat all tests merely to replace dated evidence when code has not changed.
-- [ ] Only after explicit approval, open the final V2 PRs for João's review/merge and execute his manual release sequence.
+- [x] Final V2 PRs opened after João's approval: API jg-abreu/portfolio-api#16 (safe to merge, no deploy) and site jg-abreu/portfolio#35 (merge only after the cutover steps in its description, because `deploy.yml` deploys to `DEPLOY_HOST`).
 - [ ] Verify live login/logout, public/private boundaries, selected manifests, contact delivery handling, counter trust and provider behavior; record rollback readiness.
 - [ ] Verify Dependabot activation/PR destinations and scan results after the authorized default-branch configuration is present. Review the prepared `feat/v2` maintenance targets before ordinary main-based maintenance.
 
