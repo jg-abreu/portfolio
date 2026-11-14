@@ -54,7 +54,8 @@ Local acceptance for the current content scope is complete as recorded below (20
 - [x] João approved the final preview on `v2.joaoabreu.dev` (2026-11-14). Accepted limitation: publication dispatch waits for the workflow on `main`.
 - [ ] Reconcile final changes and run the relevant checks against the actual release candidates; record commit IDs and results. Do not repeat all tests merely to replace dated evidence when code has not changed.
 - [x] Final V2 PRs opened after João's approval: API jg-abreu/portfolio-api#16 (safe to merge, no deploy) and site jg-abreu/portfolio#35 (merge only after the cutover steps in its description, because `deploy.yml` deploys to `DEPLOY_HOST`).
-- [ ] Verify live login/logout, public/private boundaries, selected manifests, contact delivery handling, counter trust and provider behavior; record rollback readiness.
+- [x] Cutover done on 2026-11-14: API PR #16 merged, main-domain nginx on the new VM with the API proxy (SAMEORIGIN, 3 MB body, no noindex), GitHub OAuth app with both callbacks, API `.env` on `joaoabreu.dev`, deploy secrets on the new VM (set by João), Cloudflare `A @` → new static IP, site PR #35 merged. Deploy run 43604094630 succeeded.
+- [x] Live checks on `joaoabreu.dev`: every public and admin page 200, PDF served, `/api` working, anonymous admin 401, 404 page, `robots.txt` and sitemap, no `noindex`; João's real GitHub login reached the admin. Lighthouse mobile: performance 91–96, accessibility 100, best practices 100, SEO 100. Rollback: the old `portfolio` VM and `portfolio-ip` are untouched; pointing `A @` back to it restores V1.
 - [ ] Verify Dependabot activation/PR destinations and scan results after the authorized default-branch configuration is present. Review the prepared `feat/v2` maintenance targets before ordinary main-based maintenance.
 
 ## Next session starting point
