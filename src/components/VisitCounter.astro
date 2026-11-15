@@ -1,15 +1,23 @@
 ---
 import { useTranslations, type Locale } from '../i18n/ui';
 
-interface Props { locale: Locale }
-const { locale } = Astro.props;
+interface Props {
+  locale: Locale;
+  variant?: 'footer' | 'badge';
+}
+const { locale, variant = 'footer' } = Astro.props;
 const t = useTranslations(locale);
 const enabled = import.meta.env.PUBLIC_VISITS_ENABLED === 'true';
 ---
 
-{enabled && <p class="visit-counter" data-visits data-locale={locale} hidden title={t('visits.explanation')}>
+{enabled && variant === 'footer' && <p class="visit-counter" data-visits data-locale={locale} hidden title={t('visits.explanation')}>
   {t('visits.label')}: <span data-visits-total></span>
 </p>}
+
+{enabled && variant === 'badge' && <span class="badge visit-badge" data-visits data-visits-reserve data-locale={locale} title={t('visits.explanation')}>
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" /><circle cx="12" cy="12" r="3" /></svg>
+  <strong data-visits-total>0</strong> {t('visits.short')}
+</span>}
 
 <script>
   import '../scripts/visits';
@@ -17,4 +25,10 @@ const enabled = import.meta.env.PUBLIC_VISITS_ENABLED === 'true';
 
 <style>
   .visit-counter { margin: .6rem auto 0; padding: 0 var(--gutter) 6rem; text-align: center; color: var(--fg-muted); font-size: .75rem; }
+  .visit-badge { cursor: help; transition: opacity .5s var(--ease), transform .5s var(--ease); }
+  .visit-badge[data-visits-reserve] { visibility: hidden; opacity: 0; transform: translateY(.25rem); }
+  .visit-badge[data-visits-reserve][data-visits-ready] { visibility: visible; opacity: 1; transform: none; }
+  .visit-badge svg { width: .9rem; height: .9rem; fill: none; stroke: var(--accent, currentColor); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .visit-badge strong { font-weight: 700; font-variant-numeric: tabular-nums; }
+  @media (prefers-reduced-motion: reduce) { .visit-badge { transition: none; } .visit-badge[data-visits-reserve] { transform: none; } }
 </style>

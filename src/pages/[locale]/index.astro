@@ -5,6 +5,7 @@ import Base from '../../layouts/Base.astro';
 import Heatmap from '../../components/Heatmap.astro';
 import RepoGrid from '../../components/RepoGrid.astro';
 import TechGrid from '../../components/TechGrid.astro';
+import VisitCounter from '../../components/VisitCounter.astro';
 import { localeTags, locales, useTranslations, type Locale } from '../../i18n/ui';
 import { heatmapCells, recentRepos } from '../../lib/activity';
 import { rioDate } from '../../lib/calendar';
@@ -57,7 +58,7 @@ const personJsonLd = JSON.stringify({
 Astro.csp?.insertScriptHash(`sha256-${createHash('sha256').update(personJsonLd).digest('base64')}`);
 ---
 
-<Base title={`${t('nav.home')} - João Abreu`} shareTitle={t('site.title')}>
+<Base title={`${t('nav.home')} - João Abreu`} shareTitle={t('site.title')} visitsInPage>
 	<script slot="head" type="application/ld+json" is:inline set:html={personJsonLd} />
 	<main id="main" class="page">
 		<!-- Clean entry: who and what; contacts live on the Contact page and in the footer. The headline is the page's LCP element. -->
@@ -67,6 +68,7 @@ Astro.csp?.insertScriptHash(`sha256-${createHash('sha256').update(personJsonLd).
 			<p class="badges" data-reveal style="--d: 150ms">
 				<span class="badge"><span class="dot" aria-hidden="true"></span>{t('home.status')}</span>
 				<span class="badge">{t('home.location')}</span>
+				<VisitCounter locale={locale} variant="badge" />
 			</p>
 		</section>
 
