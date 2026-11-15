@@ -53,6 +53,8 @@ src/
   components/TechGrid.astro      technologies with simple-icons logos (home)
   components/ProjectPopup.astro  repository popup on the projects page (root files, folders browsable)
   components/Handoff.astro       what each pipeline stage receives and hands on
+  components/LoadBalancing.astro pipeline section: the real API instance that served the visit (/api/instance)
+                                 and a labelled in-browser simulator of cache, hashing, 429 limits and failover
   components/ContactForm.astro   contact form (PUBLIC_CONTACT_ENABLED stays false by default)
   components/ContactIcon.astro   contact channel icons
   components/VisitCounter.astro  optional approximate visits: Home hero badge, footer elsewhere; excluded from admin and 404
@@ -62,6 +64,8 @@ src/
   scripts/scroll-fx.ts      progress bar, see-through header over the wallpaper, reveal on scroll
   scripts/github-live.ts    live contributions and practice data (30-min localStorage cache)
   scripts/journey.ts        pipeline page: packet on the rail, visit timings, headers, Cloudflare trace, last deploy
+  scripts/load-sim.ts       drives the simulator (counters, dots, live summary) and reads /api/instance
+  lib/load-sim.ts           simulator model mirroring nginx consistent hashing and the API's real rate limits
   scripts/project-popup.ts  opens and animates the project popups, browses folders via the GitHub API
   scripts/card-glow.ts      pointer glow on cards
   scripts/mobile-menu.ts    closes the phone menu on navigation, resize to desktop and page hide; syncs aria-expanded
@@ -104,7 +108,7 @@ deploy/
 .github/workflows/deploy.yml  build and rsync to the server on every push to main and once a day
 ```
 
-The admin uses same-origin /api and /oauth2 routes. Astro's dev server proxies them to the local API on port 8080. Production routing is infrastructure work for João. Saving and archiving drafts do not alter their separately selected public copies. The build reads selected copies from PROJECTS_API_URL, fails if that configured source is unavailable, and emits project-publications.json so the admin can distinguish pending versions from deployed ones. Publishing or withdrawing in the admin asks the API to dispatch deploy.yml, so the site rebuilds in about a minute. Existing file-based projects remain independent; a slug collision fails the build until those projects are explicitly migrated.
+The admin uses same-origin /api and /oauth2 routes. Astro's dev server proxies them to the local API on port 8080. In production nginx balances /api across two API instances (127.0.0.1:8080 and :8081) with a consistent hash of the visitor's address; see deploy/README.md. Saving and archiving drafts do not alter their separately selected public copies. The build reads selected copies from PROJECTS_API_URL, fails if that configured source is unavailable, and emits project-publications.json so the admin can distinguish pending versions from deployed ones. Publishing or withdrawing in the admin asks the API to dispatch deploy.yml, so the site rebuilds in about a minute. Existing file-based projects remain independent; a slug collision fails the build until those projects are explicitly migrated.
 
 The resume page embeds the PDF in an iframe, so nginx must allow same-origin framing
 (`X-Frame-Options: SAMEORIGIN` or `frame-ancestors 'self'`); with `DENY` only the "Open" link works.
