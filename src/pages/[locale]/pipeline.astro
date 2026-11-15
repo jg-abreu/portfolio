@@ -6,6 +6,7 @@
 import { execFileSync } from 'node:child_process';
 import Base from '../../layouts/Base.astro';
 import Handoff from '../../components/Handoff.astro';
+import LoadBalancing from '../../components/LoadBalancing.astro';
 import { localeTags, locales, useTranslations, type Locale } from '../../i18n/ui';
 import { GITHUB_USER } from '../../lib/github-data';
 
@@ -339,6 +340,8 @@ const pagePath = `/${locale}/pipeline/`;
 				</li>
 			</ol>
 		</div>
+
+		<LoadBalancing locale={locale} />
 
 		<footer class="outro" data-reveal>
 			<p>{t('pipeline.when')}</p>
