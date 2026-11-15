@@ -1,6 +1,7 @@
 ---
 import Admin from '../../../layouts/Admin.astro';
 import { locales, type Locale } from '../../../i18n/ui';
+import { adminUi } from '../../../i18n/admin';
 import { cardAdminUi } from '../../../i18n/card-admin';
 import { cardAccents, cardBlocks, cardThemes, maxStack } from '../../../lib/card-admin';
 export function getStaticPaths() { return locales.map(locale => ({ params: { locale } })); }
@@ -23,6 +24,7 @@ const content = [
       <a class="studio-brand" href={`/${locale}/admin/`}><span class="monogram">JA</span><span>{t.title}</span></a>
       <div class="header-actions"><a class="quiet" href={`/${locale}/admin/`}>{t.back}</a>
         <a class="quiet" href={`/${other}/admin/card/`} lang={other} hreflang={other}>{other.toUpperCase()}</a>
+        <a class="button secondary site-link" href={`/${locale}/`}>{adminUi[locale].site} <span aria-hidden="true">↗</span></a>
       </div>
     </header>
     <main class="card-admin-main">

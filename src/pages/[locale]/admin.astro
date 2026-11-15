@@ -50,8 +50,8 @@ const fields = [
             <path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6 7 7m10 10 1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z" />
           </svg>
         </button>
-        <a class="quiet site-link" href={`/${locale}/`}>
-          {t.site} ↗
+        <a class="button secondary site-link" href={`/${locale}/`}>
+          {t.site} <span aria-hidden="true">↗</span>
         </a>
       </div>
     </header>
@@ -95,7 +95,7 @@ const fields = [
           <p class="eyebrow">{t.content}</p>
           <nav aria-label={t.content}>
             <a
-              class="nav-current"
+              class="nav-item"
               data-open-projects
               href={`/${locale}/admin/`}
               aria-current="page"
@@ -103,14 +103,29 @@ const fields = [
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M3 7h6l2-2h10v15H3Z" />
               </svg>
-              {t.projects}
-              <span>01</span>
+              <span class="nav-label">{t.projects}</span>
+              <span class="nav-count" data-nav-count="projects" hidden></span>
             </a>
-            <button type="button" class="workspace-nav" data-open-inbox aria-pressed="false">
-              {t.inbox}
+            <button type="button" class="nav-item" data-open-inbox aria-pressed="false">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M3 6h18v12H3Zm0 0 9 7 9-7" />
+              </svg>
+              <span class="nav-label">{t.inbox}</span>
+              <span class="nav-count unread" data-nav-count="inbox" hidden></span>
             </button>
-            <a class="workspace-nav" href={`/${locale}/admin/recommendations/`}>{recommendationUi[locale].title}</a>
-            <a class="workspace-nav" href={`/${locale}/admin/card/`}>{cardAdminUi[locale].nav}</a>
+            <a class="nav-item" href={`/${locale}/admin/recommendations/`}>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3Zm0 13a3 3 0 0 1 3-3h11" />
+              </svg>
+              <span class="nav-label">{recommendationUi[locale].title}</span>
+              <span class="nav-count" data-nav-count="recommendations" hidden></span>
+            </a>
+            <a class="nav-item" href={`/${locale}/admin/card/`}>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M3 5h18v14H3Zm4 4h4v4H7Zm7 0h4m-4 4h3" />
+              </svg>
+              <span class="nav-label">{cardAdminUi[locale].nav}</span>
+            </a>
           </nav>
         </div>
         <div class="account">
@@ -147,10 +162,6 @@ const fields = [
             {t.new}
           </button>
         </div>
-        <p class="draft-note">
-          <span aria-hidden="true">◌</span>
-          {t.draftNote}
-        </p>
         <div class="toolbar">
           <div class="filters" role="group" aria-label={t.projects}>
             <button type="button" data-filter="DRAFT" aria-pressed="true">
@@ -399,11 +410,19 @@ const fields = [
               {t.reauth} ↗
             </a>
           </div>
-          <button class="button secondary" type="button" data-close>
-            {t.cancel}
+          <button class="button secondary more-button" type="button" data-more popovertarget="editor-more" aria-label={t.more}>
+            <span aria-hidden="true">⋯</span>
           </button>
-          <button class="button primary" type="submit" data-save>
+          <div class="more-menu" id="editor-more" popover data-more-menu>
+            <button type="button" data-editor-withdraw>{t.withdraw}</button>
+            <button type="button" data-editor-archive></button>
+            <button type="button" data-close>{t.discard}</button>
+          </div>
+          <button class="button secondary" type="submit" data-save>
             {t.save}
+          </button>
+          <button class="button primary" type="submit" data-save-publish>
+            {t.savePublish}
           </button>
         </div>
       </form>
@@ -424,6 +443,14 @@ const fields = [
         </button>
       </div>
     </dialog>
+    <dialog class="discard-dialog" data-confirm aria-labelledby="confirm-heading">
+      <h2 id="confirm-heading" data-confirm-title></h2>
+      <p class="muted" data-confirm-body></p>
+      <div>
+        <button class="button secondary" type="button" data-confirm-cancel>{t.cancel}</button>
+        <button class="button primary danger-fill" type="button" data-confirm-ok></button>
+      </div>
+    </dialog>
     <template data-project-template>
       <article class="project-card">
         <div class="project-mark" aria-hidden="true">
@@ -441,12 +468,14 @@ const fields = [
           </div>
         </div>
         <div class="project-actions">
-          <button class="button primary" type="button" data-publish></button>
-          <button class="quiet" type="button" data-withdraw></button>
           <button class="button secondary" type="button" data-edit>
-            {t.edit} ↗
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16Zm9-13 4 4" /></svg>
+            {t.edit}
           </button>
-          <button class="quiet" type="button" data-archive></button>
+          <button class="button secondary danger" type="button" data-withdraw hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3m-8 0 1 13h8l1-13" /></svg>
+            {t.withdraw}
+          </button>
         </div>
       </article>
     </template>
