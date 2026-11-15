@@ -8,9 +8,9 @@ import TechGrid from '../../components/TechGrid.astro';
 import { localeTags, locales, useTranslations, type Locale } from '../../i18n/ui';
 import { heatmapCells, recentRepos } from '../../lib/activity';
 import { rioDate } from '../../lib/calendar';
-import { getContacts, getProjects, getStack } from '../../lib/content';
+import { getContacts, getPracticeProfiles, getProjects, getStack } from '../../lib/content';
 import { getGitHubSnapshot } from '../../lib/github';
-import { GITHUB_USER, practiceStats } from '../../lib/github-data';
+import { GITHUB_USER, PRACTICE_REPO, practiceStats } from '../../lib/github-data';
 
 export function getStaticPaths() {
 	return locales.map((locale) => ({ params: { locale } }));
@@ -23,7 +23,8 @@ const numberFormat = new Intl.NumberFormat(localeTag);
 const dateFormat = new Intl.DateTimeFormat(localeTag, { dateStyle: 'medium', timeZone: 'UTC' });
 
 const projects = await getProjects(locale);
-const practiceProject = projects.find((p) => p.id === 'leetcode');
+const practiceProfiles = await getPracticeProfiles();
+const practiceRepoUrl = `https://github.com/${GITHUB_USER}/${PRACTICE_REPO}`;
 const contacts = await getContacts();
 const stackItems = (await getStack()).flatMap((g) => g.items);
 
@@ -107,7 +108,7 @@ Astro.csp?.insertScriptHash(`sha256-${createHash('sha256').update(personJsonLd).
 		</section>
 
 		{
-			practiceProject && practice && (
+			practice && (
 				<section class="band" aria-labelledby="practice-heading">
 					<div class="card practice" data-reveal>
 						<div class="card-head">
@@ -117,8 +118,8 @@ Astro.csp?.insertScriptHash(`sha256-${createHash('sha256').update(personJsonLd).
 								</svg>
 								{t('home.practiceTitle')}
 							</h2>
-							<a class="btn btn-ghost" href={practiceProject.repoUrl}>
-								{practiceProject.title} ↗
+							<a class="btn btn-ghost" href={practiceRepoUrl}>
+								{t('practice.repo')} ↗
 							</a>
 						</div>
 						<dl
@@ -158,9 +159,9 @@ Astro.csp?.insertScriptHash(`sha256-${createHash('sha256').update(personJsonLd).
 						</dl>
 						<p class="note">{t('practice.note')}</p>
 						{
-							practiceProject.profiles && (
+							practiceProfiles.length > 0 && (
 								<ul class="profiles" aria-label={t('practice.profiles')}>
-									{practiceProject.profiles.map((p) => (
+									{practiceProfiles.map((p) => (
 										<li>
 											<a class="btn" href={p.url}>
 												{p.label} ↗

@@ -71,6 +71,16 @@ const about = defineCollection({
 	}),
 });
 
+/** Profiles shown under the algorithm practice band on Home. */
+const practice = defineCollection({
+	loader: file('src/content/practice.yaml'),
+	schema: z.object({
+		label: z.string().min(1),
+		url: httpsUrl,
+		order: z.int().nonnegative(),
+	}),
+});
+
 /** Stack groups; their names are UI strings (stack.<id>), so the ids are fixed. */
 const stack = defineCollection({
 	loader: file('src/content/stack.yaml'),
@@ -80,4 +90,4 @@ const stack = defineCollection({
 	}),
 });
 
-export const collections = { projects, projectCopy, contacts, about, stack };
+export const collections = { projects, projectCopy, contacts, about, practice, stack };

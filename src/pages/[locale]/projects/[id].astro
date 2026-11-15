@@ -8,7 +8,7 @@ import { getProjectEntry, getProjects } from '../../../lib/content';
 import { renderPublicationMarkdown } from '../../../lib/publication-markdown';
 import { projectCover } from '../../../lib/covers';
 
-// One page per locale for every listed project (not the "signal" ones, which live on Home),
+// One page per locale for every listed project (not the "signal" ones, which have no case study),
 // modeled on developer.org.tr: title and GitHub button, then Problem, Decisions and Result side by
 // side, then the case study (Markdown body) when the project has one (`caseStudy: true`).
 export async function getStaticPaths() {
