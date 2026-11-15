@@ -3,20 +3,11 @@ import Admin from '../../../layouts/Admin.astro';
 import { locales, type Locale } from '../../../i18n/ui';
 import { adminUi } from '../../../i18n/admin';
 import { cardAdminUi } from '../../../i18n/card-admin';
-import { cardAccents, cardBlocks, cardThemes, maxStack } from '../../../lib/card-admin';
+import { cardAccents, cardIdentityFields, cardKinds, cardThemes } from '../../../lib/card-admin';
 export function getStaticPaths() { return locales.map(locale => ({ params: { locale } })); }
 const locale = Astro.params.locale as Locale;
 const t = cardAdminUi[locale];
 const other = locale === 'en' ? 'pt' : 'en';
-const identity = [
-  { name: 'name', label: t.name, max: 30 }, { name: 'role', label: t.role, max: 40 },
-  { name: 'monogram', label: t.monogram, max: 3 }, { name: 'headline', label: t.headline, max: 70 },
-];
-const content = [
-  { name: 'educationTitle', label: t.educationTitle }, { name: 'educationDetail', label: t.educationDetail },
-  { name: 'projectTitle', label: t.projectTitle }, { name: 'projectStack', label: t.projectStack },
-  { name: 'projectNote', label: t.projectNote }, { name: 'focus', label: t.focus }, { name: 'opportunity', label: t.opportunity },
-];
 ---
 <Admin locale={locale}>
   <div data-card-admin data-locale={locale} data-labels={JSON.stringify(t)}>
@@ -58,30 +49,23 @@ const content = [
               <fieldset class="card-group">
                 <legend>{t.identity}</legend>
                 <div class="form-grid">
-                  {identity.map(field => <label class:list={{ wide: field.name === 'headline' }}>{field.label}
+                  {cardIdentityFields.map(field => <label class:list={{ wide: field.name === 'headline' }}>{t[field.name]}
                     <input name={field.name} maxlength={field.max} required autocomplete="off" /></label>)}
                 </div>
               </fieldset>
               <fieldset class="card-group">
-                <legend>{t.blocks}</legend>
-                <p class="muted">{t.blocksHelp}</p>
-                <ol class="block-list" data-blocks>
-                  {cardBlocks.map(block => <li data-block={block}>
-                    <label class="choice"><input type="checkbox" data-block-visible value={block} />{t.blockNames[block]}</label>
-                    <span class="block-actions">
-                      <button type="button" class="icon-button" data-move="-1" aria-label={`${t.up}: ${t.blockNames[block]}`}>↑</button>
-                      <button type="button" class="icon-button" data-move="1" aria-label={`${t.down}: ${t.blockNames[block]}`}>↓</button>
-                    </span>
-                  </li>)}
-                </ol>
-              </fieldset>
-              <fieldset class="card-group">
-                <legend>{t.content}</legend>
-                <div class="form-grid">
-                  <label class="wide">{t.stack}<input name="stack" maxlength={maxStack * 18} required autocomplete="off" aria-describedby="stack-help" />
-                    <small id="stack-help">{t.stackHelp}</small></label>
-                  {content.map(field => <label>{field.label}<input name={field.name} maxlength="40" required autocomplete="off" /></label>)}
+                <legend>{t.layout}</legend>
+                <p class="muted">{t.layoutHelp}</p>
+                <ol class="block-grid" data-grid aria-label={t.layout}></ol>
+                <p class="muted small">{t.keyboardHelp}</p>
+                <div class="add-block">
+                  <label>{t.addKind}
+                    <select data-add-kind>{cardKinds.map(kind => <option value={kind}>{t.kinds[kind]}</option>)}</select>
+                  </label>
+                  <button class="button secondary" type="button" data-add>＋ {t.addBlock}</button>
                 </div>
+                <p class="sr-only" data-announce aria-live="polite"></p>
+                <section class="block-editor" data-block-editor></section>
               </fieldset>
               <div class="card-toolbar">
                 <button class="button primary" type="submit" data-save>{t.save}</button>
@@ -95,7 +79,7 @@ const content = [
           <section class="card-preview" aria-labelledby="card-preview-heading">
             <h2 id="card-preview-heading">{t.preview}</h2>
             <p class="muted">{t.previewHelp}</p>
-            <img data-preview alt={t.previewAlt} width="900" height="720" />
+            <img data-preview alt={t.previewAlt} width="900" height="770" />
             <p data-preview-message role="status"></p>
           </section>
         </div>
@@ -108,34 +92,74 @@ const content = [
   <script>import '../../../scripts/card-admin';</script>
 </Admin>
 <style>
-  .card-admin-main { max-width: 80rem; margin: auto; padding: 1.5rem; }
+  .card-admin-main { max-width: 84rem; margin: auto; padding: 1.5rem; }
   .card-toolbar { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; margin-block: 1rem; }
   .card-toolbar h1 { margin-right: auto; }
   .card-layout { display: grid; gap: 1.5rem; align-items: start; }
   .card-group { border: 1px solid var(--line); border-radius: 1rem; padding: 1rem 1.25rem; margin: 0 0 1rem; background: var(--panel); min-width: 0; }
   .card-group legend { font-weight: 700; padding-inline: .25rem; }
   .card-group label { display: block; margin-bottom: .75rem; min-width: 0; }
-  .card-group input:not([type=radio], [type=checkbox]) { margin-top: .4rem; }
-  .card-group input[aria-invalid="true"] { border-color: #ef4444; box-shadow: 0 0 0 2px #ef444455; }
+  .card-group input:not([type=radio], [type=checkbox]), .card-group select { margin-top: .4rem; }
+  .card-group select { display: block; width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 7px; background: var(--bg); color: var(--text); font: inherit; }
+  :global([aria-invalid="true"]) { border-color: #ef4444 !important; box-shadow: 0 0 0 2px #ef444455; }
   fieldset[data-fields] { border: 0; padding: 0; margin: 0; min-width: 0; }
   .choice-row { display: flex; flex-wrap: wrap; gap: .5rem 1rem; align-items: center; margin-bottom: .75rem; }
   .choice-label { width: 100%; color: var(--muted); font-size: .9rem; }
   .card-group .choice { display: inline-flex; gap: .45rem; align-items: center; margin: 0; cursor: pointer; min-width: 0; }
-  .card-group input[type=radio], .card-group input[type=checkbox] { flex: none; width: 1.1rem; height: 1.1rem; margin: 0; padding: 0; accent-color: var(--blue); }
+  .card-group input[type=radio] { flex: none; width: 1.1rem; height: 1.1rem; margin: 0; padding: 0; accent-color: var(--blue); }
   .swatch { display: inline-block; flex: none; width: .9rem; height: .9rem; border-radius: 50%; }
   .swatch-blue { background: #3b82f6; } .swatch-green { background: #22c55e; }
   .swatch-violet { background: #8b5cf6; } .swatch-orange { background: #f97316; }
-  .block-list { list-style: none; margin: 0; padding: 0; display: grid; gap: .5rem; }
-  .block-list li { display: flex; justify-content: space-between; align-items: center; gap: .75rem; border: 1px solid var(--line);
-    border-radius: .75rem; padding: .5rem .75rem; background: var(--bg); }
-  .block-actions { display: inline-flex; gap: .35rem; flex-shrink: 0; }
+  .small { font-size: 11px; margin-top: .5rem; }
+  .block-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: .6rem; list-style: none; margin: 1rem 0 0; padding: 0; }
+  .block-grid :global(.block-card) { position: relative; display: grid; gap: .35rem; align-content: start; min-height: 6.5rem; min-width: 0;
+    padding: .7rem .8rem .7rem .7rem; border: 1px solid var(--line); border-radius: .75rem; background: var(--bg);
+    cursor: grab; user-select: none; overflow-wrap: anywhere; }
+  .block-grid :global(.block-card:hover) { border-color: color-mix(in srgb, var(--blue) 45%, var(--line)); }
+  .block-grid :global(.block-card[aria-current="true"]) { border-color: var(--blue); box-shadow: 0 0 0 1px var(--blue); }
+  .block-grid :global(.block-card.dragging) { opacity: .55; cursor: grabbing; }
+  .block-grid :global(.block-kind) { font-size: 10px; color: var(--blue); text-transform: uppercase; letter-spacing: .06em; }
+  .block-grid :global(.block-title) { font-weight: 700; font-size: 12px; }
+  .block-grid :global(.block-summary) { font-size: 11px; color: var(--muted); }
+  .block-grid :global(.block-width) { font-size: 10px; color: var(--muted); }
+  .block-grid :global(.block-top) { display: flex; align-items: center; gap: .4rem; }
+  .block-grid :global(.grip) { color: var(--muted); touch-action: none; cursor: grab; font-size: 14px; line-height: 1; }
+  .block-grid :global(.block-menu-button) { margin-left: auto; border: 0; background: none; color: var(--muted); padding: 2px 6px; border-radius: 6px; font-size: 14px; }
+  .block-grid :global(.block-menu-button:hover) { background: var(--raised); color: var(--text); }
+  .block-grid :global(.resize) { position: absolute; top: 0; right: -6px; bottom: 0; width: 12px; cursor: ew-resize; touch-action: none; }
+  .block-grid :global(.resize::after) { content: ""; position: absolute; top: 50%; left: 4px; width: 4px; height: 26px; margin-top: -13px; border-radius: 2px; background: var(--line); }
+  .block-grid :global(.block-card:hover .resize::after), .block-grid :global(.resize.active::after) { background: var(--blue); }
+  .block-grid :global(.block-menu) { inset: auto; margin: 0; padding: 6px; border-radius: 10px; min-width: 190px; position-area: bottom span-left; position-try-fallbacks: flip-block; }
+  .block-grid :global(.block-menu button) { display: block; width: 100%; padding: 8px 11px; border: 0; border-radius: 7px; background: none; color: var(--text); font-size: 12px; text-align: left; }
+  .block-grid :global(.block-menu button:hover), .block-grid :global(.block-menu button:focus-visible) { background: var(--raised); }
+  .block-grid :global(.block-menu button[aria-pressed="true"]) { color: var(--blue); font-weight: 600; }
+  .block-grid :global(.block-menu hr) { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
+  .add-block { display: flex; gap: .75rem; align-items: end; flex-wrap: wrap; margin-top: 1rem; }
+  .add-block label { margin: 0; flex: 1 1 12rem; }
+  .block-editor { margin-top: 1rem; }
+  .block-editor :global(.editor-box) { border: 1px solid var(--blue); border-radius: .75rem; padding: 1rem; background: var(--bg); display: grid; gap: .75rem; }
+  .block-editor :global(.editor-box h3) { margin: 0; font-size: 13px; }
+  .block-editor :global(label) { display: block; min-width: 0; }
+  .block-editor :global(input) { margin-top: .4rem; }
+  .block-editor :global(small) { display: block; margin-top: .3rem; color: var(--muted); font-size: 11px; }
+  .block-editor :global(select) { display: block; width: 100%; margin-top: .4rem; padding: 10px 12px; border: 1px solid var(--line);
+    border-radius: 7px; background: var(--panel); color: var(--text); font: inherit; }
+  .block-editor :global(.line-row) { display: grid; grid-template-columns: minmax(0, 1fr) 8.5rem auto; gap: .5rem; align-items: end; }
+  .block-editor :global(.line-row label) { margin: 0; }
+  .block-editor :global(.line-row .icon-button) { margin-bottom: 4px; }
   .card-preview { min-width: 0; }
   .card-preview img { display: block; width: 100%; height: auto; border-radius: 1rem; border: 1px solid var(--line); background: var(--bg); }
   dialog { color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 1rem; max-width: calc(100% - 2rem); }
   dialog::backdrop { background: #0008; }
   @media (min-width: 64rem) {
-    .card-layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); }
+    .card-layout { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); }
     .card-preview { position: sticky; top: 1rem; }
   }
-  @media (max-width: 40rem) { .card-admin-main { padding: 1rem; } .card-group { padding: .75rem; } .header-actions { flex-wrap: wrap; } }
+  @media (max-width: 40rem) {
+    .card-admin-main { padding: 1rem; } .card-group { padding: .75rem; } .header-actions { flex-wrap: wrap; }
+    .block-grid { gap: .4rem; }
+    .block-grid :global(.block-card) { min-height: 5.5rem; padding: .55rem; }
+    .block-editor :global(.line-row) { grid-template-columns: minmax(0, 1fr) auto; }
+    .block-editor :global(.line-row label:first-child) { grid-column: 1 / -1; }
+  }
 </style>
