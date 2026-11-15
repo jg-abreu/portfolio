@@ -125,6 +125,11 @@ export async function getContacts(): Promise<Contact[]> {
 	return contacts.map(({ id, data }) => ({ ...data, id })).sort((a, b) => a.order - b.order);
 }
 
+export async function getPracticeProfiles(): Promise<{ label: string; url: string }[]> {
+	const profiles = await getCollection('practice');
+	return profiles.sort((a, b) => a.data.order - b.data.order).map(({ data }) => ({ label: data.label, url: data.url }));
+}
+
 /**
  * Public path of the résumé PDF for a locale, or undefined until the file exists,
  * so the site never links to a missing file.

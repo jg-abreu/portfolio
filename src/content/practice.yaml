@@ -1,0 +1,21 @@
+# Public profiles on the platforms where the practice repository's solutions are submitted (brand names, not translated).
+
+- id: leetcode
+  label: LeetCode
+  url: https://leetcode.com/u/jg-abreu/
+  order: 0
+
+- id: codeforces
+  label: Codeforces
+  url: https://codeforces.com/profile/jg-abreu
+  order: 1
+
+- id: atcoder
+  label: AtCoder
+  url: https://atcoder.jp/users/jgabreu
+  order: 2
+
+- id: cses
+  label: CSES
+  url: https://cses.fi/user/522406
+  order: 3

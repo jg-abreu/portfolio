@@ -30,6 +30,7 @@ src/
   content/projects.yaml     optional file-based projects (empty: projects are managed in the admin)
   assets/case-studies/      optional repository covers; admin covers download to assets/projects-generated/ (git-ignored)
   content/contacts.yaml     contact channels (https links only)
+  content/practice.yaml     profiles under the Home practice band; the band itself reads the practice repository
   content/about/<locale>.md about paragraphs and "in progress" list per locale
   content/stack.yaml        stack groups (names translated as stack.<id> in ui.ts)
   data/github-snapshot.json written by scripts/github-snapshot.ts on every build (git-ignored)
