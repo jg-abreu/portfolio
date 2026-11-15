@@ -12,24 +12,13 @@ With `PORTFOLIO_PUBLICATION_ENABLED=true` and a private `PUBLICATION_GITHUB_TOKE
 
 Dispatch is at least once: an interrupted connection or process crash after GitHub acceptance may create duplicate runs. The receiving workflow must serialize updates and safely rebuild from the latest selected source. A 200/204 response means GitHub accepted a dispatch; later workflow failure is not automatically retried by this queue. Its static manifests will still identify items as pending. Operators must review the Actions failure and rerun after fixing its cause.
 
-## Infrastructure handoff: not connected or enabled
+## Receiving workflow: live since 2026-11-15
 
-The implementation sends only to `jg-abreu/portfolio`, workflow `publication-v2.yml`, ref `feat/v2`. This deliberate V2 boundary excludes the existing production `deploy.yml`. The target is fixed in code; the approved final release target needs a reviewed change before ordinary main-based production publication. No workflow, secret, server setting, main commit or deployment was created by this stage.
+The worker dispatches the site's `deploy.yml` on `main` (`POST /repos/jg-abreu/portfolio/actions/workflows/deploy.yml/dispatches`, ref `main`). That workflow accepts `workflow_dispatch`, builds from the published API data (`PROJECTS_API_URL` and `RECOMMENDATIONS_API_URL`), fails before replacing the served release when a source is unavailable, and serializes runs with `concurrency: deploy`.
 
-GitHub requires a workflow with `workflow_dispatch`, and its definition must be present on the default branch to accept manual events. Do not bootstrap that file onto main during V2 development: pushing main also activates the existing production deployment. Therefore a live dispatch test is deferred until the explicit release plan permits registering the receiving workflow. A missing workflow returns an error and leaves the request queued; do not enable the dispatcher to repeatedly test that condition.
+Production enabled it at 00:07 UTC on 2026-11-15: API PR jg-abreu/portfolio-api#20 deployed, `PUBLICATION_ENABLED=true` and a fine-grained `PUBLICATION_GITHUB_TOKEN` limited to `jg-abreu/portfolio` with Actions read and write, created by João and kept only in the VM's private `.env`. The four queued requests were dispatched and run 43657420485 (`workflow_dispatch` on `main`) succeeded, with the site answering 200.
 
-João's manual receiving-workflow checklist for the authorized release:
-
-- Confirm the branch, environment, directory and API origin; the initial V2 workflow must not write the production directory or change DNS/IPs.
-- Register the dedicated dispatch entry point with the required branch guard and protected environment. Match the API's ref and workflow filename exactly.
-- Build selected projects and recommendations using both `PROJECTS_API_URL` and `RECOMMENDATIONS_API_URL`; a configured source failure must fail the build before replacing a served release.
-- Run the site checks/tests, then preserve both publication manifests in the generated output. Upload/deploy only a successful complete build.
-- Set concurrency to serialize runs; never cancel a run halfway through replacing served files. Review release/rollback behavior explicitly.
-- Restore/save only validated public GitHub/blog caches across CI runs, so a fresh checkout can keep a prior verified snapshot during provider outages. Never cache private environments, admin responses or credentials.
-- Configure the fine-grained token privately, limited to this repository and Actions write permission, and verify its expiration. Do not reuse the profile-card token or OAuth secret.
-- Verify a synthetic select → dispatch → successful static build → matching served manifest, then withdrawal → absence, in the designated V2 environment. Deliberately fail one build and confirm the preceding release stays intact.
-- Inspect queued generations before enabling the worker: earlier local selections may already have recorded requests. Use separate databases for synthetic checks, and never erase a real pending request to simplify a test.
-- Confirm the final main/release target with João before replacing the V2-only constants. No permission to merge or launch is implied by the existence of this module.
+Not yet exercised live: a deliberately failed build keeping the served release, and withdrawal → absence from the served manifest. Keep track of the token's expiration; do not reuse the profile-card token or the OAuth secret.
 
 References: [workflow dispatch REST API](https://docs.github.com/en/rest/actions/workflows), [events that trigger workflows](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows).
 
