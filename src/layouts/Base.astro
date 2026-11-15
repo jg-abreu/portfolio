@@ -28,9 +28,11 @@ interface Props {
 	standalone?: boolean;
 	/** Locale for standalone pages, which Astro cannot infer from the URL. */
 	locale?: Locale;
+	/** The page shows the visit counter itself, so the footer leaves it out. */
+	visitsInPage?: boolean;
 }
 
-const { standalone = false } = Astro.props;
+const { standalone = false, visitsInPage = false } = Astro.props;
 const locale: Locale = Astro.props.locale ?? (isLocale(Astro.currentLocale) ? Astro.currentLocale : defaultLocale);
 const t = useTranslations(locale);
 const { title = t('site.title'), description = t('site.description') } = Astro.props;
@@ -241,7 +243,7 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 				</nav>
 			</div>
 			<p class="footer-note">© {rioDate().slice(0, 4)} João Abreu · {t('footer.note')}</p>
-			{!standalone && <VisitCounter locale={locale} />}
+			{!standalone && !visitsInPage && <VisitCounter locale={locale} />}
 		</footer>
 		<script>
 			import '../scripts/theme';
