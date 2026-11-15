@@ -3,9 +3,7 @@ import PublicationStatus from '../../../components/PublicationStatus.astro';
 import Admin from '../../../layouts/Admin.astro';
 import { locales, type Locale } from '../../../i18n/ui';
 import { adminUi } from '../../../i18n/admin';
-import { recommendationUi } from '../../../i18n/recommendations';
 import { recommendationAdminUi } from '../../../i18n/recommendation-admin';
-import { recommendationCategories } from '../../../lib/recommendations';
 export function getStaticPaths() { return locales.map(locale => ({ params: { locale } })); }
 const locale = Astro.params.locale as Locale;
 const t = recommendationAdminUi[locale];
@@ -20,98 +18,216 @@ const other = locale === 'en' ? 'pt' : 'en';
         <a class="button secondary site-link" href={`/${locale}/`}>{adminUi[locale].site} <span aria-hidden="true">↗</span></a>
       </div>
     </header>
-    <main class="recommendation-admin-main">
-      <p data-notice role="status" aria-live="polite">{t.checking}</p>
+    <main class="rec-admin-main">
+      <p class="notice-line" data-notice role="status" aria-live="polite">{t.checking}</p>
       <section data-login hidden>
         <h1>{t.title}</h1><p>{t.loginBody}</p>
         <a class="button primary" href="/oauth2/authorization/github">{t.login}</a>
       </section>
       <button class="button secondary" type="button" data-retry>{t.retry}</button>
       <div data-workspace hidden>
-        <div class="recommendation-toolbar"><h1>{t.title}</h1><span data-username></span>
+        <div class="rec-toolbar"><h1>{t.title}</h1><span data-username></span>
           <button class="button secondary" type="button" data-logout>{t.logout}</button>
         </div>
-        <p class="muted">{t.publicationHelp}</p>
+        <p class="muted">{t.intro}</p>
         <PublicationStatus locale={locale} />
-        <div class="recommendation-toolbar">
-          <button class="button primary" type="button" data-new>{t.newItem}</button>
-          <button class="button secondary" type="button" data-refresh>{t.refresh}</button>
-        </div>
-        <p data-empty hidden>{t.empty}</p><ul class="recommendation-drafts" data-list></ul>
-        <section class="recommendation-editor" data-editor hidden aria-labelledby="recommendation-editor-heading">
-          <h2 id="recommendation-editor-heading" tabindex="-1">{t.editor}</h2>
-          <form data-form>
-            <fieldset data-fields>
-              <div class="form-grid">
-                <label>{t.slug}<input name="slug" required maxlength="100" pattern="[a-z0-9]+(-[a-z0-9]+)*" /></label>
-                <label>{t.category}<select name="category">{recommendationCategories.map(category => <option value={category}>{recommendationUi[locale].categories[category]}</option>)}</select></label>
-                <label>{t.order}<input name="displayOrder" type="number" min="0" max="2147483647" step="1" required value="0" /></label>
-                <label>{t.url}<input name="url" type="url" maxlength="1000" /></label>
-              </div>
-              <section class="recommendation-cover">
-                <div data-book-search>
-                  <label>{t.bookQuery}<input data-book-query minlength="2" maxlength="150" /></label>
-                  <div class="recommendation-toolbar"><button class="button secondary" type="button" data-search-books>{t.bookSearch}</button>
-                    <img class="google-attribution" src="https://books.google.com/googlebooks/images/poweredby.png" alt={t.poweredBy} width="62" height="30" loading="lazy" referrerpolicy="no-referrer" /></div>
-                  <p class="muted">{t.bookHelp}</p>
-                  <section data-book-results-section hidden aria-labelledby="book-results-heading">
-                    <h3 id="book-results-heading">{t.bookResults}</h3><p data-book-message role="status"></p>
-                    <ul class="book-results" data-book-results></ul>
-                  </section>
-                </div>
-                <h3>{t.cover}</h3><p class="muted">{t.uploadHelp}</p>
-                <label>{t.cover}<input data-file type="file" accept="image/png,image/jpeg" /></label>
-                <div class="recommendation-toolbar"><button class="button secondary" type="button" data-upload>{t.upload}</button>
-                  <button class="button secondary" type="button" data-remove-image>{t.removeImage}</button></div>
-                <img data-preview hidden alt="" width="160" height="200" />
-                <a class="quiet" data-book-source hidden target="_blank" rel="noopener noreferrer">{t.bookOpen}</a>
+        <div class="rec-toolbar"><button class="button primary" type="button" data-new-section>＋ {t.newSection}</button></div>
+        <p class="muted" data-empty hidden>{t.emptySections}</p>
+        <div class="rec-sections" data-sections></div>
+      </div>
+
+      <dialog class="rec-dialog" data-section-dialog aria-labelledby="section-dialog-heading">
+        <form data-section-form novalidate>
+          <h2 id="section-dialog-heading">{t.sectionDialog}</h2>
+          <fieldset class="kind-choice">
+            <legend>{t.sectionKind}</legend>
+            <label><input type="radio" name="kind" value="BOOKS" checked /> {t.kindBooks}</label>
+            <label><input type="radio" name="kind" value="ITEMS" /> {t.kindItems}</label>
+            <small data-kind-locked hidden>{t.kindLocked}</small>
+          </fieldset>
+          <label>{t.sectionTitlePt}<input name="ptTitle" maxlength="80" required autocomplete="off" /></label>
+          <label>{t.sectionTitleEn}<input name="enTitle" maxlength="80" required autocomplete="off" /></label>
+          <div class="dialog-footer">
+            <button class="button secondary" type="button" data-section-cancel>{t.cancel}</button>
+            <button class="button primary" type="submit">{t.saveSection}</button>
+          </div>
+        </form>
+      </dialog>
+
+      <dialog class="rec-dialog item-dialog" data-item-dialog aria-labelledby="item-dialog-heading">
+        <form data-item-form novalidate>
+          <div class="item-head">
+            <h2 id="item-dialog-heading" data-item-heading>{t.bookDialog}</h2>
+            <span class="status-badge" data-item-status></span>
+            <button class="icon-button" type="button" data-item-close aria-label={t.close}>✕</button>
+          </div>
+          <div class="item-scroll">
+            <section class="book-search" data-book-only>
+              <label>{t.bookQuery}
+                <span class="inline"><input data-book-query maxlength="150" autocomplete="off" />
+                  <button class="button secondary" type="button" data-search-books>{t.bookSearch}</button></span></label>
+              <section data-book-results-section hidden aria-labelledby="book-results-heading">
+                <h3 id="book-results-heading" class="sr-only">{t.bookResults}</h3>
+                <p data-book-message role="status"></p>
+                <ul class="book-results" data-book-results></ul>
+                <img class="google-attribution" src="https://books.google.com/googlebooks/images/poweredby.png" alt={t.poweredBy} width="62" height="30" loading="lazy" referrerpolicy="no-referrer" />
+              </section>
+            </section>
+            <div class="item-grid">
+              <div class="image-box">
+                <span class="field-label" data-image-label>{t.cover}</span>
+                <img data-preview hidden alt="" />
+                <span class="image-empty" data-preview-empty aria-hidden="true">＋</span>
+                <input data-file type="file" accept="image/png,image/jpeg" aria-describedby="upload-help" />
+                <small id="upload-help">{t.uploadHelp}</small>
+                <span class="inline">
+                  <button class="button secondary" type="button" data-upload>{t.upload}</button>
+                  <button class="quiet" type="button" data-remove-image>{t.removeImage}</button>
+                </span>
+                <a class="quiet" data-book-source hidden target="_blank" rel="noopener noreferrer">{t.bookOpen} ↗</a>
                 <input name="imageKey" type="hidden" />
                 <input name="googleBooksId" type="hidden" />
-              </section>
-              <div class="form-grid">{locales.map(language => <fieldset lang={language}>
-                <legend>{t[language]}</legend>
-                <label>{t.titleField}<input name={`${language}.title`} maxlength="150" /></label>
-                <label>{t.description}<textarea name={`${language}.description`} maxlength="3000" rows="5"></textarea></label>
-                <label>{t.imageAlt}<input name={`${language}.imageAlt`} maxlength="200" /></label>
-              </fieldset>)}</div>
-              <div class="recommendation-toolbar"><button class="button primary" type="submit">{t.save}</button>
-                <button class="button secondary" type="button" data-close>{t.close}</button></div>
-            </fieldset>
-          </form>
-          <p data-publication-status></p>
-          <div class="recommendation-toolbar" data-actions hidden>
-            <button class="button secondary" type="button" data-select>{t.select}</button>
-            <button class="button secondary" type="button" data-withdraw>{t.withdraw}</button>
-            <button class="button secondary" type="button" data-archive>{t.archive}</button>
+              </div>
+              <div class="fields">
+                <label><span data-title-label>{t.bookTitle}</span><input name="title" maxlength="150" required autocomplete="off" /></label>
+                <label><span data-subtitle-label>{t.author}</span><input name="subtitle" maxlength="150" autocomplete="off" /></label>
+                <fieldset class="stars" data-book-only>
+                  <legend>{t.rating}</legend>
+                  {[1, 2, 3, 4, 5].map(value => <label class="star"><input type="radio" name="rating" value={value} />
+                    <span class="sr-only">{t.ratingValue.replace('{n}', String(value))}</span><span aria-hidden="true">★</span></label>)}
+                </fieldset>
+                <fieldset class="group-choice" data-book-only>
+                  <legend>{t.groups}</legend>
+                  <label><input type="radio" name="bookGroup" value="TECHNICAL" /> {t.technical}</label>
+                  <label><input type="radio" name="bookGroup" value="NON_TECHNICAL" /> {t.nonTechnical}</label>
+                </fieldset>
+              </div>
+            </div>
+            <label>{t.descriptionPt}<textarea name="ptDescription" maxlength="300" rows="3" aria-describedby="description-help"></textarea></label>
+            <label>{t.descriptionEn}<textarea name="enDescription" maxlength="300" rows="3" aria-describedby="description-help"></textarea></label>
+            <small id="description-help" class="muted">{t.descriptionHelp}</small>
+            <label>{t.url}<input name="url" type="url" maxlength="1000" placeholder="https://…" autocomplete="off" /></label>
           </div>
-        </section>
-      </div>
-      <dialog data-discard><h2>{t.discardTitle}</h2><div class="recommendation-toolbar">
-        <button class="button secondary" type="button" data-keep>{t.keep}</button>
-        <button class="button primary" type="button" data-confirm-discard>{t.discard}</button></div></dialog>
+          <div class="dialog-footer">
+            <p data-item-message role="status"></p>
+            <button class="button secondary more-button" type="button" popovertarget="item-more" aria-label={t.more}>⋯</button>
+            <div class="more-menu" id="item-more" popover data-item-more>
+              <button type="button" data-item-withdraw>{t.withdraw}</button>
+              <button type="button" data-item-archive>{t.archive}</button>
+              <button type="button" data-item-discard>{t.discardChanges}</button>
+            </div>
+            <button class="button secondary" type="submit" data-item-save>{t.save}</button>
+            <button class="button primary" type="submit" data-item-publish>{t.savePublish}</button>
+          </div>
+        </form>
+      </dialog>
+
+      <dialog class="rec-dialog small-dialog" data-confirm aria-labelledby="confirm-heading">
+        <h2 id="confirm-heading" data-confirm-title></h2>
+        <p class="muted" data-confirm-body></p>
+        <div class="dialog-footer">
+          <button class="button secondary" type="button" data-confirm-cancel>{t.cancel}</button>
+          <button class="button primary danger-fill" type="button" data-confirm-ok></button>
+        </div>
+      </dialog>
+      <dialog class="rec-dialog small-dialog" data-discard aria-labelledby="discard-heading">
+        <h2 id="discard-heading">{t.discardTitle}</h2>
+        <div class="dialog-footer">
+          <button class="button secondary" type="button" data-keep>{t.keep}</button>
+          <button class="button primary" type="button" data-confirm-discard>{t.discard}</button>
+        </div>
+      </dialog>
     </main>
   </div>
   <script>import '../../../scripts/recommendation-admin';</script>
 </Admin>
 <style>
-  .recommendation-admin-main { max-width: 72rem; margin: auto; padding: 1.5rem; }
-  .recommendation-toolbar { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; margin-block: 1rem; }
-  .recommendation-toolbar h1 { margin-right: auto; }
-  .recommendation-drafts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); gap: .75rem; list-style: none; padding: 0; }
-  .recommendation-drafts :global(button) { width: 100%; text-align: left; border: 1px solid var(--line); background: var(--panel); border-radius: .75rem; padding: 1rem; overflow-wrap: anywhere; }
-  .recommendation-drafts :global(small) { display: block; color: var(--muted); margin-top: .5rem; }
-  .recommendation-editor { border: 1px solid var(--line); border-radius: 1rem; padding: 1.5rem; margin-block: 2rem; background: var(--panel); }
-  .recommendation-editor label { display: block; margin-bottom: 1rem; }
-  .recommendation-editor input, .recommendation-editor textarea, .recommendation-editor select { margin-top: .5rem; }
-  select { width: 100%; background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 7px; padding: 10px 12px; font: inherit; }
-  .recommendation-cover { margin-block: 1.5rem; }
-  .recommendation-cover img { object-fit: contain; max-width: 100%; }
-  .recommendation-cover .google-attribution { width: 62px; height: 30px; }
-  .book-results { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: 1rem; list-style: none; padding: 0; }
-  .book-results :global(li) { min-width: 0; border: 1px solid var(--line); padding: 1rem; border-radius: .75rem; overflow-wrap: anywhere; }
-  .book-results :global(img) { display: block; height: 10rem; width: 8rem; object-fit: contain; margin-bottom: .75rem; }
-  .book-results :global(a) { display: block; color: var(--blue); margin-block: .75rem; }
-  dialog { color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 1rem; max-width: calc(100% - 2rem); }
-  dialog::backdrop { background: #0008; }
-  @media (max-width: 40rem) { .recommendation-admin-main { padding: 1rem; } .recommendation-editor { padding: 1rem; } .header-actions { flex-wrap: wrap; } }
+  .rec-admin-main { max-width: 76rem; margin: auto; padding: 1.5rem; }
+  .rec-toolbar { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; margin-block: 1rem; }
+  .rec-toolbar h1 { margin-right: auto; }
+  .notice-line:empty { display: none; }
+  .rec-sections { display: grid; gap: 1.25rem; }
+  .rec-sections :global(.rec-section) { border: 1px solid var(--line); border-radius: 1rem; background: var(--panel); padding: 1rem 1.25rem; min-width: 0; }
+  .rec-sections :global(.rec-section.dragging), .rec-sections :global(.rec-item.dragging) { opacity: .5; }
+  .rec-sections :global(.section-head) { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
+  .rec-sections :global(.section-head h2) { font-size: 17px; margin: 0; }
+  .rec-sections :global(.kind-badge) { font-size: 10px; text-transform: uppercase; letter-spacing: .06em; color: var(--blue); }
+  .rec-sections :global(.grip) { cursor: grab; color: var(--muted); touch-action: none; font-size: 16px; }
+  .rec-sections :global(.section-actions) { margin-left: auto; display: flex; gap: .5rem; align-items: center; }
+  .rec-sections :global(.group) { margin-top: 1rem; }
+  .rec-sections :global(.group h3) { font-size: 12px; color: var(--muted); margin: 0 0 .5rem; text-transform: uppercase; letter-spacing: .06em; }
+  .rec-sections :global(.groups) { display: grid; gap: 1rem; }
+  .rec-sections :global(.items) { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 11rem), 1fr)); gap: .75rem; list-style: none; margin: 0; padding: 0; }
+  .rec-sections :global(.rec-item) { display: grid; gap: .35rem; align-content: start; padding: .7rem; border: 1px solid var(--line); border-radius: .75rem;
+    background: var(--bg); cursor: pointer; min-width: 0; overflow-wrap: anywhere; user-select: none; }
+  .rec-sections :global(.rec-item:hover) { border-color: color-mix(in srgb, var(--blue) 45%, var(--line)); }
+  .rec-sections :global(.rec-item.archived) { opacity: .55; }
+  .rec-sections :global(.rec-item .thumb) { height: 7rem; display: grid; place-items: center; background: var(--panel); border-radius: .5rem; overflow: hidden; }
+  .rec-sections :global(.rec-item .thumb img) { max-height: 100%; max-width: 100%; object-fit: contain; }
+  .rec-sections :global(.rec-item strong) { font-size: 12px; }
+  .rec-sections :global(.rec-item small) { color: var(--muted); font-size: 11px; }
+  .rec-sections :global(.rec-item .stars) { color: #eab308; font-size: 12px; letter-spacing: 1px; }
+  .rec-sections :global(.empty-items) { color: var(--muted); font-size: 12px; margin: .75rem 0 0; }
+  .rec-sections :global(.add-item) { margin-top: .9rem; }
+  .rec-sections :global(.status-badge), .status-badge { display: inline-block; justify-self: start; padding: 1px 8px; border-radius: 999px; font-size: 10px; font-weight: 600;
+    background: var(--raised); color: var(--muted); }
+  :global(.status-badge[data-tone="live"]) { background: color-mix(in srgb, #22c55e 18%, transparent); color: #16a34a; }
+  :global(.status-badge[data-tone="changes"]) { background: color-mix(in srgb, #f59e0b 20%, transparent); color: #b45309; }
+  :global(.status-badge[data-tone="pending"]) { background: var(--soft); color: var(--blue); }
+  .rec-dialog { width: min(46rem, calc(100% - 1.5rem)); max-height: calc(100dvh - 2rem); padding: 0; border-radius: 1rem; color: var(--text);
+    background: var(--panel); border: 1px solid var(--line); }
+  .rec-dialog::backdrop { background: #080d18b3; backdrop-filter: blur(4px); }
+  .rec-dialog form { display: flex; flex-direction: column; max-height: calc(100dvh - 2rem); }
+  .rec-dialog > form > h2, .small-dialog > h2 { margin: 0; padding: 1.25rem 1.25rem 0; font-size: 18px; }
+  .small-dialog { width: min(26rem, calc(100% - 1.5rem)); }
+  .small-dialog > p { padding: .5rem 1.25rem 0; margin: 0; }
+  .rec-dialog label { display: block; margin: .9rem 1.25rem 0; }
+  .rec-dialog input:not([type=radio], [type=file]), .rec-dialog textarea { margin-top: .4rem; }
+  .rec-dialog fieldset { border: 0; margin: .9rem 1.25rem 0; padding: 0; }
+  .rec-dialog fieldset label { display: flex; gap: .5rem; align-items: center; margin: .4rem 0 0; }
+  .rec-dialog legend, .field-label { font-weight: 600; font-size: 12px; }
+  .rec-dialog input[type=radio] { width: 1rem; height: 1rem; margin: 0; accent-color: var(--blue); }
+  .dialog-footer { display: flex; gap: .6rem; align-items: center; justify-content: flex-end; flex-wrap: wrap; padding: 1rem 1.25rem; border-top: 1px solid var(--line); margin-top: 1rem; }
+  .dialog-footer p { margin: 0 auto 0 0; font-size: 12px; color: var(--muted); flex: 1 1 12rem; }
+  .item-head { display: flex; align-items: center; gap: .75rem; padding: 1rem 1.25rem; border-bottom: 1px solid var(--line); }
+  .item-head h2 { margin: 0; font-size: 18px; }
+  .item-head .icon-button { margin-left: auto; }
+  .item-scroll { overflow-y: auto; padding-bottom: .25rem; }
+  .item-grid { display: grid; grid-template-columns: 11rem minmax(0, 1fr); gap: 0 .5rem; align-items: start; }
+  .item-grid .fields label:first-child { margin-top: .9rem; }
+  .image-box { display: grid; gap: .45rem; margin: .9rem 0 0 1.25rem; min-width: 0; }
+  .image-box img { width: 100%; max-height: 13rem; object-fit: contain; border-radius: .6rem; border: 1px solid var(--line); background: var(--bg); }
+  .image-empty { display: grid; place-items: center; height: 9rem; border: 1px dashed var(--line); border-radius: .6rem; color: var(--muted); font-size: 24px; }
+  .image-box input[type=file] { font-size: 11px; }
+  .image-box small, #description-help { font-size: 11px; color: var(--muted); }
+  #description-help { display: block; margin: .3rem 1.25rem 0; }
+  .inline { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+  .inline input { flex: 1 1 10rem; }
+  .book-search { border-bottom: 1px solid var(--line); padding-bottom: 1rem; }
+  .book-search :global(.book-results) { list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr)); gap: .6rem; margin: .5rem 1.25rem; padding: 0; }
+  .book-search :global(.book-results li) { display: grid; gap: .3rem; font-size: 11px; border: 1px solid var(--line); border-radius: .6rem; padding: .5rem; background: var(--bg); }
+  .book-search :global(.book-results img) { width: 100%; height: 7rem; object-fit: contain; }
+  .book-search p, .google-attribution { margin: .5rem 1.25rem 0; }
+  .stars { display: flex; flex-wrap: wrap; align-items: center; gap: .1rem; }
+  .stars legend { width: 100%; margin-bottom: .3rem; }
+  .rec-dialog .star { margin: 0; cursor: pointer; font-size: 26px; line-height: 1; color: var(--line); }
+  .star input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .star:has(input:focus-visible) { outline: 2px solid var(--blue); border-radius: 4px; }
+  .stars.filled-1 .star:nth-of-type(-n+1), .stars.filled-2 .star:nth-of-type(-n+2), .stars.filled-3 .star:nth-of-type(-n+3),
+  .stars.filled-4 .star:nth-of-type(-n+4), .stars.filled-5 .star:nth-of-type(-n+5) { color: #eab308; }
+  .group-choice { display: flex; flex-wrap: wrap; gap: .25rem 1rem; }
+  .group-choice legend { width: 100%; }
+  :global([aria-invalid="true"]) { border-color: #ef4444 !important; box-shadow: 0 0 0 2px #ef444455; }
+  .more-menu { inset: auto; margin: 0; padding: 6px; border-radius: 10px; min-width: 200px; position-area: top span-left; position-try-fallbacks: flip-block; }
+  .more-menu button { display: block; width: 100%; padding: 9px 12px; border: 0; border-radius: 7px; background: none; color: var(--text); font-size: 12px; text-align: left; }
+  .more-menu button:hover, .more-menu button:focus-visible { background: var(--raised); }
+  .more-button { padding-inline: 13px; font-size: 16px; line-height: 1; }
+  .danger-fill { background: #dc2626; box-shadow: none; }
+  @media (max-width: 40rem) {
+    .rec-admin-main { padding: 1rem; } .header-actions { flex-wrap: wrap; }
+    .rec-sections :global(.rec-section) { padding: .8rem; }
+    .item-grid { grid-template-columns: 1fr; }
+    .image-box { margin-right: 1.25rem; }
+    .rec-dialog { width: calc(100% - .75rem); }
+  }
 </style>

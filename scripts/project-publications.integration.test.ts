@@ -26,11 +26,12 @@ test('builds bilingual project and blog pages and preserves selected copies on f
   const image = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a5WQAAAAASUVORK5CYII=', 'base64');
   const imageKey = `${createHash('sha256').update(image).digest('hex')}.png`;
   const recommendation = { recommendationId: 987654, revision: '12345678-1234-1234-1234-123456789abc', draftVersion: 2,
-    data: { slug: 'synthetic-book', category: 'BOOKS', imageKey, url: 'https://example.com/book', displayOrder: 0,
+    data: { slug: 'synthetic-book', sectionId: 3, imageKey, url: 'https://example.com/book', rating: 4, bookGroup: 'TECHNICAL',
+      subtitle: 'Synthetic author', googleBooksId: '',
       en: { title: 'Synthetic recommendation', description: '<script>unsafe()</script>', imageAlt: 'Synthetic cover' },
       pt: { title: 'Recomendação de teste', description: 'Somente teste.', imageAlt: 'Capa de teste' } } };
   const bookRecommendation = { ...recommendation, recommendationId: 987655, revision: '22345678-1234-1234-1234-123456789abc',
-    data: { ...recommendation.data, slug: 'synthetic-book-reference', imageKey: '', googleBooksId: 'synthetic-edition', displayOrder: 1 } };
+    data: { ...recommendation.data, slug: 'synthetic-book-reference', imageKey: '', googleBooksId: 'synthetic-edition', bookGroup: 'NON_TECHNICAL' } };
   let imageRequests = 0;
   const article = { title: 'Local article integration test', url: 'https://dev.to/joao_abreu/local-article-test',
     description: 'An article without a runtime DEV request', image: null, publishedAt: '2026-11-13',
@@ -50,7 +51,8 @@ test('builds bilingual project and blog pages and preserves selected copies on f
     }
     response.writeHead(fail ? 503 : 200, { 'Content-Type': 'application/json' });
     response.end(JSON.stringify(request.url === '/api/recommendations'
-      ? { schemaVersion: 1, recommendations: [recommendation, bookRecommendation] } : { schemaVersion: 1, projects: [project] }));
+      ? { schemaVersion: 2, sections: [{ id: 3, kind: 'BOOKS', en: { title: 'Synthetic books' }, pt: { title: 'Livros sintéticos' },
+        items: [recommendation, bookRecommendation] }] } : { schemaVersion: 1, projects: [project] }));
   });
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
   const address = server.address();
@@ -78,6 +80,10 @@ test('builds bilingual project and blog pages and preserves selected copies on f
     for (const locale of ['en', 'pt']) {
       const picks = await readFile(`dist/${locale}/recommendations/index.html`, 'utf8');
       assert.match(picks, new RegExp(recommendation.data[locale as 'en' | 'pt'].title));
+      assert.match(picks, locale === 'en' ? /Synthetic books/ : /Livros sintéticos/);
+      assert.match(picks, locale === 'en' ? /Non-technical/ : /Não técnicos/);
+      assert.match(picks, locale === 'en' ? /4 of 5 stars/ : /4 de 5 estrelas/);
+      assert.match(picks, /Synthetic author/);
       assert.match(picks, /\/_astro\/[^" ]+\.webp/);
       assert.doesNotMatch(picks, /<script>unsafe\(\)<\/script>/);
       assert.doesNotMatch(picks, /<iframe/);

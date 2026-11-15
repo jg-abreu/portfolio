@@ -5,24 +5,29 @@ import Base from '../../layouts/Base.astro';
 import { locales, type Locale } from '../../i18n/ui';
 import { recommendationUi } from '../../i18n/recommendations';
 import { getRecommendations } from '../../lib/recommendation-data';
-import { recommendationCategories } from '../../lib/recommendations';
-import { bookCoverUrl, bookInfoUrl } from '../../lib/google-books';
+import { bookGroups, type PublicRecommendation, type PublicSection } from '../../lib/recommendations';
+import { bookCoverUrl } from '../../lib/google-books';
 
 export function getStaticPaths() {
   return locales.map(locale => ({ params: { locale } }));
 }
 const locale = Astro.params.locale as Locale;
 const labels = recommendationUi[locale];
-const { recommendations } = getRecommendations();
+const { sections } = getRecommendations();
 const images = import.meta.glob<{ default: ImageMetadata }>('../../assets/recommendations-generated/*.png', { eager: true });
-const groups = recommendationCategories.map(category => ({ category,
-  items: recommendations.filter(item => item.data.category === category),
-})).filter(group => group.items.length > 0);
 function imageFor(key: string) {
   const image = images[`../../assets/recommendations-generated/${key}`]?.default;
   if (!image) throw new Error(`Missing recommendation image: ${key}`);
   return image;
 }
+function groups(section: PublicSection) {
+  if (section.kind !== 'BOOKS') return [{ id: 'all', title: '', items: section.items }];
+  return bookGroups.map(group => ({ id: group, title: labels.groups[group], items: section.items.filter(item => item.data.bookGroup === group) }))
+    .filter(group => group.items.length > 0);
+}
+const usesGoogle = (section: PublicSection) => section.items.some(item => item.data.googleBooksId);
+const stars = (rating: number) => labels.rating.replace('{n}', String(rating));
+type Card = PublicRecommendation;
 ---
 <Base title={`${labels.title} - João Abreu`} description={labels.description}>
   <main id="main" class="page">
@@ -30,34 +35,67 @@ function imageFor(key: string) {
       <h1 data-split>{labels.title}</h1>
       <p data-reveal>{labels.description}</p>
     </header>
-    {groups.length === 0 && <p class="muted">{labels.empty}</p>}
-    {groups.map(({ category, items }) => <section class="recommendation-group" aria-labelledby={`category-${category}`}>
-      <h2 id={`category-${category}`}>{labels.categories[category]}</h2>
-      <ul class="recommendations">
-        {items.map(({ data }) => <li class="card recommendation" data-reveal>
-          {data.googleBooksId ? <img src={bookCoverUrl(data.googleBooksId)} alt={data[locale].imageAlt} width="320" height="400" loading="lazy" decoding="async" referrerpolicy="no-referrer" />
-            : <Image src={imageFor(data.imageKey)} alt={data[locale].imageAlt} widths={[320, 640]}
-              sizes="(max-width: 40rem) 100vw, 320px" width={640} loading="lazy" decoding="async" />}
-          <div class="recommendation-copy">
-            <h3>{data[locale].title}</h3>
-            <p>{data[locale].description}</p>
-            {data.url && <a href={data.url} target="_blank" rel="noopener noreferrer">{labels.open}<span class="sr-only">: {data[locale].title}</span> ↗</a>}
-            {data.googleBooksId && <p><a href={bookInfoUrl(data.googleBooksId)} target="_blank" rel="noopener noreferrer">{labels.bookSource}</a><br />
-              <img class="google-attribution" src="https://books.google.com/googlebooks/images/poweredby.png" alt={labels.poweredBy} width="62" height="30" loading="lazy" referrerpolicy="no-referrer" /></p>}
-          </div>
-        </li>)}
-      </ul>
-    </section>)}
+    {sections.length === 0 && <p class="muted">{labels.empty}</p>}
+    {sections.map(section => {
+      const parts = groups(section);
+      return <section class="rec-section" aria-labelledby={`section-${section.id}`}>
+        <h2 id={`section-${section.id}`}>{section[locale].title}</h2>
+        <div class:list={['rec-groups', { split: parts.length > 1 }]}>
+          {parts.map(part => <div class="rec-group">
+            {part.title && <h3>{part.title}</h3>}
+            <ul class="rec-grid">
+              {part.items.map(({ data }: Card) => <li class="rec-card" data-reveal>
+                <div class:list={['rec-media', { book: section.kind === 'BOOKS' }]}>
+                  {data.googleBooksId ? <img src={bookCoverUrl(data.googleBooksId)} alt={data[locale].imageAlt} width="184" height="276"
+                    loading="lazy" decoding="async" referrerpolicy="no-referrer" />
+                    : data.imageKey ? <Image src={imageFor(data.imageKey)} alt={data[locale].imageAlt} widths={[240, 480]}
+                      sizes="240px" width={480} loading="lazy" decoding="async" />
+                    : <svg class="rec-placeholder" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v10H4Zm4 14h8m-4-4v4" /></svg>}
+                </div>
+                <h4>{data[locale].title}</h4>
+                {section.kind === 'BOOKS' && <span class="rec-stars" role="img" aria-label={stars(data.rating)}>
+                  {[1, 2, 3, 4, 5].map(value => <svg viewBox="0 0 24 24" aria-hidden="true" class:list={{ off: value > data.rating }}>
+                    <path d="m12 2.8 2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.6l-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9Z" /></svg>)}
+                </span>}
+                {data.subtitle && <p class="rec-subtitle">{data.subtitle}</p>}
+                <p class="rec-description">{data[locale].description}</p>
+                {data.url && <a class="btn rec-link" href={data.url} target="_blank" rel="noopener noreferrer">
+                  {section.kind === 'BOOKS' ? labels.openBook : labels.openItem}<span class="sr-only">: {data[locale].title}</span> ↗</a>}
+              </li>)}
+            </ul>
+          </div>)}
+        </div>
+        {usesGoogle(section) && <p class="rec-attribution">{labels.bookSource}
+          <img src="https://books.google.com/googlebooks/images/poweredby.png" alt={labels.poweredBy} width="62" height="30" loading="lazy" referrerpolicy="no-referrer" /></p>}
+      </section>;
+    })}
   </main>
 </Base>
 <style>
-  .recommendation-group { margin-block: 2.5rem; }
-  .recommendations { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); gap: 1.25rem; list-style: none; padding: 0; }
-  .recommendation { overflow: hidden; min-width: 0; }
-  .recommendation img { display: block; width: 100%; height: 15rem; object-fit: contain; padding: 1rem; }
-  .recommendation-copy { padding: 1.25rem; overflow-wrap: anywhere; }
-  .recommendation-copy h3 { margin: 0 0 .75rem; }
-  .recommendation-copy p { white-space: pre-line; line-height: 1.7; }
-  .recommendation-copy a { display: inline-block; margin-top: .5rem; }
-  .recommendation .google-attribution { width: 62px; height: 30px; padding: 0; object-fit: contain; }
+  .rec-section { margin-block: 3rem; }
+  .rec-section > h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); margin: 0 0 1.5rem; }
+  .rec-groups { display: grid; gap: 2.5rem; }
+  .rec-group h3 { font-size: clamp(1.25rem, 2.4vw, 1.6rem); margin: 0 0 1.25rem; }
+  .rec-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 13.5rem), 1fr)); gap: 2rem 1.5rem; list-style: none; margin: 0; padding: 0; }
+  .rec-card { display: flex; flex-direction: column; gap: .45rem; min-width: 0; overflow-wrap: anywhere; }
+  .rec-media { display: grid; place-items: center; height: 14rem; margin-bottom: .6rem; }
+  .rec-media > :is(img, picture) { display: block; height: 100%; width: auto; max-width: 100%; min-height: 0; object-fit: contain;
+    border-radius: .6rem; box-shadow: 0 10px 30px #0003; }
+  .rec-media:not(.book) > :is(img, picture) { box-shadow: none; }
+  .rec-media:not(.book) { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); padding: .75rem; }
+  .rec-placeholder { width: 3rem; height: 3rem; fill: none; stroke: var(--fg-muted); stroke-width: 1.5; }
+  .rec-card h4 { margin: 0; font-size: 1.1rem; }
+  .rec-stars { display: inline-flex; gap: .15rem; }
+  .rec-stars svg { width: 1.1rem; height: 1.1rem; fill: #facc15; }
+  .rec-stars svg.off { fill: var(--line); }
+  .rec-subtitle { margin: 0; color: var(--fg-muted); font-size: .95rem; }
+  .rec-description { margin: 0; color: var(--fg-muted); line-height: 1.65; white-space: pre-line; }
+  .rec-link { margin-top: auto; justify-content: center; width: 100%; }
+  .rec-description + .rec-link { margin-top: .6rem; }
+  .rec-attribution { display: flex; align-items: center; gap: .6rem; margin-top: 1.5rem; color: var(--fg-muted); font-size: .85rem; }
+  .rec-attribution img { width: 62px; height: 30px; object-fit: contain; }
+  @media (min-width: 64rem) {
+    .rec-groups.split { grid-template-columns: 1fr 1fr; gap: 3rem; }
+    .rec-groups.split .rec-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
 </style>
