@@ -67,8 +67,9 @@ src/
   scripts/mobile-menu.ts    closes the phone menu on navigation, resize to desktop and page hide; syncs aria-expanded
   layouts/Admin.astro       private workspace shell (noindex); authenticated data loads only in the browser
   scripts/admin.ts          GitHub session, CSRF, project drafts and private contact inbox
-  scripts/card-admin.ts     profile-card editor: blocks, palette and text with live preview, draft and publish
-  lib/card-admin.ts         card settings validators, block reordering and base64url preview encoding
+  scripts/card-admin.ts     profile-card editor: free blocks dragged to move and resized by their edge (1/3, 1/2, full),
+                            titles and lines editable, live preview, draft and publish
+  lib/card-admin.ts         card settings validators, row packing that mirrors the API, base64url preview encoding
   lib/contact.ts            same-origin CSRF contact client and acknowledged receipt
   scripts/contact.ts        optional contact submission, retry keys and bilingual feedback
   lib/visits.ts             same-origin CSRF visit registration and validated real total
