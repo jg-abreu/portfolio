@@ -19,7 +19,7 @@ visitor ──HTTPS──▶ Cloudflare (proxy, cache, edge certificate)
 | Address | Static IP `portfolio-v2-ip` attached to the instance | Free while attached; billed if left detached |
 | API | `/opt/portfolio-api` with `compose.production.yaml` | JAR built and tested outside the VM; private settings in `.env` and `smtp.env` (mode 600). See `portfolio-api/PRODUCTION.md` |
 | Backups | Private Lightsail bucket `joaoabreu-portfolio-v2-backups` | Daily `age`-encrypted dump + covers, 30-day retention; the decryption key is kept off the server. See `portfolio-api/docs/backup-restore.md` |
-| Preview | `v2.joaoabreu.dev` → same VM, nginx site `portfolio-v2` | Serves `/var/www/portfolio-v2` with `noindex`; useful for testing a build before release |
+| Preview | `v2.joaoabreu.dev` → same VM, nginx site `portfolio-v2` | Retired on 2026-11-15: every request redirects (301) to `joaoabreu.dev`, because the frozen preview build was wired to the production API. Restore the previous `nginx/portfolio-v2.conf` from Git to bring a preview back |
 | Firewall | Lightsail networking tab | 22 (SSH): any IPv4/IPv6 + browser SSH; 80/443: Cloudflare IPv4/IPv6 ranges only |
 | DNS | Cloudflare | `A @` and `A v2` → static IP, `CNAME www` → `joaoabreu.dev`, all proxied; Browser Cache TTL "Respect Existing Headers" |
 | TLS | Cloudflare Origin CA certificate on nginx | `/etc/ssl/cloudflare/joaoabreu.dev.{pem,key}`, valid until 2041 |
