@@ -26,7 +26,7 @@ Local acceptance for the current content scope is complete as recorded below (20
 - [x] Verify a real public card query/parse/render locally using existing authorized CLI authentication in memory only. This did not configure a deployment token or test live scheduled failure/recovery.
 - [x] Obtain João's visual approval for the dark modular card inspired by buraksocial's README (2026-11-14). Warm/cold/long-data renderer previews and 10 focused tests passed after the change. This is approval of composition, not publication.
 - [x] Configure a dedicated minimal card deployment credential and check live refresh/cache/fallback (v2, 2026-11-14). Profile README integration waits for the authorized release.
-- [ ] Complete the receiving-workflow handoff and live publication checks when release authorization permits default-branch registration. Verify project and recommendation manifests against selected revisions, failed builds and rollback. Dispatch acceptance alone is not publication. See [publication](publication.md).
+- [ ] Complete the live publication checks (receiving workflow registered and first dispatch succeeded on 2026-11-15; failed-build and withdrawal checks still pending). Verify project and recommendation manifests against selected revisions, failed builds and rollback. Dispatch acceptance alone is not publication. See [publication](publication.md).
 
 ## 3. Manual infrastructure acceptance — João
 
@@ -47,7 +47,7 @@ Local acceptance for the current content scope is complete as recorded below (20
 - [x] Contact enabled on v2 (API `1258830`): João copied his SMTP settings to `/opt/portfolio-api/smtp.env` (mode 600, read through the optional compose `env_file`); intake, delivery worker and 90-day retention on; site built with `PUBLIC_CONTACT_ENABLED=true`. A synthetic message sent through the real v2 form was stored, marked sent on the first attempt and confirmed received by João.
 - [x] Profile card enabled on v2: João created a fine-grained token (public repositories read-only, no permissions, expires 2027) and stored it in `.env`. Public `/api/profile-card.svg` through Cloudflare: 200 with real data (693 contributions, latest repository), ETag and 304 on revalidation; rendered card inspected. Cloudflare's Browser Cache TTL currently rewrites `max-age` to 14400 (4 h) for every response; consider "Respect existing headers" or a cache rule for the card before the profile README points to it.
 - [x] Section 2.4 (card credential and live refresh) satisfied on v2. Profile README integration still waits for the domain switch.
-- [ ] Still disabled on v2: publication dispatch (needs the receiving workflow registered on `main`).
+- [x] Publication dispatch enabled in production on 2026-11-15 (API #20, `deploy.yml` on `main`, João's fine-grained token in `.env`); the four queued requests were dispatched and run 43657420485 succeeded. See [publication](publication.md).
 
 ## 4. Joint release gate
 
@@ -56,7 +56,8 @@ Local acceptance for the current content scope is complete as recorded below (20
 - [x] Final V2 PRs opened after João's approval: API jg-abreu/portfolio-api#16 (safe to merge, no deploy) and site jg-abreu/portfolio#35 (merge only after the cutover steps in its description, because `deploy.yml` deploys to `DEPLOY_HOST`).
 - [x] Cutover done on 2026-11-14: API PR #16 merged, main-domain nginx on the new VM with the API proxy (SAMEORIGIN, 3 MB body, no noindex), GitHub OAuth app with both callbacks, API `.env` on `joaoabreu.dev`, deploy secrets on the new VM (set by João), Cloudflare `A @` → new static IP, site PR #35 merged. Deploy run 43604094630 succeeded.
 - [x] Live checks on `joaoabreu.dev`: every public and admin page 200, PDF served, `/api` working, anonymous admin 401, 404 page, `robots.txt` and sitemap, no `noindex`; João's real GitHub login reached the admin. Lighthouse mobile: performance 91–96, accessibility 100, best practices 100, SEO 100. Rollback: the old `portfolio` VM and `portfolio-ip` are untouched; pointing `A @` back to it restores V1.
-- [ ] Verify Dependabot activation/PR destinations and scan results after the authorized default-branch configuration is present. Review the prepared `feat/v2` maintenance targets before ordinary main-based maintenance.
+- [x] Dependabot pointed at `main` in both repositories (site #43, API #18); the older PRs #36–#40 against `feat/v2` were closed.
+- [x] API instance identity live on 2026-11-15: API #24 and #25 deployed (JAR from `abdb48d`, 168 tests); instances A and B restarted one at a time after a JAR and database backup (`backups/*pre-instance*`); `/api/instance` answers through Cloudflare.
 
 ## Next session starting point
 
