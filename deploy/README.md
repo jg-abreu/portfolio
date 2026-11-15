@@ -8,8 +8,9 @@ visitor ──HTTPS──▶ Cloudflare (proxy, cache, edge certificate)
                        ▼
                  AWS Lightsail portfolio-v2-2gb · Ubuntu 24.04 · nginx
                    ├─ /var/www/portfolio     ◀── rsync over SSH (user deploy) from GitHub Actions
-                   └─ /api, /oauth2, /login/oauth2 ──▶ 127.0.0.1:8080
-                        Docker Compose (/opt/portfolio-api): Spring Boot API + PostgreSQL 18
+                   └─ /api, /oauth2, /login/oauth2 ──▶ upstream (hash on the visitor's address)
+                        ├─ 127.0.0.1:8080  API instance A ┐
+                        └─ 127.0.0.1:8081  API instance B ┴─ Docker Compose (/opt/portfolio-api) + PostgreSQL 18
 ```
 
 | Piece | Where | Notes |
