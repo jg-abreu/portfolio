@@ -21,8 +21,11 @@ async function workspace() {
         callbacks.set(`${selector}:${name}`, callback);
         this.events.set(name, callback);
       },
+      classList: { toggle() {} },
+      querySelector() { return null; },
+      querySelectorAll() { return []; },
+      append(...children: unknown[]) { this.children.push(...children); },
       replaceChildren() { this.children = []; },
-      append(child: unknown) { this.children.push(child); },
       reset() { element('[data-private-field]').value = ''; },
       close() { this.open = false; },
       setAttribute() {},
@@ -67,7 +70,8 @@ async function workspace() {
       let body: unknown = path.endsWith('/session') ? { username: 'jg-abreu' }
         : path.endsWith('/csrf') ? { headerName: 'X-CSRF-TOKEN', token: 'test-token' }
         : path.startsWith('/api/admin/messages?') ? {
-          messages: inboxDetail.archivedAt ? [] : [inboxDetail], totalElements: inboxDetail.archivedAt ? 0 : 1, hasNext: false }
+          messages: inboxDetail.archivedAt ? [] : [inboxDetail], totalElements: inboxDetail.archivedAt ? 0 : 1, hasNext: false,
+          unreadCount: inboxDetail.archivedAt || inboxDetail.readAt ? 0 : 1 }
         : path.startsWith('/api/admin/messages/7') ? inboxDetail
         : path.endsWith('.json') ? { schemaVersion: 1, projects: [] } : [];
       if (path === deferredPath)
@@ -187,6 +191,19 @@ test('session expiry clears an open inbox and its private message fields', async
   assert.equal(app.element('[data-inbox-detail]').hidden, true);
 });
 
+test('opening an unread message marks it read once, using the loaded version', async () => {
+  const app = await workspace();
+  app.openInbox();
+  await app.settle();
+  const item = app.element('[data-inbox-list]').children[0];
+  item.events.get('click')();
+  await app.settle();
+  assert.deepEqual(app.changes, [{ action: 'readAt', version: 0 }]);
+  item.events.get('click')();
+  await app.settle();
+  assert.deepEqual(app.changes, [{ action: 'readAt', version: 0 }]);
+});
+
 test('inbox actions use the version returned by the previous update', async () => {
   const app = await workspace();
   app.openInbox();
@@ -197,7 +214,7 @@ test('inbox actions use the version returned by the previous update', async () =
   await app.settle();
   app.changeArchive();
   await app.settle();
-  assert.deepEqual(app.changes, [{ action: 'readAt', version: 0 }, { action: 'archivedAt', version: 1 }]);
+  assert.deepEqual(app.changes, [{ action: 'readAt', version: 0 }, { action: 'readAt', version: 1 }, { action: 'archivedAt', version: 2 }]);
   assert.equal(app.element('[data-inbox-list]').children.length, 0);
   assert.equal(app.element('[data-inbox-detail]').hidden, true);
 });

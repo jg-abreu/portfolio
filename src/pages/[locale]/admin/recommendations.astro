@@ -2,6 +2,7 @@
 import PublicationStatus from '../../../components/PublicationStatus.astro';
 import Admin from '../../../layouts/Admin.astro';
 import { locales, type Locale } from '../../../i18n/ui';
+import { adminUi } from '../../../i18n/admin';
 import { recommendationUi } from '../../../i18n/recommendations';
 import { recommendationAdminUi } from '../../../i18n/recommendation-admin';
 import { recommendationCategories } from '../../../lib/recommendations';
@@ -16,6 +17,7 @@ const other = locale === 'en' ? 'pt' : 'en';
       <a class="studio-brand" href={`/${locale}/admin/`}><span class="monogram">JA</span><span>{t.title}</span></a>
       <div class="header-actions"><a class="quiet" href={`/${locale}/admin/`}>{t.back}</a>
         <a class="quiet" href={`/${other}/admin/recommendations/`} lang={other} hreflang={other}>{other.toUpperCase()}</a>
+        <a class="button secondary site-link" href={`/${locale}/`}>{adminUi[locale].site} <span aria-hidden="true">↗</span></a>
       </div>
     </header>
     <main class="recommendation-admin-main">

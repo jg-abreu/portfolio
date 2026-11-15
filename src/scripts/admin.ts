@@ -24,6 +24,7 @@ type InboxMessage = {
   archivedAt: string | null;
   deliveryStatus: string;
 };
+type InboxPage = { messages: InboxMessage[]; hasNext: boolean; totalElements: number; unreadCount: number };
 type InboxDetail = InboxMessage & { email: string; message: string };
 type Draft = {
   id: number;
@@ -64,6 +65,10 @@ function initialize(root: HTMLElement) {
   const form = q<HTMLFormElement>("[data-project-form]");
   const formMessage = q<HTMLElement>("[data-form-message]");
   const saveButton = q<HTMLButtonElement>("[data-save]");
+  const savePublishButton = q<HTMLButtonElement>("[data-save-publish]");
+  const moreMenu = q<HTMLElement>("[data-more-menu]");
+  const editorWithdraw = q<HTMLButtonElement>("[data-editor-withdraw]");
+  const editorArchive = q<HTMLButtonElement>("[data-editor-archive]");
   const coverPreview = q<HTMLImageElement>("[data-cover-preview]");
   const coverFile = q<HTMLInputElement>("[data-cover-file]");
   function showCover() {
@@ -246,6 +251,7 @@ function initialize(root: HTMLElement) {
       connection.hidden = true;
       void updateBuildStatus(root!, request);
       render();
+      void loadCounts();
     } catch (error) {
       if (sessionError(error)) {
         workspace.hidden = true;
@@ -277,7 +283,29 @@ function initialize(root: HTMLElement) {
     }
   }
 
+  function setCount(name: string, value: number | null, suffix = "") {
+    const badge = q<HTMLElement>(`[data-nav-count="${name}"]`);
+    badge.hidden = value === null || value === 0 && name === "inbox";
+    badge.textContent = value === null ? "" : String(value);
+    if (suffix) badge.setAttribute("aria-label", `${value} ${suffix}`);
+  }
+
+  async function loadCounts() {
+    try {
+      const page = await request("/api/admin/messages?archived=false&page=0&size=1");
+      if (isInboxPage(page)) setCount("inbox", page.unreadCount, labels.unreadCount);
+    } catch (error) {
+      if (sessionError(error)) return;
+    }
+    try {
+      const items = await request("/api/admin/recommendations");
+      if (Array.isArray(items))
+        setCount("recommendations", items.filter(item => isObject(item) && item.status !== "ARCHIVED").length);
+    } catch {}
+  }
+
   function render() {
+    setCount("projects", drafts.filter((draft) => draft.status === "DRAFT").length);
     for (const status of ["DRAFT", "ARCHIVED"] as const)
       q<HTMLElement>(`[data-count="${status}"]`).textContent = String(
         drafts.filter((draft) => draft.status === status).length,
@@ -303,10 +331,12 @@ function initialize(root: HTMLElement) {
       };
       text("[data-project-title]", draft[locale].title);
       text("[data-project-description]", draft[locale].tagline);
-      text(
-        "[data-project-status]",
-        publicationLabel(draft),
-      );
+      const state = publicationState(draft);
+      const badge = fragment.querySelector<HTMLElement>("[data-project-status]");
+      if (badge) {
+        badge.textContent = state.text;
+        badge.dataset.tone = state.tone;
+      }
       text("[data-project-stack]", draft.stack);
       const date = fragment.querySelector<HTMLTimeElement>(
         "[data-project-date]",
@@ -321,30 +351,17 @@ function initialize(root: HTMLElement) {
           }).format(new Date(draft.updatedAt)),
         );
       }
+      const card = fragment.querySelector<HTMLElement>(".project-card");
+      card?.addEventListener("click", (event) => {
+        if (!(event.target instanceof Element) || !event.target.closest("button, a")) void openEditor(draft);
+      });
       fragment
         .querySelector<HTMLButtonElement>("[data-edit]")
         ?.addEventListener("click", () => openEditor(draft));
-      const archive =
-        fragment.querySelector<HTMLButtonElement>("[data-archive]");
-      if (archive) {
-        archive.textContent =
-          draft.status === "DRAFT" ? labels.archive : labels.restore;
-        archive.addEventListener(
-          "click",
-          () => void changeStatus(draft, archive),
-        );
-      }
-      const publish = fragment.querySelector<HTMLButtonElement>('[data-publish]');
-      if (publish) {
-        publish.hidden = draft.status !== 'DRAFT';
-        publish.textContent = labels.publish;
-        publish.addEventListener('click', () => void changePublication(draft, publish, false));
-      }
       const withdraw = fragment.querySelector<HTMLButtonElement>('[data-withdraw]');
       if (withdraw) {
-        withdraw.hidden = !publications.some(item => item.projectId === draft.id);
-        withdraw.textContent = labels.withdraw;
-        withdraw.addEventListener('click', () => void changePublication(draft, withdraw, true));
+        withdraw.hidden = !isSelected(draft);
+        withdraw.addEventListener('click', () => void confirmWithdraw(draft, withdraw));
       }
       list.append(fragment);
     }
@@ -356,20 +373,55 @@ function initialize(root: HTMLElement) {
     q<HTMLElement>("[data-empty-body]").hidden = !first;
   }
 
-  function publicationLabel(draft: Draft) {
+  function isSelected(draft: Draft) {
+    return publications.some(item => item.projectId === draft.id);
+  }
+
+  function publicationState(draft: Draft): { text: string; tone: string } {
     const selected = publications.find(item => item.projectId === draft.id);
     const live = deployed.find(item => item.projectId === draft.id);
-    const prefix = draft.status === 'ARCHIVED' ? `${labels.archived} · ` : '';
-    if (!selected && live) return prefix + labels.withdrawPending;
+    if (!selected && live) return { text: labels.withdrawPending, tone: "pending" };
     if (selected) {
-      if (live?.revision !== selected.revision) return prefix + labels.publicationPending;
-      return prefix + (selected.draftVersion === draft.version ? labels.published : labels.unpublishedEdits);
+      if (live?.revision !== selected.revision) return { text: labels.publicationPending, tone: "pending" };
+      return selected.draftVersion === draft.version
+        ? { text: labels.published, tone: "live" }
+        : { text: labels.unpublishedEdits, tone: "changes" };
     }
-    return draft.status === 'DRAFT' ? labels.drafts : labels.archived;
+    return draft.status === "DRAFT"
+      ? { text: labels.statusDraft, tone: "draft" }
+      : { text: labels.statusArchived, tone: "draft" };
+  }
+
+  function confirmAction(title: string, body: string, action: string): Promise<boolean> {
+    const dialog = q<HTMLDialogElement>("[data-confirm]");
+    q<HTMLElement>("[data-confirm-title]").textContent = title;
+    q<HTMLElement>("[data-confirm-body]").textContent = body;
+    const ok = q<HTMLButtonElement>("[data-confirm-ok]");
+    ok.textContent = action;
+    return new Promise((resolve) => {
+      const finish = (value: boolean) => {
+        ok.removeEventListener("click", accept);
+        dialog.removeEventListener("close", cancel);
+        if (dialog.open) dialog.close();
+        resolve(value);
+      };
+      const accept = () => finish(true);
+      const cancel = () => finish(false);
+      ok.addEventListener("click", accept);
+      dialog.addEventListener("close", cancel);
+      dialog.showModal();
+      q<HTMLButtonElement>("[data-confirm-cancel]").focus();
+    });
+  }
+
+  async function confirmWithdraw(draft: Draft, button: HTMLButtonElement) {
+    if (busy) return false;
+    if (!await confirmAction(labels.confirmWithdrawTitle, labels.confirmWithdrawBody, labels.withdraw)) return false;
+    return changePublication(draft, button, true);
   }
 
   async function changePublication(draft: Draft, button: HTMLButtonElement, withdraw: boolean) {
-    if (busy) return;
+    if (busy) return false;
     busy = true;
     button.disabled = true;
     try {
@@ -377,9 +429,11 @@ function initialize(root: HTMLElement) {
       await loadPublications();
       render();
       message(withdraw ? labels.withdrawQueued : labels.publicationQueued);
+      return true;
     } catch (error) {
       message(error instanceof ApiError && error.status === 400 ? labels.publishIncomplete : errorMessage(error));
       reauth.hidden = !sessionError(error);
+      return false;
     } finally {
       busy = false;
       button.disabled = false;
@@ -452,9 +506,19 @@ function initialize(root: HTMLElement) {
     }
     showCover();
     chooseLocale(locale);
+    refreshEditorActions();
     baseline = snapshot();
     editor.showModal();
     input("slug").focus();
+  }
+  function refreshEditorActions() {
+    editorWithdraw.hidden = !current || !isSelected(current);
+    editorArchive.hidden = !current;
+    editorArchive.textContent = current?.status === "ARCHIVED" ? labels.restore : labels.archive;
+    savePublishButton.hidden = current?.status === "ARCHIVED";
+  }
+  function closeMore() {
+    try { moreMenu.hidePopover(); } catch {}
   }
   function closeEditor() {
     if (busy) return;
@@ -469,7 +533,7 @@ function initialize(root: HTMLElement) {
   }
 
   async function changeStatus(draft: Draft, button: HTMLButtonElement) {
-    if (busy) return;
+    if (busy) return false;
     busy = true;
     button.disabled = true;
     reauth.hidden = true;
@@ -483,9 +547,11 @@ function initialize(root: HTMLElement) {
       if (!isDraft(data)) throw new Error("Invalid draft response");
       store(data);
       message(status === "ARCHIVED" ? labels.archivedNotice : labels.restored);
+      return true;
     } catch (error) {
       message(errorMessage(error));
       reauth.hidden = !sessionError(error);
+      return false;
     } finally {
       busy = false;
       button.disabled = false;
@@ -495,6 +561,7 @@ function initialize(root: HTMLElement) {
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (busy) return;
+    const publish = event.submitter === savePublishButton;
     const invalid = [
       ...form.querySelectorAll<HTMLInputElement | HTMLTextAreaElement>(
         "input, textarea",
@@ -537,8 +604,10 @@ function initialize(root: HTMLElement) {
       profiles,
     };
     busy = true;
-    saveButton.disabled = true;
-    saveButton.textContent = labels.saving;
+    const pressed = publish ? savePublishButton : saveButton;
+    const idle = pressed.textContent;
+    saveButton.disabled = savePublishButton.disabled = true;
+    pressed.textContent = labels.saving;
     formMessage.textContent = "";
     q<HTMLAnchorElement>("[data-form-reauth]").hidden = true;
     try {
@@ -558,22 +627,52 @@ function initialize(root: HTMLElement) {
         }
       }
       store(data);
-      editor.close();
-      message(labels.saved);
+      current = data;
+      baseline = snapshot();
+      if (publish) {
+        try {
+          await mutate(`/api/admin/projects/${data.id}/publication`, "PUT", { version: data.version });
+          await loadPublications();
+          render();
+          editor.close();
+          message(labels.publicationQueued);
+        } catch (error) {
+          q<HTMLElement>("[data-editor-heading]").textContent = labels.editorEdit;
+          refreshEditorActions();
+          formMessage.textContent = error instanceof ApiError && error.status === 400
+            ? labels.publishIncomplete : errorMessage(error);
+          q<HTMLAnchorElement>("[data-form-reauth]").hidden = !sessionError(error);
+        }
+      } else {
+        editor.close();
+        message(labels.saved);
+      }
     } catch (error) {
       formMessage.textContent = errorMessage(error);
       q<HTMLAnchorElement>("[data-form-reauth]").hidden = !sessionError(error);
     } finally {
       busy = false;
-      saveButton.disabled = false;
-      saveButton.textContent = labels.save;
+      saveButton.disabled = savePublishButton.disabled = false;
+      pressed.textContent = idle;
     }
   });
+  editorWithdraw.addEventListener("click", async () => {
+    closeMore();
+    if (!current || snapshot() !== baseline && !await confirmAction(labels.unsaved, labels.discardBody, labels.discard)) return;
+    if (await confirmWithdraw(current, editorWithdraw)) editor.close();
+  });
+  editorArchive.addEventListener("click", async () => {
+    closeMore();
+    if (!current) return;
+    if (current.status === "DRAFT" && !await confirmAction(labels.confirmArchiveTitle, labels.confirmArchiveBody, labels.archive)) return;
+    if (await changeStatus(current, editorArchive)) editor.close();
+  });
 
+  q<HTMLButtonElement>("[data-confirm-cancel]").addEventListener("click", () => q<HTMLDialogElement>("[data-confirm]").close());
   for (const button of root.querySelectorAll<HTMLButtonElement>("[data-new]"))
     button.addEventListener("click", () => openEditor(null));
   for (const button of root.querySelectorAll<HTMLButtonElement>("[data-close]"))
-    button.addEventListener("click", closeEditor);
+    button.addEventListener("click", () => { closeMore(); closeEditor(); });
   editor.addEventListener("cancel", (event) => {
     event.preventDefault();
     closeEditor();
@@ -672,17 +771,41 @@ function initialize(root: HTMLElement) {
     q<HTMLElement>("[data-inbox-sender]").focus();
   }
 
+  function markItem(id: number, read: boolean) {
+    const item = q<HTMLElement>("[data-inbox-list]").querySelector<HTMLElement>(`[data-message-id="${id}"]`);
+    if (!item) return;
+    item.classList.toggle("unread", !read);
+    const state = item.querySelector<HTMLElement>(".sr-only");
+    if (state) state.textContent = read ? labels.inboxRead : labels.inboxUnread;
+  }
+
+  function selectItem(id: number) {
+    for (const item of q<HTMLElement>("[data-inbox-list]").querySelectorAll<HTMLElement>("[data-message-id]"))
+      if (item.dataset.messageId === String(id)) item.setAttribute("aria-current", "true");
+      else item.removeAttribute("aria-current");
+  }
+
   async function openMessage(id: number) {
     if (inboxBusy) return;
     inboxBusy = true;
     const generation = ++inboxGeneration;
     inboxCurrent = null;
     q<HTMLElement>("[data-inbox-detail]").hidden = true;
+    selectItem(id);
     inboxStatus(labels.checking);
     try {
-      const detail = await request(`/api/admin/messages/${id}`);
+      const loaded = await request(`/api/admin/messages/${id}`);
       if (generation !== inboxGeneration) return;
-      if (!isInboxDetail(detail)) throw new Error("Invalid inbox detail");
+      if (!isInboxDetail(loaded)) throw new Error("Invalid inbox detail");
+      let detail: InboxDetail = loaded;
+      if (!detail.readAt && !detail.archivedAt) {
+        const read = await mutate(`/api/admin/messages/${id}/read`, "PATCH", { value: true, version: detail.version });
+        if (generation !== inboxGeneration) return;
+        if (!isInboxDetail(read)) throw new Error("Invalid inbox update");
+        detail = read;
+        markItem(id, true);
+        void loadCounts();
+      }
       showMessage(detail);
       inboxStatus("");
     } catch (error) {
@@ -704,18 +827,29 @@ function initialize(root: HTMLElement) {
     try {
       const data = await request(`/api/admin/messages?archived=${inboxArchived}&page=${inboxPage}&size=20`);
       if (generation !== inboxGeneration) return;
-      if (!isObject(data) || !Array.isArray(data.messages) || !data.messages.every(isInboxMessage)
-        || typeof data.hasNext !== "boolean" || !Number.isSafeInteger(data.totalElements))
-        throw new Error("Invalid inbox page");
+      if (!isInboxPage(data)) throw new Error("Invalid inbox page");
+      setCount("inbox", data.unreadCount, labels.unreadCount);
       const list = q<HTMLElement>("[data-inbox-list]");
       for (const item of data.messages) {
         const button = document.createElement("button");
         button.type = "button";
         button.className = "inbox-item";
-        const date = new Intl.DateTimeFormat(locale === "pt" ? "pt-BR" : "en-US", {
+        button.dataset.messageId = String(item.id);
+        button.classList.toggle("unread", !item.readAt);
+        const dot = document.createElement("span");
+        dot.className = "inbox-dot";
+        dot.setAttribute("aria-hidden", "true");
+        const name = document.createElement("strong");
+        name.textContent = item.name;
+        const time = document.createElement("time");
+        time.dateTime = item.createdAt;
+        time.textContent = new Intl.DateTimeFormat(locale === "pt" ? "pt-BR" : "en-US", {
           dateStyle: "medium", timeStyle: "short", timeZone: "America/Sao_Paulo",
         }).format(new Date(item.createdAt));
-        button.textContent = `${item.name} · ${date} · ${item.readAt ? labels.inboxRead : labels.inboxUnread}`;
+        const state = document.createElement("span");
+        state.className = "sr-only";
+        state.textContent = item.readAt ? labels.inboxRead : labels.inboxUnread;
+        button.append(dot, name, time, state);
         button.addEventListener("click", () => void openMessage(item.id));
         list.append(button);
       }
@@ -742,6 +876,7 @@ function initialize(root: HTMLElement) {
       if (generation !== inboxGeneration) return;
       if (!isInboxDetail(detail)) throw new Error("Invalid inbox update");
       await loadInbox();
+      selectItem(detail.id);
       if (action === "read" && generation + 1 === inboxGeneration && !workspace.hidden) showMessage(detail);
     } catch (error) {
       if (generation === inboxGeneration) showInboxError(error);
@@ -811,6 +946,11 @@ function isInboxMessage(value: unknown): value is InboxMessage {
     && [value.readAt, value.archivedAt].every(date => date === null
       || typeof date === "string" && Number.isFinite(Date.parse(date)))
     && ["pending", "sending", "sent", "failed"].includes(String(value.deliveryStatus));
+}
+function isInboxPage(value: unknown): value is InboxPage {
+  return isObject(value) && Array.isArray(value.messages) && value.messages.every(isInboxMessage)
+    && typeof value.hasNext === "boolean" && Number.isSafeInteger(value.totalElements)
+    && Number.isSafeInteger(value.unreadCount) && Number(value.unreadCount) >= 0;
 }
 function isInboxDetail(value: unknown): value is InboxDetail {
   return isInboxMessage(value) && "email" in value && typeof value.email === "string"
