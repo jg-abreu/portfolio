@@ -7,7 +7,7 @@ import RepoGrid from '../../components/RepoGrid.astro';
 import TechGrid from '../../components/TechGrid.astro';
 import VisitCounter from '../../components/VisitCounter.astro';
 import { localeTags, locales, useTranslations, type Locale } from '../../i18n/ui';
-import { heatmapCells, recentRepos } from '../../lib/activity';
+import { activityStats, heatmapCells, recentRepos } from '../../lib/activity';
 import { rioDate } from '../../lib/calendar';
 import { getContacts, getPracticeProfiles, getProjects, getStack } from '../../lib/content';
 import { getGitHubSnapshot } from '../../lib/github';
@@ -34,6 +34,7 @@ const snapshot = getGitHubSnapshot();
 const today = snapshot?.generatedAt ?? '';
 const contributions = snapshot?.contributions ?? null;
 const cells = contributions ? heatmapCells(contributions, today) : [];
+const streak = contributions ? activityStats(contributions, rioDate()).currentStreak : null;
 const practiceDays = snapshot?.practiceDays ?? [];
 // Practice days are days in Rio, so the streak is measured against today in Rio.
 const practice = practiceStats(practiceDays, rioDate());
@@ -83,12 +84,20 @@ Astro.csp?.insertScriptHash(`sha256-${createHash('sha256').update(personJsonLd).
 					</h2>
 					{
 						contributions && (
-							<p class="pill" data-live-block>
-								<strong data-live="contributions" data-value={contributions.total}>
-									{numberFormat.format(contributions.total)}
-								</strong>{' '}
-								{t('stats.contributions')}
-							</p>
+							<div class="pills">
+								<p class="pill" data-live-block>
+									<strong data-live="contributions" data-value={contributions.total}>
+										{numberFormat.format(contributions.total)}
+									</strong>{' '}
+									{t('stats.contributions')}
+								</p>
+								<p class="pill">
+									{t('stats.streakNow')}{' '}
+									<strong data-home-streak data-day-one={t('leetcode.day')} data-day-many={t('leetcode.days')}>
+										{dayCount(streak ?? 0)}
+									</strong>
+								</p>
+							</div>
 						)
 					}
 				</div>
@@ -396,6 +405,12 @@ Astro.csp?.insertScriptHash(`sha256-${createHash('sha256').update(personJsonLd).
 
 	.pill strong {
 		color: var(--fg);
+	}
+
+	.pills {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
 	}
 
 	.readings {
