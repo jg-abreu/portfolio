@@ -143,6 +143,8 @@ function updateActivity(contributions: Contributions) {
 	set('activeDays', numberFormat.format(stats.activeDays));
 	set('currentStreak', dayLabel(stats.currentStreak));
 	set('longestStreak', dayLabel(stats.longestStreak));
+	const homeStreak = document.querySelector<HTMLElement>('[data-home-streak]');
+	if (homeStreak) homeStreak.textContent = dayLabel(stats.currentStreak);
 	if (stats.bestDay) {
 		set('bestCount', numberFormat.format(stats.bestDay.count));
 		set('bestDate', dateFormat.format(at(stats.bestDay.date)));
