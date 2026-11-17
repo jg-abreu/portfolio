@@ -51,8 +51,10 @@ test('builds bilingual project and blog pages and preserves selected copies on f
     }
     response.writeHead(fail ? 503 : 200, { 'Content-Type': 'application/json' });
     response.end(JSON.stringify(request.url === '/api/recommendations'
-      ? { schemaVersion: 2, sections: [{ id: 3, kind: 'BOOKS', en: { title: 'Synthetic books' }, pt: { title: 'Livros sintéticos' },
-        items: [recommendation, bookRecommendation] }] } : { schemaVersion: 1, projects: [project] }));
+      ? { schemaVersion: 3, sections: [{ id: 3, slug: 'synthetic-books', kind: 'BOOKS', url: '',
+        en: { title: 'Synthetic books', description: 'Books for the test' }, pt: { title: 'Livros sintéticos', description: 'Livros do teste' },
+        items: [recommendation, bookRecommendation] }, { id: 4, slug: 'gear', kind: 'LINK', url: 'https://www.amazon.com.br/shop/test',
+        en: { title: 'Gear' }, pt: { title: 'Equipamentos' }, items: [] }] } : { schemaVersion: 1, projects: [project] }));
   });
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
   const address = server.address();
@@ -78,9 +80,12 @@ test('builds bilingual project and blog pages and preserves selected copies on f
     assert.match(en, /<strong>Saved Markdown<\/strong>/);
     assert.match(pt, /Teste de publicação/);
     for (const locale of ['en', 'pt']) {
-      const picks = await readFile(`dist/${locale}/recommendations/index.html`, 'utf8');
+      const doors = await readFile(`dist/${locale}/recommendations/index.html`, 'utf8');
+      assert.match(doors, new RegExp(`href="/${locale}/recommendations/synthetic-books/"`));
+      assert.match(doors, /href="https:\/\/www\.amazon\.com\.br\/shop\/test"[^>]*target="_blank"/);
+      assert.match(doors, locale === 'en' ? /Synthetic books/ : /Livros sintéticos/);
+      const picks = await readFile(`dist/${locale}/recommendations/synthetic-books/index.html`, 'utf8');
       assert.match(picks, new RegExp(recommendation.data[locale as 'en' | 'pt'].title));
-      assert.match(picks, locale === 'en' ? /Synthetic books/ : /Livros sintéticos/);
       assert.match(picks, locale === 'en' ? /Non-technical/ : /Não técnicos/);
       assert.match(picks, locale === 'en' ? /4 of 5 stars/ : /4 de 5 estrelas/);
       assert.match(picks, /Synthetic author/);
@@ -90,7 +95,7 @@ test('builds bilingual project and blog pages and preserves selected copies on f
       assert.match(picks, /https:\/\/books\.google\.com\/books\/content\?id=synthetic-edition/);
       assert.match(picks, /poweredby\.png/);
       assert.match(picks, new RegExp(`href="/${locale}/recommendations/"[^>]*aria-label="[^"]+"[^>]*aria-current="page"`));
-      assert.match(picks, new RegExp(`href="/${locale === 'en' ? 'pt' : 'en'}/recommendations/"`));
+      assert.match(picks, /Buy on Amazon|Comprar na Amazon|View book|Ver livro/);
       const blog = await readFile(`dist/${locale}/blog/local-article-test/index.html`, 'utf8');
       assert.match(blog, /<strong>Local Markdown body<\/strong>/);
       assert.match(blog, /data-visits(?:\s|=|>)/);

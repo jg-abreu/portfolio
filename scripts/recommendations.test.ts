@@ -2,19 +2,49 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createHash } from 'node:crypto';
 import { fetchRecommendationImage, fetchRecommendations, recommendationSource } from './recommendation-source.ts';
-import { allRecommendations, parseRecommendationSnapshot } from '../src/lib/recommendations.ts';
+import { allRecommendations, isAmazon, parseRecommendationSnapshot, starFill } from '../src/lib/recommendations.ts';
 
 const item = () => ({ recommendationId: 1, revision: '12345678-1234-1234-1234-123456789abc', draftVersion: 0,
-  data: { slug: 'synthetic-book', sectionId: 3, imageKey: `${'a'.repeat(64)}.png`, url: '', rating: 4,
-    bookGroup: 'TECHNICAL' as string | null, subtitle: 'Synthetic author', googleBooksId: '',
+  data: { slug: 'synthetic-book', sectionId: 3, imageKey: `${'a'.repeat(64)}.png`, url: '', rating: 4 as number,
+    bookGroup: 'TECHNICAL' as string | null, readIn: null as string | null, subtitle: 'Synthetic author', googleBooksId: '',
     en: { title: 'Synthetic book', description: 'Test fixture only.', imageAlt: 'Test cover' },
     pt: { title: 'Livro sintético', description: 'Somente teste.', imageAlt: 'Capa de teste' } } });
-const books = (items: unknown[]) => ({ id: 3, kind: 'BOOKS', en: { title: 'Books' }, pt: { title: 'Livros' }, items });
+const books = (items: unknown[]) => ({ id: 3, slug: 'books', kind: 'BOOKS', url: '',
+  en: { title: 'Books', description: '' }, pt: { title: 'Livros', description: 'Os que recomendo' }, items });
 const parse = (value: unknown, kind = 'BOOKS') =>
-  parseRecommendationSnapshot({ schemaVersion: 2, sections: [{ ...books([value]), kind }] });
+  parseRecommendationSnapshot({ schemaVersion: 3, sections: [{ ...books([value]), kind }] });
+
+test('reads the previous schema with generated section addresses', () => {
+  const legacy = parseRecommendationSnapshot({ schemaVersion: 2, sections: [{ id: 3, kind: 'BOOKS', en: { title: 'Books' },
+    pt: { title: 'Livros' }, items: [item()] }] });
+  assert.equal(legacy.sections[0]!.slug, 'section-3');
+  assert.equal(legacy.sections[0]!.pt.description, '');
+});
+
+test('books take half stars and an optional reading language; link sections hold no items', () => {
+  const half = item(); Object.assign(half.data, { rating: 4.5, readIn: 'EN' });
+  assert.equal(parse(half).sections[0]!.items[0]!.data.rating, 4.5);
+  assert.equal(parse(half).sections[0]!.items[0]!.data.readIn, 'EN');
+  for (const change of [{ rating: 4.3 }, { readIn: 'ES' }]) {
+    const value = item(); Object.assign(value.data, change);
+    assert.throws(() => parse(value), JSON.stringify(change));
+  }
+  const link = { id: 9, slug: 'setup', kind: 'LINK', url: 'https://www.amazon.com.br/shop/x', en: { title: 'Setup' }, pt: { title: 'Setup' }, items: [] };
+  assert.equal(parseRecommendationSnapshot({ schemaVersion: 3, sections: [link] }).sections[0]!.url, link.url);
+  for (const invalid of [{ ...link, url: 'http://example.com' }, { ...link, url: '' }, { ...link, items: [item()] }, { ...link, slug: '../x' }])
+    assert.throws(() => parseRecommendationSnapshot({ schemaVersion: 3, sections: [invalid] }));
+  assert.throws(() => parseRecommendationSnapshot({ schemaVersion: 2, sections: [{ ...link, items: [] }] }));
+});
+
+test('star fill and Amazon detection', () => {
+  assert.deepEqual([1, 2, 3, 4, 5].map(star => starFill(3.5, star)), ['full', 'full', 'full', 'half', 'empty']);
+  assert.equal(isAmazon('https://www.amazon.com.br/shop/x'), true);
+  assert.equal(isAmazon('https://amzn.to/abc'), true);
+  assert.equal(isAmazon('https://notamazon.example.com'), false);
+});
 
 test('accepts the empty legacy catalogue and strips unrecognized publication data', () => {
-  assert.deepEqual(parseRecommendationSnapshot({ schemaVersion: 1, recommendations: [] }), { schemaVersion: 2, sections: [] });
+  assert.deepEqual(parseRecommendationSnapshot({ schemaVersion: 1, recommendations: [] }), { schemaVersion: 3, sections: [] });
   assert.throws(() => parseRecommendationSnapshot({ schemaVersion: 1, recommendations: [item()] }));
   const value = { ...item(), privateEmail: 'private@example.com' };
   const parsed = parse(value);
@@ -50,9 +80,9 @@ test('books need a rating, a group and a cover; items need neither', () => {
 });
 
 test('rejects duplicates, empty sections and invalid versions or kinds', () => {
-  assert.throws(() => parseRecommendationSnapshot({ schemaVersion: 2, sections: [books([item(), item()])] }));
-  assert.throws(() => parseRecommendationSnapshot({ schemaVersion: 2, sections: [books([])] }));
-  assert.throws(() => parseRecommendationSnapshot({ schemaVersion: 2, sections: [books([item()]), books([{ ...item(), recommendationId: 2 }])] }));
+  assert.throws(() => parseRecommendationSnapshot({ schemaVersion: 3, sections: [books([item(), item()])] }));
+  assert.throws(() => parseRecommendationSnapshot({ schemaVersion: 3, sections: [books([])] }));
+  assert.throws(() => parseRecommendationSnapshot({ schemaVersion: 3, sections: [books([item()]), books([{ ...item(), recommendationId: 2 }])] }));
   for (const draftVersion of [-1, 0.5, Number.MAX_SAFE_INTEGER + 1]) assert.throws(() => parse({ ...item(), draftVersion }));
   assert.throws(() => parse(item(), 'COURSES'));
 });

@@ -31,22 +31,24 @@ const other = locale === 'en' ? 'pt' : 'en';
         </div>
         <p class="muted">{t.intro}</p>
         <PublicationStatus locale={locale} />
-        <div class="rec-toolbar"><button class="button primary" type="button" data-new-section>＋ {t.newSection}</button></div>
+        <div class="rec-toolbar">
+          <button class="button primary" type="button" data-new-section="BOOKS">＋ {t.newBooks}</button>
+          <button class="button secondary" type="button" data-new-section="ITEMS">＋ {t.newItems}</button>
+          <button class="button secondary" type="button" data-new-section="LINK">＋ {t.newLink}</button>
+        </div>
         <p class="muted" data-empty hidden>{t.emptySections}</p>
         <div class="rec-sections" data-sections></div>
       </div>
 
       <dialog class="rec-dialog" data-section-dialog aria-labelledby="section-dialog-heading">
         <form data-section-form novalidate>
-          <h2 id="section-dialog-heading">{t.sectionDialog}</h2>
-          <fieldset class="kind-choice">
-            <legend>{t.sectionKind}</legend>
-            <label><input type="radio" name="kind" value="BOOKS" checked /> {t.kindBooks}</label>
-            <label><input type="radio" name="kind" value="ITEMS" /> {t.kindItems}</label>
-            <small data-kind-locked hidden>{t.kindLocked}</small>
-          </fieldset>
+          <h2 id="section-dialog-heading" data-section-heading>{t.sectionDialog}</h2>
           <label>{t.sectionTitlePt}<input name="ptTitle" maxlength="80" required autocomplete="off" /></label>
           <label>{t.sectionTitleEn}<input name="enTitle" maxlength="80" required autocomplete="off" /></label>
+          <label>{t.sectionDescriptionPt}<input name="ptDescription" maxlength="200" autocomplete="off" /></label>
+          <label>{t.sectionDescriptionEn}<input name="enDescription" maxlength="200" autocomplete="off" /></label>
+          <label data-link-only>{t.sectionUrl}<input name="sectionUrl" type="url" maxlength="1000" placeholder="https://www.amazon.com.br/…" autocomplete="off" />
+            <small>{t.sectionUrlHelp}</small></label>
           <div class="dialog-footer">
             <button class="button secondary" type="button" data-section-cancel>{t.cancel}</button>
             <button class="button primary" type="submit">{t.saveSection}</button>
@@ -78,12 +80,10 @@ const other = locale === 'en' ? 'pt' : 'en';
                 <span class="field-label" data-image-label>{t.cover}</span>
                 <img data-preview hidden alt="" />
                 <span class="image-empty" data-preview-empty aria-hidden="true">＋</span>
-                <input data-file type="file" accept="image/png,image/jpeg" aria-describedby="upload-help" />
+                <label class="button secondary file-button">{t.chooseImage}
+                  <input data-file type="file" accept="image/png,image/jpeg" aria-describedby="upload-help" /></label>
                 <small id="upload-help">{t.uploadHelp}</small>
-                <span class="inline">
-                  <button class="button secondary" type="button" data-upload>{t.upload}</button>
-                  <button class="quiet" type="button" data-remove-image>{t.removeImage}</button>
-                </span>
+                <button class="quiet" type="button" data-remove-image>{t.removeImage}</button>
                 <a class="quiet" data-book-source hidden target="_blank" rel="noopener noreferrer">{t.bookOpen} ↗</a>
                 <input name="imageKey" type="hidden" />
                 <input name="googleBooksId" type="hidden" />
@@ -91,10 +91,23 @@ const other = locale === 'en' ? 'pt' : 'en';
               <div class="fields">
                 <label><span data-title-label>{t.bookTitle}</span><input name="title" maxlength="150" required autocomplete="off" /></label>
                 <label><span data-subtitle-label>{t.author}</span><input name="subtitle" maxlength="150" autocomplete="off" /></label>
-                <fieldset class="stars" data-book-only>
+                <fieldset class="stars" data-book-only data-stars>
                   <legend>{t.rating}</legend>
-                  {[1, 2, 3, 4, 5].map(value => <label class="star"><input type="radio" name="rating" value={value} />
-                    <span class="sr-only">{t.ratingValue.replace('{n}', String(value))}</span><span aria-hidden="true">★</span></label>)}
+                  <span class="star-row">
+                    {[1, 2, 3, 4, 5].map(star => <span class="star" data-star={star}>
+                      <span class="glyph" aria-hidden="true">★</span><span class="glyph fill" aria-hidden="true">★</span>
+                      {[star - 0.5, star].map((value, index) => <label class:list={['half', index === 0 ? 'left' : 'right']}>
+                        <input type="radio" name="rating" value={value} />
+                        <span class="sr-only">{t.ratingValue.replace('{n}', String(value).replace('.', locale === 'pt' ? ',' : '.'))}</span></label>)}
+                    </span>)}
+                  </span>
+                  <output class="star-value" data-star-value></output>
+                </fieldset>
+                <fieldset class="group-choice" data-book-only>
+                  <legend>{t.readIn}</legend>
+                  <label><input type="radio" name="readIn" value="PT" /> {t.readPt}</label>
+                  <label><input type="radio" name="readIn" value="EN" /> {t.readEn}</label>
+                  <label><input type="radio" name="readIn" value="" /> {t.readNone}</label>
                 </fieldset>
                 <fieldset class="group-choice" data-book-only>
                   <legend>{t.groups}</legend>
@@ -169,6 +182,7 @@ const other = locale === 'en' ? 'pt' : 'en';
   .rec-sections :global(.rec-item .stars) { color: #eab308; font-size: 12px; letter-spacing: 1px; }
   .rec-sections :global(.empty-items) { color: var(--muted); font-size: 12px; margin: .75rem 0 0; }
   .rec-sections :global(.add-item) { margin-top: .9rem; }
+  .rec-sections :global(.link-target) { display: inline-block; margin-top: .75rem; color: var(--blue); font-size: 13px; overflow-wrap: anywhere; }
   .rec-sections :global(.status-badge), .status-badge { display: inline-block; justify-self: start; padding: 1px 8px; border-radius: 999px; font-size: 10px; font-weight: 600;
     background: var(--raised); color: var(--muted); }
   :global(.status-badge[data-tone="live"]) { background: color-mix(in srgb, #22c55e 18%, transparent); color: #16a34a; }
@@ -208,13 +222,22 @@ const other = locale === 'en' ? 'pt' : 'en';
   .book-search :global(.book-results li) { display: grid; gap: .3rem; font-size: 11px; border: 1px solid var(--line); border-radius: .6rem; padding: .5rem; background: var(--bg); }
   .book-search :global(.book-results img) { width: 100%; height: 7rem; object-fit: contain; }
   .book-search p, .google-attribution { margin: .5rem 1.25rem 0; }
-  .stars { display: flex; flex-wrap: wrap; align-items: center; gap: .1rem; }
+  .stars { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
   .stars legend { width: 100%; margin-bottom: .3rem; }
-  .rec-dialog .star { margin: 0; cursor: pointer; font-size: 26px; line-height: 1; color: var(--line); }
+  .star-row { display: inline-flex; gap: .15rem; }
+  .star { position: relative; display: inline-block; width: 28px; height: 28px; font-size: 28px; line-height: 28px; }
+  .star .glyph { position: absolute; inset: 0; color: var(--line); text-align: center; }
+  .star .fill { color: #eab308; clip-path: inset(0 100% 0 0); }
+  .star.full .fill { clip-path: none; }
+  .star.half .fill { clip-path: inset(0 50% 0 0); }
+  .rec-dialog .star .half { position: absolute; top: 0; bottom: 0; width: 50%; margin: 0; cursor: pointer; }
+  .star .left { left: 0; } .star .right { right: 0; }
   .star input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-  .star:has(input:focus-visible) { outline: 2px solid var(--blue); border-radius: 4px; }
-  .stars.filled-1 .star:nth-of-type(-n+1), .stars.filled-2 .star:nth-of-type(-n+2), .stars.filled-3 .star:nth-of-type(-n+3),
-  .stars.filled-4 .star:nth-of-type(-n+4), .stars.filled-5 .star:nth-of-type(-n+5) { color: #eab308; }
+  .star .half:has(input:focus-visible) { outline: 2px solid var(--blue); border-radius: 4px; }
+  .star-value { font-family: ui-monospace, monospace; color: var(--muted); font-size: 13px; }
+  .file-button { position: relative; overflow: hidden; cursor: pointer; justify-self: start; }
+  .file-button input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .file-button:has(input:focus-visible) { outline: 2px solid var(--blue); }
   .group-choice { display: flex; flex-wrap: wrap; gap: .25rem 1rem; }
   .group-choice legend { width: 100%; }
   :global([aria-invalid="true"]) { border-color: #ef4444 !important; box-shadow: 0 0 0 2px #ef444455; }

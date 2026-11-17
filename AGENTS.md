@@ -91,7 +91,10 @@ src/
   lib/card-admin.ts         card settings validators, row packing that mirrors the API, base64url preview encoding
   lib/contact.ts            same-origin CSRF contact client and acknowledged receipt
   lib/sortable.ts           pointer drag-to-reorder for admin lists (mouse anywhere, touch on the grip)
-  lib/recommendations.ts    recommendation snapshot v2: free sections (Books or Items), book ratings and groups
+  lib/recommendations.ts    recommendation snapshot (v3, reads v2): sections Books, Items or external Link, half-star
+                            ratings, reading language, Amazon link detection
+  components/RecommendationSection.astro  a section's cards: Technical / Non-technical book columns, stars, link button
+  pages/[locale]/recommendations/[slug].astro  one page per Books or Items section; the index shows a card per section
   scripts/contact.ts        optional contact submission, retry keys and bilingual feedback
   lib/visits.ts             same-origin CSRF visit registration and validated real total
   scripts/visits.ts         optional public-page tracking after load; hides unavailable totals

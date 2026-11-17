@@ -7,13 +7,14 @@ import ts from 'typescript';
 import { AdminClient, AdminRequestError } from '../src/lib/admin-client.ts';
 import { isRecommendationDraft, isRecommendationSection, isRecommendationSummary, reorder } from '../src/lib/recommendation-admin.ts';
 import { bookCoverUrl, bookInfoUrl, parseBookResults } from '../src/lib/google-books.ts';
-import { bookGroups } from '../src/lib/recommendations.ts';
+import { bookGroups, linkHost, starFill } from '../src/lib/recommendations.ts';
 
 const source = ts.transpileModule(readFileSync('src/scripts/recommendation-admin.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
 const copy = { title: '<img src=x onerror=unsafe()>', description: 'Private recommendation', imageAlt: '' };
-const section = { id: 7, version: 0, displayOrder: 0, items: 1, data: { kind: 'ITEMS', en: { title: 'Setup' }, pt: { title: 'Setup' } } };
+const section = { id: 7, version: 0, displayOrder: 0, items: 1, data: { kind: 'ITEMS', en: { title: 'Setup', description: '' },
+  pt: { title: 'Setup', description: '' }, slug: 'setup', url: '' } };
 const draft = { id: 1, version: 0, status: 'DRAFT', displayOrder: 0, updatedAt: '2026-11-13T12:00:00Z',
-  data: { slug: 'synthetic-item', sectionId: 7, rating: 0, bookGroup: null, subtitle: 'Synthetic brand', imageKey: '', url: '', googleBooksId: '', en: copy, pt: copy } };
+  data: { slug: 'synthetic-item', sectionId: 7, rating: 0, bookGroup: null, readIn: null, subtitle: 'Synthetic brand', imageKey: '', url: '', googleBooksId: '', en: copy, pt: copy } };
 const book = { volumeId: 'edition', title: '<img src=x onerror=unsafe()>', authors: ['Synthetic author'], publisher: 'Test publisher', publishedDate: '2026', hasCover: true };
 
 function harness() {
@@ -62,12 +63,12 @@ function harness() {
     return Response.json({ schemaVersion: 1, recommendations: [] });
   }) as typeof fetch;
   class BoundClient extends AdminClient { constructor(clear: () => void) { super(clear, transport); } }
-  const root = { dataset: { locale: 'en', labels: JSON.stringify({ expired: 'Expired', statusDraft: 'Draft', ratingValue: '{n}' }) }, querySelector: element };
+  const root = { dataset: { locale: 'en', labels: JSON.stringify({ expired: 'Expired', statusDraft: 'Draft', ratingValue: '{n}' }) }, querySelector: element, querySelectorAll: () => [] };
   runInNewContext(source, { exports: {}, require: (path: string) => path.includes('publication-status') ? { clearBuildStatus, updateBuildStatus }
     : path.includes('admin-client') ? { AdminClient: BoundClient, AdminRequestError }
     : path.includes('google-books') ? { bookCoverUrl, bookInfoUrl, parseBookResults }
     : path.includes('sortable') ? { sortable() {} }
-    : path.includes('lib/recommendations') ? { bookGroups }
+    : path.includes('lib/recommendations') ? { bookGroups, linkHost, starFill }
     : { isRecommendationDraft, isRecommendationSection, isRecommendationSummary, reorder },
     document: { querySelector: () => root, createElement: () => make(`created-${created++}`), visibilityState: 'visible' },
     window: { addEventListener() {}, setInterval(callback: Function) { poll = callback; }, setTimeout }, fetch: transport, FormData, AbortSignal, console });
@@ -135,6 +136,8 @@ test('validators accept the section and draft shapes and reject unsafe ones', ()
   assert.ok(isRecommendationDraft(draft));
   assert.equal(isRecommendationSection({ ...section, data: { ...section.data, kind: 'VIDEOS' } }), false);
   assert.equal(isRecommendationDraft({ ...draft, data: { ...draft.data, rating: 6 } }), false);
+  assert.equal(isRecommendationDraft({ ...draft, data: { ...draft.data, rating: 4.25 } }), false);
+  assert.ok(isRecommendationDraft({ ...draft, data: { ...draft.data, rating: 4.5, readIn: 'EN' } }));
   assert.equal(isRecommendationDraft({ ...draft, data: { ...draft.data, bookGroup: 'OTHER' } }), false);
   assert.equal(isRecommendationDraft({ ...draft, data: { ...draft.data, imageKey: '../x.png' } }), false);
   assert.deepEqual(reorder([1, 2, 3], 3, 0), [3, 1, 2]);
