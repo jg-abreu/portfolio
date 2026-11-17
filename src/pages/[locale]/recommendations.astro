@@ -5,7 +5,7 @@ import Base from '../../layouts/Base.astro';
 import { locales, type Locale } from '../../i18n/ui';
 import { recommendationUi } from '../../i18n/recommendations';
 import { getRecommendations } from '../../lib/recommendation-data';
-import { bookGroups, type PublicRecommendation, type PublicSection } from '../../lib/recommendations';
+import { linkHost, type PublicSection } from '../../lib/recommendations';
 import { bookCoverUrl } from '../../lib/google-books';
 
 export function getStaticPaths() {
@@ -15,19 +15,14 @@ const locale = Astro.params.locale as Locale;
 const labels = recommendationUi[locale];
 const { sections } = getRecommendations();
 const images = import.meta.glob<{ default: ImageMetadata }>('../../assets/recommendations-generated/*.png', { eager: true });
-function imageFor(key: string) {
-  const image = images[`../../assets/recommendations-generated/${key}`]?.default;
-  if (!image) throw new Error(`Missing recommendation image: ${key}`);
-  return image;
-}
-function groups(section: PublicSection) {
-  if (section.kind !== 'BOOKS') return [{ id: 'all', title: '', items: section.items }];
-  return bookGroups.map(group => ({ id: group, title: labels.groups[group], items: section.items.filter(item => item.data.bookGroup === group) }))
-    .filter(group => group.items.length > 0);
-}
-const usesGoogle = (section: PublicSection) => section.items.some(item => item.data.googleBooksId);
-const stars = (rating: number) => labels.rating.replace('{n}', String(rating));
-type Card = PublicRecommendation;
+const preview = (section: PublicSection) => section.items.filter(item => item.data.googleBooksId || item.data.imageKey).slice(0, 4)
+  .map(({ data }) => data.googleBooksId ? { src: bookCoverUrl(data.googleBooksId) }
+    : { image: images[`../../assets/recommendations-generated/${data.imageKey}`]?.default });
+const count = (section: PublicSection) => {
+  const n = section.items.length;
+  const [one, many] = section.kind === 'BOOKS' ? [labels.booksOne, labels.booksMany] : [labels.itemsOne, labels.itemsMany];
+  return n === 1 ? one : many.replace('{n}', String(n));
+};
 ---
 <Base title={`${labels.title} - João Abreu`} description={labels.description}>
   <main id="main" class="page">
@@ -36,66 +31,46 @@ type Card = PublicRecommendation;
       <p data-reveal>{labels.description}</p>
     </header>
     {sections.length === 0 && <p class="muted">{labels.empty}</p>}
-    {sections.map(section => {
-      const parts = groups(section);
-      return <section class="rec-section" aria-labelledby={`section-${section.id}`}>
-        <h2 id={`section-${section.id}`}>{section[locale].title}</h2>
-        <div class:list={['rec-groups', { split: parts.length > 1 }]}>
-          {parts.map(part => <div class="rec-group">
-            {part.title && <h3>{part.title}</h3>}
-            <ul class="rec-grid">
-              {part.items.map(({ data }: Card) => <li class="rec-card" data-reveal>
-                <div class:list={['rec-media', { book: section.kind === 'BOOKS' }]}>
-                  {data.googleBooksId ? <img src={bookCoverUrl(data.googleBooksId)} alt={data[locale].imageAlt} width="184" height="276"
-                    loading="lazy" decoding="async" referrerpolicy="no-referrer" />
-                    : data.imageKey ? <Image src={imageFor(data.imageKey)} alt={data[locale].imageAlt} widths={[240, 480]}
-                      sizes="240px" width={480} loading="lazy" decoding="async" />
-                    : <svg class="rec-placeholder" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v10H4Zm4 14h8m-4-4v4" /></svg>}
-                </div>
-                <h4>{data[locale].title}</h4>
-                {section.kind === 'BOOKS' && <span class="rec-stars" role="img" aria-label={stars(data.rating)}>
-                  {[1, 2, 3, 4, 5].map(value => <svg viewBox="0 0 24 24" aria-hidden="true" class:list={{ off: value > data.rating }}>
-                    <path d="m12 2.8 2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.6l-5.8 3.1 1.1-6.5-4.7-4.6 6.5-.9Z" /></svg>)}
-                </span>}
-                {data.subtitle && <p class="rec-subtitle">{data.subtitle}</p>}
-                <p class="rec-description">{data[locale].description}</p>
-                {data.url && <a class="btn rec-link" href={data.url} target="_blank" rel="noopener noreferrer">
-                  {section.kind === 'BOOKS' ? labels.openBook : labels.openItem}<span class="sr-only">: {data[locale].title}</span> ↗</a>}
-              </li>)}
-            </ul>
-          </div>)}
-        </div>
-        {usesGoogle(section) && <p class="rec-attribution">{labels.bookSource}
-          <img src="https://books.google.com/googlebooks/images/poweredby.png" alt={labels.poweredBy} width="62" height="30" loading="lazy" referrerpolicy="no-referrer" /></p>}
-      </section>;
-    })}
+    <ul class="doors">
+      {sections.map(section => {
+        const external = section.kind === 'LINK';
+        const covers = preview(section);
+        return <li data-reveal>
+          <a class="card door" href={external ? section.url : `/${locale}/recommendations/${section.slug}/`}
+            {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
+            {covers.length > 0 ? <span class="covers" aria-hidden="true">
+              {covers.map(cover => cover.src ? <img src={cover.src} alt="" width="92" height="138" loading="lazy" decoding="async" referrerpolicy="no-referrer" />
+                : cover.image && <Image src={cover.image} alt="" width={184} loading="lazy" decoding="async" />)}
+            </span> : <span class="covers icon" aria-hidden="true"><svg viewBox="0 0 24 24">
+              {external ? <path d="M6 7h12l-1 13H7L6 7Zm3 0V5a3 3 0 0 1 6 0v2" /> : <path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3Zm0 13a3 3 0 0 1 3-3h11" />}
+            </svg></span>}
+            <span class="door-copy">
+              <strong class="door-title">{section[locale].title}</strong>
+              {section[locale].description && <span class="door-description">{section[locale].description}</span>}
+              <span class="door-meta">
+                {external ? labels.external.replace('{host}', linkHost(section.url)) : count(section)}
+                <span aria-hidden="true">{external ? ' ↗' : ' →'}</span>
+              </span>
+            </span>
+          </a>
+        </li>;
+      })}
+    </ul>
   </main>
 </Base>
 <style>
-  .rec-section { margin-block: 3rem; }
-  .rec-section > h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); margin: 0 0 1.5rem; }
-  .rec-groups { display: grid; gap: 2.5rem; }
-  .rec-group h3 { font-size: clamp(1.25rem, 2.4vw, 1.6rem); margin: 0 0 1.25rem; }
-  .rec-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 13.5rem), 1fr)); gap: 2rem 1.5rem; list-style: none; margin: 0; padding: 0; }
-  .rec-card { display: flex; flex-direction: column; gap: .45rem; min-width: 0; overflow-wrap: anywhere; }
-  .rec-media { display: grid; place-items: center; height: 14rem; margin-bottom: .6rem; }
-  .rec-media > :is(img, picture) { display: block; height: 100%; width: auto; max-width: 100%; min-height: 0; object-fit: contain;
-    border-radius: .6rem; box-shadow: 0 10px 30px #0003; }
-  .rec-media:not(.book) > :is(img, picture) { box-shadow: none; }
-  .rec-media:not(.book) { border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); padding: .75rem; }
-  .rec-placeholder { width: 3rem; height: 3rem; fill: none; stroke: var(--fg-muted); stroke-width: 1.5; }
-  .rec-card h4 { margin: 0; font-size: 1.1rem; }
-  .rec-stars { display: inline-flex; gap: .15rem; }
-  .rec-stars svg { width: 1.1rem; height: 1.1rem; fill: #facc15; }
-  .rec-stars svg.off { fill: var(--line); }
-  .rec-subtitle { margin: 0; color: var(--fg-muted); font-size: .95rem; }
-  .rec-description { margin: 0; color: var(--fg-muted); line-height: 1.65; white-space: pre-line; }
-  .rec-link { margin-top: auto; justify-content: center; width: 100%; }
-  .rec-description + .rec-link { margin-top: .6rem; }
-  .rec-attribution { display: flex; align-items: center; gap: .6rem; margin-top: 1.5rem; color: var(--fg-muted); font-size: .85rem; }
-  .rec-attribution img { width: 62px; height: 30px; object-fit: contain; }
-  @media (min-width: 64rem) {
-    .rec-groups.split { grid-template-columns: 1fr 1fr; gap: 3rem; }
-    .rec-groups.split .rec-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  }
+  .doors { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: 1.5rem; list-style: none; margin: 2rem 0 4rem; padding: 0; }
+  .door { display: grid; gap: 1.25rem; align-content: start; height: 100%; padding: 1.5rem; color: inherit; text-decoration: none; transition: transform .2s var(--ease), border-color .2s; }
+  .door:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--brand) 50%, var(--line)); }
+  .door:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
+  .covers { display: flex; gap: .6rem; height: 8.5rem; align-items: flex-end; }
+  .covers :global(img) { height: 100%; width: auto; max-width: 25%; object-fit: contain; border-radius: .4rem; box-shadow: 0 8px 20px #0003; }
+  .covers.icon { align-items: center; }
+  .covers.icon svg { width: 4.5rem; height: 4.5rem; padding: 1rem; border: 1px solid var(--line); border-radius: 1rem; background: var(--surface);
+    fill: none; stroke: var(--brand); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+  .door-copy { display: grid; gap: .45rem; }
+  .door-title { font-size: clamp(1.4rem, 2.6vw, 1.8rem); }
+  .door-description { color: var(--fg-muted); line-height: 1.6; }
+  .door-meta { color: var(--brand); font-weight: 600; }
+  @media (prefers-reduced-motion: reduce) { .door { transition: none; } .door:hover { transform: none; } }
 </style>

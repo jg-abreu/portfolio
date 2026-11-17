@@ -3,7 +3,7 @@ import { AdminClient, AdminRequestError } from '../lib/admin-client';
 import { isRecommendationDraft, isRecommendationSection, isRecommendationSummary, reorder,
   type RecommendationDraft, type RecommendationSection, type RecommendationSummary } from '../lib/recommendation-admin';
 import type { RecommendationAdminLabels } from '../i18n/recommendation-admin';
-import { bookGroups, type BookGroup } from '../lib/recommendations';
+import { bookGroups, linkHost, starFill, type BookGroup, type SectionKind } from '../lib/recommendations';
 import { bookCoverUrl, bookInfoUrl, parseBookResults } from '../lib/google-books';
 import { sortable } from '../lib/sortable';
 
@@ -37,6 +37,7 @@ function initialize(root: HTMLElement) {
   let current: RecommendationDraft | null = null;
   let currentSection: RecommendationSection | null = null;
   let editingSection: RecommendationSection | null = null;
+  let newKind: SectionKind = 'BOOKS';
   let baseline = '';
   let busy = false;
   let loggingOut = false;
@@ -166,9 +167,18 @@ function initialize(root: HTMLElement) {
       grip.setAttribute('aria-hidden', 'true');
       const items = drafts.filter(item => item.data.sectionId === section.id);
       head.append(grip, element('h2', '', section.data[locale].title),
-        element('span', 'kind-badge', section.data.kind === 'BOOKS' ? labels.modelBooks : labels.modelItems),
+        element('span', 'kind-badge', section.data.kind === 'BOOKS' ? labels.modelBooks
+          : section.data.kind === 'LINK' ? labels.modelLink : labels.modelItems),
         element('small', 'muted', String(items.length)), sectionMenu(section, index));
       article.append(head);
+      if (section.data.kind === 'LINK') {
+        const link = element('a', 'link-target', labels.linkCard.replace('{host}', linkHost(section.data.url)));
+        link.href = section.data.url;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        article.append(link);
+        return article;
+      }
       if (section.data.kind === 'BOOKS') {
         const groups = element('div', 'groups');
         for (const group of bookGroups) {
@@ -237,18 +247,22 @@ function initialize(root: HTMLElement) {
   }
   q('[data-confirm-cancel]').addEventListener('click', () => confirmDialog.close());
 
-  function openSection(section: RecommendationSection | null) {
+  function kindName(kind: SectionKind) {
+    return kind === 'BOOKS' ? labels.newBooks : kind === 'LINK' ? labels.newLink : labels.newItems;
+  }
+
+  function openSection(section: RecommendationSection | null, kind: SectionKind = 'BOOKS') {
     editingSection = section;
+    newKind = section?.data.kind ?? kind;
     sectionForm.reset();
     for (const node of sectionForm.querySelectorAll('[aria-invalid]')) node.removeAttribute('aria-invalid');
-    const occupied = !!section && drafts.some(item => item.data.sectionId === section.id);
-    for (const radio of sectionForm.querySelectorAll<HTMLInputElement>('input[name="kind"]')) {
-      radio.checked = radio.value === (section?.data.kind ?? 'BOOKS');
-      radio.disabled = occupied;
-    }
-    q<HTMLElement>('[data-kind-locked]').hidden = !occupied;
+    q<HTMLElement>('[data-section-heading]').textContent = kindName(newKind);
+    q<HTMLElement>('[data-link-only]').hidden = newKind !== 'LINK';
     field(sectionForm, 'ptTitle').value = section?.data.pt.title ?? '';
     field(sectionForm, 'enTitle').value = section?.data.en.title ?? '';
+    field(sectionForm, 'ptDescription').value = section?.data.pt.description ?? '';
+    field(sectionForm, 'enDescription').value = section?.data.en.description ?? '';
+    field(sectionForm, 'sectionUrl').value = section?.data.url ?? '';
     sectionDialog.showModal();
     field(sectionForm, 'ptTitle').focus();
   }
@@ -256,18 +270,22 @@ function initialize(root: HTMLElement) {
   sectionForm.addEventListener('submit', event => {
     event.preventDefault();
     const pt = field(sectionForm, 'ptTitle'), en = field(sectionForm, 'enTitle');
+    const url = field<HTMLInputElement>(sectionForm, 'sectionUrl');
+    const required = newKind === 'LINK' ? [pt, en, url] : [pt, en];
     let invalid: HTMLInputElement | null = null;
-    for (const input of [pt, en] as HTMLInputElement[]) {
-      const empty = !input.value.trim();
+    for (const input of required as HTMLInputElement[]) {
+      const empty = !input.value.trim() || (input === url && !/^https:\/\/[^\s]+$/.test(input.value.trim()));
       input.toggleAttribute('aria-invalid', empty);
       if (empty) input.setAttribute('aria-invalid', 'true');
       invalid ??= empty ? input : null;
     }
     if (invalid) { invalid.focus(); return; }
-    const kind = sectionForm.querySelector<HTMLInputElement>('input[name="kind"]:checked')?.value ?? 'BOOKS';
     const target = editingSection;
     void execute(async () => {
-      const body = { version: target?.version ?? 0, data: { kind, en: { title: en.value.trim() }, pt: { title: pt.value.trim() } } };
+      const body = { version: target?.version ?? 0, data: { kind: newKind,
+        en: { title: en.value.trim(), description: field(sectionForm, 'enDescription').value.trim() },
+        pt: { title: pt.value.trim(), description: field(sectionForm, 'ptDescription').value.trim() },
+        slug: target?.data.slug ?? '', url: newKind === 'LINK' ? url.value.trim() : '' } };
       const saved = await client.mutate(target ? `/api/admin/recommendation-sections/${target.id}` : '/api/admin/recommendation-sections',
         target ? 'PUT' : 'POST', body);
       if (!isRecommendationSection(saved)) throw new Error('Invalid section');
@@ -277,7 +295,8 @@ function initialize(root: HTMLElement) {
     });
   });
   q('[data-section-cancel]').addEventListener('click', () => sectionDialog.close());
-  q('[data-new-section]').addEventListener('click', () => openSection(null));
+  for (const button of root.querySelectorAll<HTMLButtonElement>('[data-new-section]'))
+    button.addEventListener('click', () => openSection(null, (button.dataset.newSection as SectionKind) ?? 'BOOKS'));
 
   async function deleteSection(section: RecommendationSection) {
     if (drafts.some(item => item.data.sectionId === section.id)) { notice(labels.sectionNotEmpty); return; }
@@ -299,11 +318,12 @@ function initialize(root: HTMLElement) {
       url: field(itemForm, 'url').value.trim(), subtitle: field(itemForm, 'subtitle').value.trim(),
       rating: isBook() ? Number(checked('rating') || 0) : 0,
       bookGroup: isBook() ? (checked('bookGroup') || null) : null,
+      readIn: isBook() ? (checked('readIn') || null) : null,
       en: copy('en'), pt: copy('pt'),
     };
   }
 
-  const dirty = () => itemDialog.open && (JSON.stringify(itemData()) !== baseline || !!file.files?.length);
+  const dirty = () => itemDialog.open && JSON.stringify(itemData()) !== baseline;
 
   function guard(action: () => void) {
     if (busy) return;
@@ -312,9 +332,13 @@ function initialize(root: HTMLElement) {
   }
 
   function paintStars() {
-    const stars = itemForm.querySelector<HTMLElement>('.stars');
-    if (!stars) return;
-    stars.className = `stars filled-${checked('rating') || 0}`;
+    const rating = Number(checked('rating') || 0);
+    for (const star of itemForm.querySelectorAll<HTMLElement>('[data-star]')) {
+      star.classList.remove('full', 'half', 'empty');
+      star.classList.add(starFill(rating, Number(star.dataset.star)));
+    }
+    const value = itemForm.querySelector<HTMLOutputElement>('[data-star-value]');
+    if (value) value.value = rating ? rating.toLocaleString(locale === 'pt' ? 'pt-BR' : 'en-US') : '';
   }
 
   function updatePreview() {
@@ -351,6 +375,7 @@ function initialize(root: HTMLElement) {
       field(itemForm, 'googleBooksId').value = item.data.googleBooksId ?? '';
       for (const radio of itemForm.querySelectorAll<HTMLInputElement>('input[name="rating"]')) radio.checked = Number(radio.value) === item.data.rating;
       for (const radio of itemForm.querySelectorAll<HTMLInputElement>('input[name="bookGroup"]')) radio.checked = radio.value === item.data.bookGroup;
+      for (const radio of itemForm.querySelectorAll<HTMLInputElement>('input[name="readIn"]')) radio.checked = radio.value === (item.data.readIn ?? '');
     }
     const status = item ? state(item) : { text: labels.statusDraft, tone: 'draft' };
     const badge = q<HTMLElement>('[data-item-status]');
@@ -386,7 +411,6 @@ function initialize(root: HTMLElement) {
   itemForm.addEventListener('submit', event => {
     event.preventDefault();
     const publish = (event as SubmitEvent).submitter === q('[data-item-publish]');
-    if (file.files?.length) { itemMessage.textContent = labels.invalidFile; return; }
     if (!validateItem() || !currentSection) return;
     const target = current;
     void execute(async () => {
@@ -438,15 +462,19 @@ function initialize(root: HTMLElement) {
     if (target.name === 'rating' || target.name === 'bookGroup') target.closest('[aria-invalid]')?.removeAttribute('aria-invalid');
   });
 
-  q('[data-upload]').addEventListener('click', () => {
+  file.addEventListener('change', () => {
     const image = file.files?.[0];
-    if (!image || !['image/png', 'image/jpeg'].includes(image.type) || image.size > 2 * 1024 * 1024) { itemMessage.textContent = labels.invalidFile; return; }
+    if (!image) return;
+    if (!['image/png', 'image/jpeg'].includes(image.type) || image.size > 2 * 1024 * 1024) {
+      itemMessage.textContent = labels.invalidFile; file.value = ''; return;
+    }
+    itemMessage.textContent = labels.uploading;
     void execute(async () => {
       const body = new FormData(); body.append('image', image);
       const result = await client.mutate('/api/admin/recommendation-images', 'POST', body);
       if (!result || typeof result !== 'object' || !('key' in result) || typeof result.key !== 'string' || !/^[0-9a-f]{64}\.png$/.test(result.key)) throw new Error('Invalid image');
       field(itemForm, 'imageKey').value = result.key; field(itemForm, 'googleBooksId').value = ''; file.value = ''; updatePreview();
-      itemMessage.textContent = '';
+      itemMessage.textContent = labels.uploaded;
     }, text => { itemMessage.textContent = text; });
   });
   q('[data-remove-image]').addEventListener('click', () => {

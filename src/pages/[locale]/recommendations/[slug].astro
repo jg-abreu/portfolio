@@ -1,0 +1,34 @@
+---
+import Base from '../../../layouts/Base.astro';
+import RecommendationSection from '../../../components/RecommendationSection.astro';
+import { locales, type Locale } from '../../../i18n/ui';
+import { recommendationUi } from '../../../i18n/recommendations';
+import { getRecommendations } from '../../../lib/recommendation-data';
+import type { PublicSection } from '../../../lib/recommendations';
+
+export function getStaticPaths() {
+  const sections = getRecommendations().sections.filter(section => section.kind !== 'LINK');
+  return locales.flatMap(locale => sections.map(section => ({ params: { locale, slug: section.slug }, props: { section } })));
+}
+const locale = Astro.params.locale as Locale;
+const { section } = Astro.props as { section: PublicSection };
+const labels = recommendationUi[locale];
+const copy = section[locale];
+---
+<Base title={`${copy.title} - ${labels.title} - João Abreu`} description={copy.description || labels.description}>
+  <main id="main" class="page">
+    <a class="back" href={`/${locale}/recommendations/`}>← {labels.back}</a>
+    <header class="page-head">
+      <h1 data-split>{copy.title}</h1>
+      {copy.description && <p data-reveal>{copy.description}</p>}
+    </header>
+    <section class="section-body" aria-label={copy.title}>
+      <RecommendationSection section={section} locale={locale} />
+    </section>
+  </main>
+</Base>
+<style>
+  .back { display: inline-block; margin-bottom: 1.5rem; color: var(--fg-muted); text-decoration: none; }
+  .back:hover { color: var(--fg); }
+  .section-body { margin: 2rem 0 4rem; }
+</style>
