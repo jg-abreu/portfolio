@@ -106,6 +106,8 @@ src/
   pages/project-publications.json.ts         deployed project versions, so the admin can spot pending ones
   pages/recommendation-publications.json.ts  deployed recommendation revisions, for the same purpose
   pages/index.astro         redirects / to /en/ (static fallback)
+  pages/links.astro         short /links address: a static redirect to /en/links/ (noindex)
+  pages/[locale]/links.astro  link-in-bio page (Base in bare mode): site links, email and profile icons
   pages/404.astro           bilingual 404 (noindex); nginx should serve it with `error_page 404 /404.html`
   pages/[locale]/           Home, Projects, Pipeline, Blog, Recommendations, Resume and Contact, generated for every locale
   pages/[locale]/projects/[id].astro  page for every listed project (problem, decisions, result, case study)

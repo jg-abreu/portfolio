@@ -30,9 +30,11 @@ interface Props {
 	locale?: Locale;
 	/** The page shows the visit counter itself, so the footer leaves it out. */
 	visitsInPage?: boolean;
+	/** Link-in-bio page: the header keeps only the brand and tools; no loader, page pill, assistant or footer. */
+	bare?: boolean;
 }
 
-const { standalone = false, visitsInPage = false } = Astro.props;
+const { standalone = false, visitsInPage = false, bare = false } = Astro.props;
 const locale: Locale = Astro.props.locale ?? (isLocale(Astro.currentLocale) ? Astro.currentLocale : defaultLocale);
 const t = useTranslations(locale);
 const { title = t('site.title'), description = t('site.description') } = Astro.props;
@@ -102,7 +104,7 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 		<style is:inline set:html={fontFaces} />
 		<script is:inline set:html={themeBootstrap} />
 		<script is:inline set:html={revealBootstrap} />
-		<script is:inline set:html={introBootstrap} />
+		{!bare && <script is:inline set:html={introBootstrap} />}
 
 		{
 			standalone ? (
@@ -138,14 +140,18 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 		<slot name="head" />
 	</head>
 	<body>
-		<div class="loader" aria-hidden="true" data-loader>
-			<div class="loader-box">
-				<span class="loader-mark">JA</span>
-				<p class="loader-line"><span>»</span> <span>{t('loader.label')}</span> <span>-</span> <span class="loader-pct"><span data-loader-pct>0</span>%</span></p>
-				<span class="loader-bar"><i data-loader-bar></i></span>
-			</div>
-			<p class="loader-url">{loaderUrl}</p>
-		</div>
+		{
+			!bare && (
+				<div class="loader" aria-hidden="true" data-loader>
+					<div class="loader-box">
+						<span class="loader-mark">JA</span>
+						<p class="loader-line"><span>»</span> <span>{t('loader.label')}</span> <span>-</span> <span class="loader-pct"><span data-loader-pct>0</span>%</span></p>
+						<span class="loader-bar"><i data-loader-bar></i></span>
+					</div>
+					<p class="loader-url">{loaderUrl}</p>
+				</div>
+			)
+		}
 		<div class="wallpaper" aria-hidden="true"><span></span><span></span><span></span></div>
 		<div class="progress" aria-hidden="true"></div>
 		<a class="skip-link" href="#main">{t('nav.skip')}</a>
@@ -155,7 +161,7 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 					<span class="brand-mark" aria-hidden="true">JA</span>
 					<span class="brand-name">João Abreu</span>
 				</a>
-				<nav class="sections" aria-label={t('nav.main')}>
+				{!bare && <nav class="sections" aria-label={t('nav.main')}>
 					<ul>
 						{
 							pages.map((p) => (
@@ -170,7 +176,7 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 							))
 						}
 					</ul>
-				</nav>
+				</nav>}
 				<div class="tools">
 					<nav class="languages" aria-label={t('nav.language')}>
 						<ul>
@@ -202,13 +208,13 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 						</svg>
 						<span class="visually-hidden">{t('nav.theme')}</span>
 					</button>
-					<MobileMenu locale={locale} pages={pages} />
+					{!bare && <MobileMenu locale={locale} pages={pages} />}
 				</div>
 			</div>
 		</header>
 		<slot />
-		{!standalone && <Assistant locale={locale} />}
-		<footer class="site-footer">
+		{!standalone && !bare && <Assistant locale={locale} />}
+		{!bare && <footer class="site-footer">
 			<div class="footer-inner">
 				<div class="footer-brand">
 					<a class="brand" href={home}>
@@ -244,7 +250,7 @@ Astro.csp?.insertStyleHash(`sha256-${createHash('sha256').update(fontFaces).dige
 			</div>
 			<p class="footer-note">© {rioDate().slice(0, 4)} João Abreu · {t('footer.note')}</p>
 			{!standalone && !visitsInPage && <VisitCounter locale={locale} />}
-		</footer>
+		</footer>}
 		<script>
 			import '../scripts/theme';
 			import '../scripts/loader';

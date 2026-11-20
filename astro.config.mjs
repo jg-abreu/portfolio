@@ -46,8 +46,8 @@ export default defineConfig({
 		sitemap({
 			// Each URL lists its other-language version as an hreflang alternate.
 			i18n: { defaultLocale: 'en', locales: { en: 'en-US', pt: 'pt-BR' } },
-			// The root only redirects and the 404 page is not content.
-			filter: (page) => page !== `${site}/` && !page.includes('/404') && !page.includes('/admin'),
+			// The root and /links only redirect and the 404 page is not content.
+			filter: (page) => page !== `${site}/` && page !== `${site}/links/` && !page.includes('/404') && !page.includes('/admin'),
 		}),
 	],
 });
