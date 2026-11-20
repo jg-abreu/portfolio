@@ -42,6 +42,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PROJECTS_API_URL: https://joaoabreu.dev/api/projects
           RECOMMENDATIONS_API_URL: https://joaoabreu.dev/api/recommendations
+          LINKS_API_URL: https://joaoabreu.dev/api/link-page
           PUBLIC_VISITS_ENABLED: "true"
           PUBLIC_CONTACT_ENABLED: "true"
 

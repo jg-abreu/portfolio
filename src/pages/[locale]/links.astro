@@ -1,0 +1,207 @@
+---
+import Base from '../../layouts/Base.astro';
+import LinkIcon from '../../components/LinkIcon.astro';
+import VisitCounter from '../../components/VisitCounter.astro';
+import { locales, useTranslations, type Locale } from '../../i18n/ui';
+import { localizedHref } from '../../lib/link-page';
+import { getLinkPage } from '../../lib/link-page-data';
+
+export function getStaticPaths() {
+	return locales.map((locale) => ({ params: { locale } }));
+}
+
+const locale = Astro.params.locale as Locale;
+const t = useTranslations(locale);
+const entities = (text: string) => [...text].map((ch) => `&#${ch.codePointAt(0)};`).join('');
+const links = getLinkPage().links.map((link) => ({
+	...link,
+	href: localizedHref(link.url, locale),
+	mail: link.url.startsWith('mailto:') ? `<a class="stretch" href="${entities(link.url)}">${entities(link.title)}</a>` : null,
+}));
+---
+
+<Base title={`${t('links.title')} - João Abreu`} description={t('links.description')} bare>
+	<main id="main" class="links-page">
+		<header class="intro">
+			<span class="mark" aria-hidden="true">JA</span>
+			<h1>João Abreu</h1>
+			<p class="role">{t('home.role')}</p>
+			<p class="badges">
+				<span class="badge"><span class="dot" aria-hidden="true"></span>{t('home.status')}</span>
+				<span class="badge">{t('home.location')}</span>
+				<VisitCounter locale={locale} variant="badge" />
+			</p>
+		</header>
+
+		<ul class="links">
+			{
+				links.map((link) => (
+					<li class="link">
+						<span class="icon">
+							<LinkIcon name={link.icon} />
+						</span>
+						{link.mail ? (
+							<Fragment set:html={link.mail} />
+						) : (
+							<a class="stretch" href={link.href}>
+								{link.title}
+							</a>
+						)}
+						<span class="arrow" aria-hidden="true">
+							→
+						</span>
+					</li>
+				))
+			}
+		</ul>
+	</main>
+</Base>
+
+<style>
+	.links-page {
+		display: grid;
+		gap: 2rem;
+		max-width: 34rem;
+		margin: 0 auto;
+		padding: clamp(2rem, 8vw, 4rem) var(--gutter) 3rem;
+		overflow-wrap: anywhere;
+	}
+
+	.intro {
+		display: grid;
+		justify-items: center;
+		gap: 0.5rem;
+		text-align: center;
+	}
+
+	.mark {
+		display: grid;
+		place-items: center;
+		width: 4.5rem;
+		height: 4.5rem;
+		margin-bottom: 0.5rem;
+		background: linear-gradient(135deg, var(--brand-2), var(--accent) 55%, #6366f1);
+		border-radius: 1.25rem;
+		color: var(--on-accent);
+		font-size: 1.6rem;
+		font-weight: 800;
+		letter-spacing: -0.04em;
+	}
+
+	h1 {
+		margin: 0;
+		font-size: clamp(1.75rem, 6vw, 2.25rem);
+		font-weight: 700;
+		letter-spacing: -0.035em;
+		line-height: 1.1;
+	}
+
+	.role {
+		margin: 0;
+		color: var(--fg-muted);
+	}
+
+	.badges {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: 0.5rem;
+		margin: 0.5rem 0 0;
+	}
+
+	.links {
+		display: grid;
+		gap: 0.75rem;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.link {
+		position: relative;
+		display: flex;
+		align-items: center;
+		gap: 0.9rem;
+		padding: 0.75rem 1rem 0.75rem 0.75rem;
+		background: color-mix(in srgb, var(--surface) 92%, transparent);
+		border: 1px solid var(--line);
+		border-radius: var(--radius);
+	}
+
+	.link:hover,
+	.link:focus-within {
+		background: var(--surface-2);
+		border-color: var(--fg-muted);
+	}
+
+	.icon {
+		display: grid;
+		flex-shrink: 0;
+		place-items: center;
+		width: 2.5rem;
+		height: 2.5rem;
+		background: var(--surface-2);
+		border: 1px solid var(--line);
+		border-radius: 0.7rem;
+		color: var(--brand);
+	}
+
+	.icon :global(svg) {
+		width: 1.2rem;
+		height: 1.2rem;
+	}
+
+	.link :global(.stretch) {
+		flex: 1;
+		min-width: 0;
+		color: var(--fg);
+		font-weight: 600;
+		text-decoration: none;
+	}
+
+	.link :global(.stretch)::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		border-radius: inherit;
+	}
+
+	.link :global(.stretch):focus-visible {
+		outline: none;
+	}
+
+	.link:has(:focus-visible) {
+		outline: 2px solid var(--brand);
+		outline-offset: 3px;
+	}
+
+	.arrow {
+		flex-shrink: 0;
+		color: var(--fg-muted);
+	}
+
+	.link:hover .arrow {
+		color: var(--fg);
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		.link {
+			transition:
+				transform 0.25s var(--ease),
+				background-color 0.2s,
+				border-color 0.2s;
+		}
+
+		.link:hover {
+			transform: translateY(-2px);
+		}
+
+		.link .arrow {
+			transition: transform 0.25s var(--ease);
+		}
+
+		.link:hover .arrow {
+			transform: translateX(3px);
+		}
+	}
+</style>

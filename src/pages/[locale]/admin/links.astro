@@ -1,0 +1,142 @@
+---
+import Admin from '../../../layouts/Admin.astro';
+import LinkIcon from '../../../components/LinkIcon.astro';
+import { locales, type Locale } from '../../../i18n/ui';
+import { adminUi } from '../../../i18n/admin';
+import { linkAdminUi } from '../../../i18n/link-admin';
+import { linkIcons } from '../../../lib/link-icons';
+import { maxTitle, maxUrl } from '../../../lib/link-page';
+export function getStaticPaths() { return locales.map(locale => ({ params: { locale } })); }
+const locale = Astro.params.locale as Locale;
+const t = linkAdminUi[locale];
+const other = locale === 'en' ? 'pt' : 'en';
+---
+<Admin locale={locale}>
+  <div data-link-admin data-locale={locale} data-labels={JSON.stringify(t)} data-max-title={maxTitle} data-max-url={maxUrl}>
+    <header class="studio-header">
+      <a class="studio-brand" href={`/${locale}/admin/`}><span class="monogram">JA</span><span>{t.title}</span></a>
+      <div class="header-actions"><a class="quiet" href={`/${locale}/admin/`}>{t.back}</a>
+        <a class="quiet" href={`/${other}/admin/links/`} lang={other} hreflang={other}>{other.toUpperCase()}</a>
+        <a class="button secondary site-link" href={`/${locale}/links/`}>{adminUi[locale].site} <span aria-hidden="true">↗</span></a>
+      </div>
+    </header>
+    <main class="links-admin-main">
+      <p data-notice role="status" aria-live="polite">{t.checking}</p>
+      <section data-login hidden>
+        <h1>{t.title}</h1><p>{t.loginBody}</p>
+        <a class="button primary" href="/oauth2/authorization/github">{t.login}</a>
+      </section>
+      <button class="button secondary" type="button" data-retry>{t.retry}</button>
+      <div data-workspace hidden>
+        <div class="toolbar"><h1>{t.title}</h1><span data-username></span>
+          <button class="button secondary" type="button" data-logout>{t.logout}</button>
+        </div>
+        <p class="muted">{t.intro}</p>
+        <p data-state></p>
+        <div class="layout">
+          <form data-form novalidate>
+            <fieldset data-fields>
+              <section class="group" aria-labelledby="links-heading">
+                <h2 id="links-heading">{t.links}</h2>
+                <p class="muted small">{t.urlHelp}</p>
+                <ol class="rows" data-rows></ol>
+                <button class="button secondary" type="button" data-add>＋ {t.addLink}</button>
+                <p class="sr-only" data-announce aria-live="polite"></p>
+              </section>
+              <div class="toolbar">
+                <button class="button primary" type="submit">{t.save}</button>
+                <button class="button primary" type="button" data-publish>{t.publish}</button>
+                <button class="button secondary" type="button" data-revert>{t.revert}</button>
+                <button class="quiet" type="button" data-defaults>{t.defaults}</button>
+                <button class="button secondary" type="button" data-reload hidden>{t.reload}</button>
+              </div>
+            </fieldset>
+          </form>
+          <section class="preview" aria-labelledby="links-preview-heading">
+            <h2 id="links-preview-heading">{t.preview}</h2>
+            <div class="phone">
+              <span class="mark" aria-hidden="true">JA</span>
+              <strong>João Abreu</strong>
+              <ul data-preview></ul>
+            </div>
+          </section>
+        </div>
+      </div>
+      <dialog class="picker" data-picker aria-labelledby="picker-heading">
+        <div class="picker-head">
+          <h2 id="picker-heading" data-picker-title></h2>
+          <button class="icon-button" type="button" data-picker-close aria-label={t.keep}>✕</button>
+        </div>
+        <input type="search" data-picker-search placeholder={t.searchIcons} aria-label={t.searchIcons} autocomplete="off" />
+        <div class="icon-grid" data-icon-grid>
+          {linkIcons.map(icon => (
+            <button type="button" class="icon-option" data-icon={icon.id} title={icon.id} aria-label={icon.id}>
+              <LinkIcon name={icon.id} />
+            </button>
+          ))}
+        </div>
+        <p class="muted" data-no-icons hidden>{t.noIcons}</p>
+      </dialog>
+      <dialog data-discard aria-labelledby="links-discard-heading"><h2 id="links-discard-heading">{t.discardTitle}</h2><div class="toolbar">
+        <button class="button secondary" type="button" data-keep>{t.keep}</button>
+        <button class="button primary" type="button" data-confirm-discard>{t.discard}</button></div></dialog>
+    </main>
+  </div>
+  <script>import '../../../scripts/link-admin';</script>
+</Admin>
+<style>
+  .links-admin-main { max-width: 72rem; margin: auto; padding: 1.5rem; }
+  .toolbar { display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; margin-block: 1rem; }
+  .toolbar h1 { margin-right: auto; }
+  .layout { display: grid; gap: 1.5rem; align-items: start; }
+  .group { border: 1px solid var(--line); border-radius: 1rem; padding: 1rem 1.25rem; background: var(--panel); min-width: 0; }
+  .group h2 { margin: 0 0 .25rem; font-size: 1rem; }
+  .small { font-size: 12px; }
+  fieldset[data-fields] { border: 0; padding: 0; margin: 0; min-width: 0; }
+  .rows { display: grid; gap: .6rem; list-style: none; margin: 1rem 0; padding: 0; }
+  .rows :global(.row) { display: grid; grid-template-columns: auto auto minmax(0, 1fr) minmax(0, 1.4fr) auto; gap: .5rem; align-items: center;
+    padding: .55rem; border: 1px solid var(--line); border-radius: .75rem; background: var(--bg); min-width: 0; }
+  .rows :global(.row.dragging) { opacity: .55; }
+  .rows :global(.grip) { color: var(--muted); cursor: grab; touch-action: none; padding: 0 .2rem; font-size: 16px; user-select: none; }
+  .rows :global(.icon-pick) { display: grid; place-items: center; width: 2.5rem; height: 2.5rem; padding: 0; border: 1px solid var(--line);
+    border-radius: .65rem; background: var(--raised); color: var(--blue); cursor: pointer; }
+  .rows :global(.icon-pick:hover) { border-color: var(--blue); }
+  .rows :global(.icon-pick svg), .icon-option :global(svg), .preview :global(svg) { width: 1.2rem; height: 1.2rem; }
+  .rows :global(input) { margin: 0; min-width: 0; }
+  :global(.link-icon-brand) { fill: currentColor; stroke: none; }
+  .rows :global(.row-actions) { display: flex; gap: .15rem; grid-column: 5; grid-row: 1; }
+  .rows :global(.row input[data-field="url"]) { grid-column: 4; grid-row: 1; }
+  :global([aria-invalid="true"]) { border-color: #ef4444 !important; box-shadow: 0 0 0 2px #ef444455; }
+  .preview { min-width: 0; }
+  .preview h2 { margin: 0 0 .75rem; font-size: 1rem; }
+  .phone { display: grid; justify-items: center; gap: .6rem; max-width: 22rem; margin: auto; padding: 1.5rem 1rem;
+    border: 1px solid var(--line); border-radius: 1.5rem; background: var(--panel); }
+  .phone .mark { display: grid; place-items: center; width: 3rem; height: 3rem; border-radius: .85rem; color: #fff; font-weight: 800;
+    background: linear-gradient(135deg, #38bdf8, #2563eb 55%, #6366f1); }
+  .phone ul { display: grid; gap: .5rem; width: 100%; margin: .5rem 0 0; padding: 0; list-style: none; }
+  .phone :global(li) { display: flex; align-items: center; gap: .65rem; padding: .5rem .7rem .5rem .5rem; border: 1px solid var(--line);
+    border-radius: .8rem; background: var(--bg); font-size: 13px; font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+  .phone :global(li span:first-child) { display: grid; flex: none; place-items: center; width: 2rem; height: 2rem; border-radius: .55rem;
+    background: var(--raised); color: var(--blue); }
+  .phone :global(li span:last-child) { margin-left: auto; color: var(--muted); }
+  .picker { width: min(36rem, calc(100% - 2rem)); padding: 1rem; color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 1rem; }
+  .picker::backdrop, dialog::backdrop { background: #0008; }
+  .picker-head { display: flex; align-items: center; gap: .5rem; margin-bottom: .75rem; }
+  .picker-head h2 { margin: 0 auto 0 0; font-size: 1rem; }
+  .icon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(2.75rem, 1fr)); gap: .4rem; max-height: 50vh; overflow: auto; margin-top: .75rem; padding: 2px; }
+  .icon-option { display: grid; place-items: center; aspect-ratio: 1; padding: 0; border: 1px solid var(--line); border-radius: .6rem;
+    background: var(--bg); color: var(--text); cursor: pointer; }
+  .icon-option:hover, .icon-option:focus-visible { border-color: var(--blue); color: var(--blue); }
+  .icon-option[aria-pressed="true"] { border-color: var(--blue); background: var(--soft); color: var(--blue); }
+  dialog[data-discard] { color: var(--text); background: var(--panel); border: 1px solid var(--line); border-radius: 1rem; max-width: calc(100% - 2rem); }
+  @media (min-width: 64rem) {
+    .layout { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); }
+    .preview { position: sticky; top: 1rem; }
+  }
+  @media (max-width: 40rem) {
+    .links-admin-main { padding: 1rem; } .group { padding: .75rem; } .header-actions { flex-wrap: wrap; }
+    .rows :global(.row) { grid-template-columns: auto auto minmax(0, 1fr) auto; }
+    .rows :global(.row-actions) { grid-column: 4; }
+    .rows :global(.row input[data-field="url"]) { grid-column: 2 / -1; grid-row: 2; }
+  }
+</style>
