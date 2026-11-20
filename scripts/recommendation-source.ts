@@ -1,15 +1,15 @@
 import { createHash } from 'node:crypto';
 import { parseRecommendationSnapshot, type RecommendationSnapshot } from '../src/lib/recommendations.ts';
 
-export function recommendationSource(value: string): URL {
+export function recommendationSource(value: string, name = 'RECOMMENDATIONS_API_URL'): URL {
   const url = new URL(value);
   if (url.username || url.password || url.hash || (url.protocol !== 'https:'
     && !(url.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname))))
-    throw new Error('RECOMMENDATIONS_API_URL must use credential-free HTTPS or local HTTP');
+    throw new Error(`${name} must use credential-free HTTPS or local HTTP`);
   return url;
 }
 
-async function bounded(response: Response, maximum: number): Promise<Uint8Array> {
+export async function bounded(response: Response, maximum: number): Promise<Uint8Array> {
   if (!response.ok) throw new Error(`Recommendations source unavailable (${response.status})`);
   const reader = response.body?.getReader();
   if (!reader) throw new Error('Recommendations source returned no body');

@@ -1,0 +1,27 @@
+---
+import { linkIcon } from '../lib/link-icons';
+
+interface Props {
+	name: string;
+}
+const icon = linkIcon(Astro.props.name);
+---
+
+{
+	icon.kind === 'brand' ? (
+		<svg class="link-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false" set:html={icon.body} />
+	) : (
+		<svg
+			class="link-icon"
+			viewBox="0 0 24 24"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="1.75"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			aria-hidden="true"
+			focusable="false"
+			set:html={icon.body}
+		/>
+	)
+}

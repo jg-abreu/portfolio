@@ -35,5 +35,7 @@ CLAUDE.local.md
 SESSION_HANDOFF.md
 src/data/recommendations.json
 src/data/recommendations.json.tmp
+src/data/link-page.json
+src/data/link-page.json.tmp
 src/assets/recommendations-generated/
 src/assets/projects-generated/

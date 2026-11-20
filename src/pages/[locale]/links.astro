@@ -1,12 +1,10 @@
 ---
-import { getRelativeLocaleUrl } from 'astro:i18n';
 import Base from '../../layouts/Base.astro';
-import ContactIcon from '../../components/ContactIcon.astro';
+import LinkIcon from '../../components/LinkIcon.astro';
 import VisitCounter from '../../components/VisitCounter.astro';
-import { recommendationUi } from '../../i18n/recommendations';
 import { locales, useTranslations, type Locale } from '../../i18n/ui';
-import { getBlogArticles } from '../../lib/blog-data';
-import { getContacts, getResumePath, obfuscatedMailto } from '../../lib/content';
+import { localizedHref } from '../../lib/link-page';
+import { getLinkPage } from '../../lib/link-page-data';
 
 export function getStaticPaths() {
 	return locales.map((locale) => ({ params: { locale } }));
@@ -14,48 +12,12 @@ export function getStaticPaths() {
 
 const locale = Astro.params.locale as Locale;
 const t = useTranslations(locale);
-const contacts = await getContacts();
-const email = contacts.find((c) => c.kind === 'email');
-const profiles = contacts.filter((c) => c.kind !== 'email');
-const resumePath = getResumePath(locale);
-const latest = getBlogArticles()[0];
-
-const links = [
-	{
-		href: getRelativeLocaleUrl(locale),
-		title: t('links.portfolio'),
-		body: t('links.portfolioBody'),
-		icon: 'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1Z',
-	},
-	{
-		href: getRelativeLocaleUrl(locale, 'projects/'),
-		title: t('nav.projects'),
-		body: t('links.projectsBody'),
-		icon: 'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z',
-	},
-	{
-		href: resumePath ?? getRelativeLocaleUrl(locale, 'resume/'),
-		title: t('nav.resume'),
-		body: resumePath ? t('links.resumeBody') : t('resume.body'),
-		icon: 'M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9Zm0 0v6h6M8 13h8m-8 4h5',
-	},
-	...(latest
-		? [
-				{
-					href: getRelativeLocaleUrl(locale, `blog/${latest.slug}/`),
-					title: t('links.latest'),
-					body: latest.title,
-					icon: 'M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16Zm9.5-13.5 4 4',
-				},
-			]
-		: []),
-	{
-		href: getRelativeLocaleUrl(locale, 'recommendations/'),
-		title: recommendationUi[locale].title,
-		body: t('links.recommendationsBody'),
-		icon: 'M6 3h12v18l-6-4-6 4Z',
-	},
-];
+const entities = (text: string) => [...text].map((ch) => `&#${ch.codePointAt(0)};`).join('');
+const links = getLinkPage().links.map((link) => ({
+	...link,
+	href: localizedHref(link.url, locale),
+	mail: link.url.startsWith('mailto:') ? `<a class="stretch" href="${entities(link.url)}">${entities(link.title)}</a>` : null,
+}));
 ---
 
 <Base title={`${t('links.title')} - João Abreu`} description={t('links.description')} bare>
@@ -73,56 +35,25 @@ const links = [
 
 		<ul class="links">
 			{
-				links.map((l) => (
+				links.map((link) => (
 					<li class="link">
-						<span class="icon" aria-hidden="true">
-							<svg viewBox="0 0 24 24">
-								<path d={l.icon} />
-							</svg>
+						<span class="icon">
+							<LinkIcon name={link.icon} />
 						</span>
-						<span class="text">
-							<a class="stretch" href={l.href}>
-								{l.title}
+						{link.mail ? (
+							<Fragment set:html={link.mail} />
+						) : (
+							<a class="stretch" href={link.href}>
+								{link.title}
 							</a>
-							<span class="body">{l.body}</span>
-						</span>
+						)}
 						<span class="arrow" aria-hidden="true">
 							→
 						</span>
 					</li>
 				))
 			}
-			{
-				email && (
-					<li class="link">
-						<span class="icon" aria-hidden="true">
-							<ContactIcon name="email" />
-						</span>
-						<span class="text">
-							<span class="title">{t('links.email')}</span>
-							<Fragment set:html={obfuscatedMailto(email.address, 'body stretch')} />
-						</span>
-						<span class="arrow" aria-hidden="true">
-							→
-						</span>
-					</li>
-				)
-			}
 		</ul>
-
-		<nav class="profiles" aria-label={t('links.profiles')}>
-			<ul>
-				{
-					profiles.map((c) => (
-						<li>
-							<a href={c.url} title={c.label} aria-label={c.label}>
-								<ContactIcon name={c.kind} />
-							</a>
-						</li>
-					))
-				}
-			</ul>
-		</nav>
 	</main>
 </Base>
 
@@ -191,7 +122,7 @@ const links = [
 		display: flex;
 		align-items: center;
 		gap: 0.9rem;
-		padding: 0.85rem 1rem;
+		padding: 0.75rem 1rem 0.75rem 0.75rem;
 		background: color-mix(in srgb, var(--surface) 92%, transparent);
 		border: 1px solid var(--line);
 		border-radius: var(--radius);
@@ -215,44 +146,27 @@ const links = [
 		color: var(--brand);
 	}
 
-	.icon svg {
-		width: 1.15rem;
-		height: 1.15rem;
-		fill: none;
-		stroke: currentColor;
-		stroke-width: 1.75;
-		stroke-linecap: round;
-		stroke-linejoin: round;
+	.icon :global(svg) {
+		width: 1.2rem;
+		height: 1.2rem;
 	}
 
-	.text {
-		display: grid;
+	.link :global(.stretch) {
 		flex: 1;
 		min-width: 0;
-	}
-
-	.text .stretch,
-	.title {
 		color: var(--fg);
 		font-weight: 600;
 		text-decoration: none;
 	}
 
-	.text :global(.body),
-	.body {
-		color: var(--fg-muted);
-		font-size: 0.85rem;
-		text-decoration: none;
-	}
-
-	.text :global(.stretch)::after {
+	.link :global(.stretch)::after {
 		content: '';
 		position: absolute;
 		inset: 0;
 		border-radius: inherit;
 	}
 
-	.text :global(.stretch):focus-visible {
+	.link :global(.stretch):focus-visible {
 		outline: none;
 	}
 
@@ -270,49 +184,15 @@ const links = [
 		color: var(--fg);
 	}
 
-	.profiles ul {
-		display: flex;
-		flex-wrap: wrap;
-		justify-content: center;
-		gap: 0.6rem;
-		margin: 0;
-		padding: 0;
-		list-style: none;
-	}
-
-	.profiles a {
-		display: grid;
-		place-items: center;
-		width: 2.75rem;
-		height: 2.75rem;
-		background: color-mix(in srgb, var(--surface) 92%, transparent);
-		border: 1px solid var(--line);
-		border-radius: 999px;
-		color: var(--fg-muted);
-	}
-
-	.profiles a:hover {
-		background: var(--surface-2);
-		border-color: var(--fg-muted);
-		color: var(--fg);
-	}
-
-	.profiles :global(svg) {
-		width: 1.2rem;
-		height: 1.2rem;
-	}
-
 	@media (prefers-reduced-motion: no-preference) {
-		.link,
-		.profiles a {
+		.link {
 			transition:
 				transform 0.25s var(--ease),
 				background-color 0.2s,
 				border-color 0.2s;
 		}
 
-		.link:hover,
-		.profiles a:hover {
+		.link:hover {
 			transform: translateY(-2px);
 		}
 

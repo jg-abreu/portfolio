@@ -38,6 +38,7 @@ src/
   i18n/admin.ts             typed EN/PT strings for the private admin workspace
   i18n/card-admin.ts        typed EN/PT strings for the admin profile-card editor
   i18n/recommendation-admin.ts  typed EN/PT strings for the admin recommendations editor
+  i18n/link-admin.ts        typed EN/PT strings for the admin links-page editor
   i18n/publication.ts       typed EN/PT labels for the site-update (publication dispatch) status
   lib/activity.ts           contribution stats, year heatmap layout, recent repos (shared by build and browser)
   lib/calendar.ts           Rio and UTC dates
@@ -56,6 +57,9 @@ src/
   lib/admin-client.ts       shared same-origin admin request helper and its error type
   lib/recommendation-data.ts   reads the recommendations snapshot (empty when the API source is not configured)
   lib/recommendation-admin.ts  types and validators for recommendation drafts and sections in the admin
+  lib/link-page.ts          link-in-bio page: types, validators (mirroring the API), defaults, same-site language links
+  lib/link-page-data.ts     reads the link page snapshot (defaults when the API source is not configured)
+  lib/link-icons.ts         about 110 icons for the links page: Lucide line icons (ISC) and simple-icons brands
   lib/google-books.ts       builds validated Google Books links and cover addresses for book recommendations
   layouts/Base.astro        <html lang>, hreflang, Open Graph, CSP-hashed head scripts, palette tokens, wallpapers,
                             intro loader, header pill, footer, page transitions
@@ -68,6 +72,7 @@ src/
                                  and a labelled in-browser simulator of cache, hashing, 429 limits and failover
   components/ContactForm.astro   contact form (PUBLIC_CONTACT_ENABLED stays false by default)
   components/ContactIcon.astro   contact channel icons
+  components/LinkIcon.astro      renders a links-page icon by id (falls back to the link icon)
   components/VisitCounter.astro  optional approximate visits: Home hero badge, footer elsewhere; excluded from admin and 404
   components/MobileMenu.astro    phone navigation: a menu button opens a popover panel with every page
   components/Assistant.astro     AI assistant launcher and dialog (EN/PT); answers come from the API (docs/assistant.md)
@@ -86,6 +91,7 @@ src/
   scripts/recommendation-admin.ts  admin recommendations editor: sections, items, ordering, draft and publish
   layouts/Admin.astro       private workspace shell (noindex); authenticated data loads only in the browser
   scripts/admin.ts          GitHub session, CSRF, project drafts and private contact inbox
+  scripts/link-admin.ts     admin links-page editor: title, link and icon per row, icon picker, reorder, draft and publish
   scripts/card-admin.ts     profile-card editor: free blocks dragged to move and resized by their edge (1/3, 1/2, full),
                             titles and lines editable, live preview, draft and publish
   lib/card-admin.ts         card settings validators, row packing that mirrors the API, base64url preview encoding
@@ -103,11 +109,12 @@ src/
   pages/[locale]/admin.astro  EN/PT project drafts and inbox; excluded from the sitemap
   pages/[locale]/admin/card.astro  EN/PT editor for the GitHub profile card served by the API
   pages/[locale]/admin/recommendations.astro  EN/PT editor for the public recommendations
+  pages/[locale]/admin/links.astro  EN/PT editor for the link-in-bio page
   pages/project-publications.json.ts         deployed project versions, so the admin can spot pending ones
   pages/recommendation-publications.json.ts  deployed recommendation revisions, for the same purpose
   pages/index.astro         redirects / to /en/ (static fallback)
   pages/links.astro         short /links address: a static redirect to /en/links/ (noindex)
-  pages/[locale]/links.astro  link-in-bio page (Base in bare mode): site links, email and profile icons
+  pages/[locale]/links.astro  link-in-bio page (Base in bare mode) with the links published in the admin
   pages/404.astro           bilingual 404 (noindex); nginx should serve it with `error_page 404 /404.html`
   pages/[locale]/           Home, Projects, Pipeline, Blog, Recommendations, Resume and Contact, generated for every locale
   pages/[locale]/projects/[id].astro  page for every listed project (problem, decisions, result, case study)
@@ -121,6 +128,8 @@ scripts/project-publications.ts  `npm run publications` (first build step): fetc
                             from PROJECTS_API_URL
 scripts/recommendations-snapshot.ts  `npm run recommendations`: fetches published recommendations and their covers
                             from RECOMMENDATIONS_API_URL (empty when unset); recommendation-source.ts validates that URL
+scripts/links-snapshot.ts   `npm run links`: fetches the published link page from LINKS_API_URL (defaults when unset);
+                            link-source.ts validates and bounds the response
 scripts/*.test.ts           `npm test`: Node test runner suites, one per library or feature
 scripts/og-images.ts        `npm run og`: renders public/og/og-<locale>.png (1200 × 630) with headless Chrome;
                             rerun after changing the name, role or badge strings
@@ -208,7 +217,7 @@ A stage becomes a PR only when:
 ```bash
 npm install
 npm run dev       # dev server at http://localhost:4321
-npm run build     # snapshots (publications, recommendations, GitHub, blog) + astro check + static build into dist/
+npm run build     # snapshots (publications, recommendations, links, GitHub, blog) + astro check + static build into dist/
 npm run preview   # serve dist/ locally
 npm test          # Node test runner suites in scripts/*.test.ts
 ```
