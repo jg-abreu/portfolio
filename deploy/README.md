@@ -20,8 +20,9 @@ visitor ──HTTPS──▶ Cloudflare (proxy, cache, edge certificate)
 | API | `/opt/portfolio-api` with `compose.production.yaml` | JAR built and tested outside the VM; private settings in `.env` and `smtp.env` (mode 600). See `portfolio-api/PRODUCTION.md` |
 | Backups | Private Lightsail bucket `joaoabreu-portfolio-v2-backups` | Daily `age`-encrypted dump + covers, 30-day retention; the decryption key is kept off the server. See `portfolio-api/docs/backup-restore.md` |
 | Preview | `v2.joaoabreu.dev` → same VM, nginx site `portfolio-v2` | Retired on 2026-11-15: every request redirects (301) to `joaoabreu.dev`, because the frozen preview build was wired to the production API. Restore the previous `nginx/portfolio-v2.conf` from Git to bring a preview back |
+| Tutoring demo | `tutoring.joaoabreu.dev` → same VM, nginx site `tutoring` | Live demo of the Tutoring Management project since 2026-11-20: static client in `/var/www/tutoring`, its API in `/opt/tutoring-api` on `127.0.0.1:8090` (384 MB cap), and a `tutoring` database with its own role inside this server's PostgreSQL. A 1 GB swap file was added for it. Everything about it, including rollback, is in [tutoring-management-api/deploy/README.md](https://github.com/jg-abreu/tutoring-management-api/blob/main/deploy/README.md) |
 | Firewall | Lightsail networking tab | 22 (SSH): any IPv4/IPv6 + browser SSH; 80/443: Cloudflare IPv4/IPv6 ranges only |
-| DNS | Cloudflare | `A @` and `A v2` → static IP, `CNAME www` → `joaoabreu.dev`, all proxied; Browser Cache TTL "Respect Existing Headers" |
+| DNS | Cloudflare | `A @`, `A v2` and `A tutoring` → static IP, `CNAME www` → `joaoabreu.dev`, all proxied; Browser Cache TTL "Respect Existing Headers" |
 | TLS | Cloudflare Origin CA certificate on nginx | `/etc/ssl/cloudflare/joaoabreu.dev.{pem,key}`, valid until 2041 |
 | Web server | [`nginx/portfolio.conf`](nginx/portfolio.conf) | `/etc/nginx/sites-available/portfolio` |
 
