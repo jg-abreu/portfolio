@@ -18,7 +18,7 @@ References: [configuration location](https://github.com/github/docs/blob/main/co
 
 ## Maven remediation and CodeQL results — 2026-11-13
 
-The API's resolved dependency check queried 206 distinct Maven name/version pairs in OSV. It found Guava 33.4.0-android, pulled by the Gemini SDK authentication dependency. API 6f2e960 manages patched 33.7.2-android; the regenerated tree confirmed it, all 133 API tests passed and a second OSV query returned zero matching advisories. Build plugins, JDK, OS/container layers, reachability and unknown vulnerabilities are outside this check. Details and the repeat command are in portfolio-api/docs/dependency-security.md.
+The API's resolved dependency check queried 206 distinct Maven name/version pairs in OSV. It found Guava 33.4.0-android, pulled by the Gemini SDK authentication dependency. API 6f2e960 manages patched 33.7.2-android; the regenerated tree confirmed it, all 133 API tests passed and a second OSV query returned zero matching advisories. Build plugins, JDK, OS/container layers, reachability and unknown vulnerabilities are outside this check. Details and the repeat command are in `api/docs/dependency-security.md`.
 
 CodeQL workflows now run on V2 pushes/PRs only, with pinned official actions and no deploy steps/application secrets. Both repositories were public and default setup was not configured before these workflows. No main or production workflow changed.
 

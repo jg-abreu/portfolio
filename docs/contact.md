@@ -6,7 +6,7 @@ When enabled, the browser obtains the same-origin CSRF token and posts JSON to `
 
 A 202 response with `status: accepted` confirms persistence in the inbox, not email delivery. Only then is the form cleared. Errors preserve the text, disable duplicate submissions while busy and provide EN/PT feedback for invalid requests, rate limiting and unavailable service. Visitor text is never saved in localStorage.
 
-The API has separate, disabled-by-default flags for contact submission, SMTP delivery and 90-day retention. Before enabling public contact, enable and verify retention, validate the trusted proxy/client address configuration, configure SMTP privately and test real delivery. See `portfolio-api/docs/contact-delivery.md` and `portfolio-api/docs/contact-smtp.md` in the sibling API repository.
+The API has separate, disabled-by-default flags for contact submission, SMTP delivery and 90-day retention. Before enabling public contact, enable and verify retention, validate the trusted proxy/client address configuration, configure SMTP privately and test real delivery. See `api/docs/contact-delivery.md` and `api/docs/contact-smtp.md`.
 
 Automated client tests simulate HTTP responses; backend integration tests use PostgreSQL Testcontainers and simulated SMTP. No V2 release or server modification is included in this implementation.
 

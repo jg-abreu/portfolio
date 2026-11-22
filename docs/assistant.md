@@ -2,7 +2,7 @@
 
 ## Status
 
-The assistant is live on https://joaoabreu.dev since the V2 cutover on 2026-11-14 (API PR jg-abreu/portfolio-api#16, site PR jg-abreu/portfolio#35). The Gemini key is configured privately in the production `.env` by João. This file is kept identical in `portfolio` and `portfolio-api`.
+The assistant is live on https://joaoabreu.dev since the V2 cutover on 2026-11-14 (API PR jg-abreu/portfolio-api#16, site PR jg-abreu/portfolio#35). The Gemini key is configured privately in the production `.env` by João. The API lives in `api/` of the same repository (it was the separate `portfolio-api` repository until 2026-11-22).
 
 ## Change rules
 

@@ -17,8 +17,8 @@ visitor ──HTTPS──▶ Cloudflare (proxy, cache, edge certificate)
 |---|---|---|
 | Server | AWS Lightsail, instance `portfolio-v2-2gb`, us-east-2 (Ohio) | 2 GB, 2 vCPU, 60 GB SSD, dual-stack; created from a snapshot of the first server |
 | Address | Static IP `portfolio-v2-ip` attached to the instance | Free while attached; billed if left detached |
-| API | `/opt/portfolio-api` with `compose.production.yaml` | JAR built and tested outside the VM; private settings in `.env` and `smtp.env` (mode 600). See `portfolio-api/PRODUCTION.md` |
-| Backups | Private Lightsail bucket `joaoabreu-portfolio-v2-backups` | Daily `age`-encrypted dump + covers, 30-day retention; the decryption key is kept off the server. See `portfolio-api/docs/backup-restore.md` |
+| API | `/opt/portfolio-api` with `compose.production.yaml` | JAR built and tested outside the VM; private settings in `.env` and `smtp.env` (mode 600). See `api/PRODUCTION.md` |
+| Backups | Private Lightsail bucket `joaoabreu-portfolio-v2-backups` | Daily `age`-encrypted dump + covers, 30-day retention; the decryption key is kept off the server. See `api/docs/backup-restore.md` |
 | Preview | `v2.joaoabreu.dev` → same VM, nginx site `portfolio-v2` | Retired on 2026-11-15: every request redirects (301) to `joaoabreu.dev`, because the frozen preview build was wired to the production API. Restore the previous `nginx/portfolio-v2.conf` from Git to bring a preview back |
 | Tutoring demo | `tutoring.joaoabreu.dev` → same VM, nginx site `tutoring` | Live demo of the Tutoring Management project since 2026-11-20: static client in `/var/www/tutoring`, its API in `/opt/tutoring-api` on `127.0.0.1:8090` (384 MB cap), and a `tutoring` database with its own role inside this server's PostgreSQL. A 1 GB swap file was added for it. Everything about it, including rollback, is in [tutoring-management-api/deploy/README.md](https://github.com/jg-abreu/tutoring-management-api/blob/main/deploy/README.md) |
 | Firewall | Lightsail networking tab | 22 (SSH): any IPv4/IPv6 + browser SSH; 80/443: Cloudflare IPv4/IPv6 ranges only |
