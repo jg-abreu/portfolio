@@ -1,17 +1,24 @@
-name: CI
+# Runs the API test suite (api/) on every change to it.
+name: API CI
 
 on:
   push:
     branches: [main]
+    paths:
+      - api/**
+      - .github/workflows/api-ci.yml
   pull_request:
     branches: [main]
+    paths:
+      - api/**
+      - .github/workflows/api-ci.yml
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: api-ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -19,6 +26,9 @@ jobs:
     name: Tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: api
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
@@ -28,5 +38,6 @@ jobs:
           distribution: temurin
           java-version: '21'
           cache: maven
+          cache-dependency-path: api/pom.xml
       - name: Run tests
         run: bash ./mvnw -B test
