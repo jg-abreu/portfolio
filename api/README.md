@@ -1,6 +1,7 @@
 # Portfolio API
 
-[![CodeQL](https://github.com/jg-abreu/portfolio-api/actions/workflows/codeql.yml/badge.svg)](https://github.com/jg-abreu/portfolio-api/actions/workflows/codeql.yml)
+[![API CI](https://github.com/jg-abreu/portfolio/actions/workflows/api-ci.yml/badge.svg)](https://github.com/jg-abreu/portfolio/actions/workflows/api-ci.yml)
+[![CodeQL](https://github.com/jg-abreu/portfolio/actions/workflows/codeql.yml/badge.svg)](https://github.com/jg-abreu/portfolio/actions/workflows/codeql.yml)
 ![Java 21](https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk&logoColor=white)
 ![Spring Boot 4.1](https://img.shields.io/badge/Spring_Boot-4.1-6DB33F?logo=springboot&logoColor=white)
 ![PostgreSQL 18](https://img.shields.io/badge/PostgreSQL-18-4169E1?logo=postgresql&logoColor=white)
@@ -8,7 +9,7 @@
 
 A static portfolio is fast, but it can't take a message, count a visit or let me update a project without a redeploy.
 
-**Portfolio API** is the Spring Boot backend that adds those features to **[joaoabreu.dev](https://joaoabreu.dev)** while the [Astro site](https://github.com/jg-abreu/portfolio) stays static: a private admin to edit content without touching code, a contact inbox, a visit counter, an AI assistant that answers questions about me, and the live card on my [GitHub profile](https://github.com/jg-abreu).
+**Portfolio API** is the Spring Boot backend that adds those features to **[joaoabreu.dev](https://joaoabreu.dev)** while the [Astro site](../) stays static: a private admin to edit content without touching code, a contact inbox, a visit counter, an AI assistant that answers questions about me, and the live card on my [GitHub profile](https://github.com/jg-abreu).
 
 **In production since November 14, 2026** · 2 instances behind nginx and Cloudflare · 133 tests
 
@@ -104,7 +105,7 @@ Requirements: JDK 21 and Docker with Compose (the Maven wrapper is included).
    ./mvnw spring-boot:run        # Windows: .\mvnw.cmd spring-boot:run
    ```
 
-3. Run the [Astro site](https://github.com/jg-abreu/portfolio) on port 4321. It proxies the API and OAuth routes, so open the admin through the site.
+3. Run the [Astro site](../README.md) (repository root) on port 4321. It proxies the API and OAuth routes, so open the admin through the site.
 
 Optional features are switched on with environment variables; each one is documented in [`docs/`](docs): [contact](docs/contact-delivery.md), [SMTP](docs/contact-smtp.md), [visits](docs/visits.md), [recommendations](docs/recommendations.md), [assistant](docs/assistant.md), [publication](docs/publication.md) and [profile card](docs/profile-card.md).
 
@@ -114,7 +115,7 @@ Optional features are switched on with environment variables; each one is docume
 ./mvnw test
 ```
 
-**133 tests** covering security, sessions and CSRF, HTTP limits, concurrent counter updates, stale draft versions, publication, image handling, the email outbox, scheduled cleanup and the profile card cache. Database tests run against real PostgreSQL containers with Testcontainers; external services (SMTP, Gemini, Google Books, GitHub) are simulated.
+**133 tests** covering security, sessions and CSRF, HTTP limits, concurrent counter updates, stale draft versions, publication, image handling, the email outbox, scheduled cleanup and the profile card cache. Database tests run against real PostgreSQL containers with Testcontainers; external services (SMTP, Gemini, Google Books, GitHub) are simulated. GitHub Actions runs the full suite on every push and pull request to `main` that touches `api/`.
 
 ## Deployment
 
