@@ -8,7 +8,7 @@
 
 A recruiter spends a few seconds on a portfolio, and most portfolios are a template with a list of links that goes stale the week after it ships.
 
-**joaoabreu.dev** is my bilingual (EN/PT) portfolio: a static Astro site that shows real, current GitHub activity, publishes my DEV articles as its own pages, lets visitors ask an AI assistant about me and runs on a server I set up myself. The interactive parts come from my Spring Boot [portfolio-api](https://github.com/jg-abreu/portfolio-api).
+**joaoabreu.dev** is my bilingual (EN/PT) portfolio: a static Astro site that shows real, current GitHub activity, publishes my DEV articles as its own pages, lets visitors ask an AI assistant about me and runs on a server I set up myself. The interactive parts come from my Spring Boot API in [`api/`](api/).
 
 **Live at [joaoabreu.dev](https://joaoabreu.dev)** · [Português](https://joaoabreu.dev/pt/) · Lighthouse 97–98 Performance and 100 Accessibility, Best Practices and SEO on the audited pages
 
@@ -47,14 +47,14 @@ merge to main · daily 06:00 (Rio) · manual run
   → your browser
 ```
 
-Server setup, from an empty instance to HTTPS, is documented step by step in [`deploy/README.md`](deploy/README.md); the nginx site is [`deploy/nginx/portfolio.conf`](deploy/nginx/portfolio.conf) and the pipeline is [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml). The API runs on the same server, behind the same nginx; see [portfolio-api](https://github.com/jg-abreu/portfolio-api).
+Server setup, from an empty instance to HTTPS, is documented step by step in [`deploy/README.md`](deploy/README.md); the nginx site is [`deploy/nginx/portfolio.conf`](deploy/nginx/portfolio.conf) and the pipeline is [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml). The API runs on the same server, behind the same nginx; see [`api/PRODUCTION.md`](api/PRODUCTION.md).
 
 ## Tech stack
 
 | Layer | Technologies |
 |---|---|
 | Front-end | Astro 7, TypeScript (strict), content collections, self-hosted Inter and JetBrains Mono |
-| Back-end | Spring Boot [portfolio-api](https://github.com/jg-abreu/portfolio-api) for the admin, contact, visits, assistant and published content |
+| Back-end | Spring Boot API in [`api/`](api/) for the admin, contact, visits, assistant and published content |
 | Data | GitHub REST API and contributions, DEV API (build only), Google Books |
 | Infrastructure | AWS Lightsail (Ubuntu 24.04), nginx, Cloudflare, GitHub Actions, rsync over SSH |
 | Testing | Node's built-in test runner, `astro check` |
@@ -70,7 +70,7 @@ npm install
 npm run dev
 ```
 
-Then open **http://localhost:4321** (it redirects to `/en/`). The public pages work without the API; the admin, assistant, contact form and visit counter need [portfolio-api](https://github.com/jg-abreu/portfolio-api) running locally.
+Then open **http://localhost:4321** (it redirects to `/en/`). The public pages work without the API; the admin, assistant, contact form and visit counter need the API in [`api/`](api/) running locally (see its README).
 
 | Command | What it does |
 |---|---|
