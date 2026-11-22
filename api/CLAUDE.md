@@ -4,11 +4,11 @@ Project rules for Claude Code in this repository. Machine-specific instructions 
 
 ## Project
 
-Back-end of João Abreu's portfolio (https://joaoabreu.dev), used by the static Astro site in `jg-abreu/portfolio`. It serves the private admin (GitHub login, projects, recommendations, profile card, links page, contact inbox), the public data read at build time, the visit counter, the contact form, the profile-card SVG and the AI assistant. Live since the V2 cutover on 2026-11-14.
+Back-end of João Abreu's portfolio (https://joaoabreu.dev), used by the static Astro site at the root of this repository (`jg-abreu/portfolio`); the API lives in `api/`. Rules shared with the site are in the root file; this one adds the API's. It serves the private admin (GitHub login, projects, recommendations, profile card, links page, contact inbox), the public data read at build time, the visit counter, the contact form, the profile-card SVG and the AI assistant. Live since the V2 cutover on 2026-11-14.
 
 - **Stack:** Java 21, Spring Boot 4.1 (Web MVC, Security with OAuth2 client, Data JPA, Validation, Actuator, Mail), PostgreSQL 18 with Flyway, Maven wrapper.
 - **External services:** GitHub (OAuth, profile data, workflow dispatch), Google Gemini (assistant), Google Books (recommendations), SMTP (contact delivery).
-- **Hosting:** Lightsail VM `portfolio-v2-2gb`; `compose.production.yaml` runs two API instances (A on `127.0.0.1:8080`, B on `127.0.0.1:8081`) and PostgreSQL; nginx balances `/api` by the visitor's `CF-Connecting-IP`. See `PRODUCTION.md` and the site's `deploy/README.md`.
+- **Hosting:** Lightsail VM `portfolio-v2-2gb`; `compose.production.yaml` runs two API instances (A on `127.0.0.1:8080`, B on `127.0.0.1:8081`) and PostgreSQL; nginx balances `/api` by the visitor's `CF-Connecting-IP`. See `PRODUCTION.md` and the root `deploy/README.md`.
 
 ## Division of responsibilities
 
@@ -49,13 +49,12 @@ compose.production.yaml         production: two API instances + PostgreSQL
 .env.production.example         variable names for the VM's private `.env`
 deploy/backup/                  daily encrypted backup script and its systemd service/timer
 scripts/                        audit-maven-osv.py (dependency audit), two-instance-review.py (local two-instance exercise)
-.github/                        Dependabot and CodeQL
 PRODUCTION.md                   how the production environment is prepared and run
 docs/                           one spec per feature (assistant, publication, recommendations, contact, visits,
                                 profile card, backup/restore, dependency security, local two-instance exercise)
 ```
 
-`docs/assistant.md` is kept identical in this repository and in `portfolio`.
+The assistant spec is the root `docs/assistant.md`. The API's workflows are at the root: `.github/workflows/api-ci.yml` (tests) and `codeql.yml` (the `java-kotlin` job); Dependabot watches `/api`.
 
 ## API rules
 
@@ -72,7 +71,7 @@ docs/                           one spec per feature (assistant, publication, re
 
 - Everything merged into `main` can be deployed, so `main` must always be deployable. **No direct commits to `main`.**
 - One branch per stage, prefixed: `chore/`, `ci/`, `feat/`, `fix/`, `docs/`, `perf/`, `test/`. Before starting a stage, `git pull` on `main` and branch from it. `feat/v2` is historical and receives no new work.
-- A change that spans both repositories gets one branch and PR in each.
+- A change that spans the API and the site goes in one branch and one PR.
 - Small, frequent commits in English using Conventional Commits (`feat:`, `fix:`, `chore:`, `ci:`, `docs:`, `perf:`, `refactor:`, `test:`).
 - Branch, file and folder names in English.
 - PR description in English: what changed, why, how to test, and the definition-of-done checklist.
@@ -97,7 +96,7 @@ docs/                           one spec per feature (assistant, publication, re
 - [ ] Authentication and CSRF are unchanged for admin routes, with tests covering any new route
 - [ ] Behavior holds with two instances (no correctness depending on one process's memory)
 - [ ] No secret in the code, tests, logs or commit
-- [ ] The feature's spec in `docs/` (and `docs/assistant.md` in both repositories, when it changes) reflects the change
+- [ ] The feature's spec in `docs/` (and the root `docs/assistant.md`, when the assistant changes) reflects the change
 - [ ] João has reviewed the code and the flow
 
 ## Commands

@@ -7,8 +7,9 @@ Project rules for Codex in this repository. Machine-specific instructions live i
 Personal portfolio of João Abreu: a static, bilingual (EN/PT) site with real GitHub data. The look (V2) follows two references: developer.org.tr (pages, cards, popups, dark theme under blue wallpapers) and augustogalego.com (header pill, intro loader, light theme). Audience: recruiters arriving from GitHub and LinkedIn, so the essentials go on the first screen and the site must load fast and never stutter.
 
 - **Stack:** Astro (static output), TypeScript (strict). Zero JavaScript by default; JS only in interactive islands.
-- **Hosting:** own VM (AWS Lightsail `portfolio-v2-2gb`, Ubuntu, nginx) behind Cloudflare, deployed by GitHub Actions (build + rsync over SSH) on every push to `main`, once a day and when the admin publishes. The same VM runs the API from `portfolio-api` (two instances plus PostgreSQL in Docker Compose) and the `v2.joaoabreu.dev` preview (noindex). The old `portfolio` VM and its static IP are kept only as a rollback. See `deploy/README.md`.
+- **Hosting:** own VM (AWS Lightsail `portfolio-v2-2gb`, Ubuntu, nginx) behind Cloudflare, deployed by GitHub Actions (build + rsync over SSH) on every push to `main`, once a day and when the admin publishes. The same VM runs the API from `api/` (two instances plus PostgreSQL in Docker Compose) and the `v2.joaoabreu.dev` preview (noindex). The old `portfolio` VM and its static IP are kept only as a rollback. See `deploy/README.md`.
 - **Domain:** https://joaoabreu.dev
+- **Repository:** one repository for the site (root) and its Spring Boot API (`api/`, with its own `CLAUDE.md`/`AGENTS.md`, `README.md` and `PRODUCTION.md`). The API was the separate `portfolio-api` repository until 2026-11-22.
 
 ## Division of responsibilities
 
@@ -136,7 +137,7 @@ scripts/og-images.ts        `npm run og`: renders public/og/og-<locale>.png (120
 public/                     static files copied as-is (robots.txt points to the sitemap from @astrojs/sitemap)
   img/wallpapers/*.svg      the blue wallpapers behind the top of every page
   cv/joao-abreu-cv-<locale>.pdf  résumé; the link and viewer appear only when the file exists
-docs/                       feature specs and evidence: assistant (kept identical in portfolio-api), blog, contact,
+docs/                       feature specs and evidence: assistant, blog, contact,
                             publication, recommendations, visits, dependency security, admin testing, validation
                             and the V2 release checklist
 ```
@@ -148,9 +149,12 @@ deploy/
   nginx/portfolio.conf      main site: static files, /api balanced over two API instances, OAuth routes;
                             copied to /etc/nginx/sites-available/portfolio with scp
   nginx/portfolio-v2.conf   v2.joaoabreu.dev preview (noindex) on the same VM
-.github/workflows/deploy.yml  build and rsync to the server on every push to main, once a day and on admin dispatch
-.github/workflows/codeql.yml  CodeQL scan of the JavaScript/TypeScript and the workflows
-.github/dependabot.yml      dependency update PRs against main
+.github/workflows/deploy.yml  build and rsync to the server on every push to main that touches the site (not api/ only),
+                            once a day and on admin dispatch
+.github/workflows/api-ci.yml  API test suite on changes to api/
+.github/workflows/codeql.yml  CodeQL scan of the JavaScript/TypeScript, the workflows and the API (java-kotlin)
+.github/dependabot.yml      dependency update PRs against main (npm at /, Maven at /api, Actions)
+api/                        Spring Boot API (see api/CLAUDE.md); deployed by hand as a JAR, see api/PRODUCTION.md
 ```
 
 The admin uses same-origin /api and /oauth2 routes. Astro's dev server proxies them to the local API on port 8080. In production nginx balances /api across two API instances (127.0.0.1:8080 and :8081) with a consistent hash of the visitor's address; see deploy/README.md. Saving and archiving drafts do not alter their separately selected public copies. The build reads selected copies from PROJECTS_API_URL, fails if that configured source is unavailable, and emits project-publications.json so the admin can distinguish pending versions from deployed ones. Publishing or withdrawing in the admin asks the API to dispatch deploy.yml, so the site rebuilds in about a minute. Existing file-based projects remain independent; a slug collision fails the build until those projects are explicitly migrated.
@@ -181,7 +185,7 @@ The resume page embeds the PDF in an iframe, so nginx must allow same-origin fra
 
 - Everything merged into `main` goes live, so `main` must always be deployable. **No direct commits to `main`.**
 - V2 is live since the cutover on 2026-11-14; `feat/v2` is historical and receives no new work.
-- One branch per stage, prefixed: `chore/`, `ci/`, `feat/`, `fix/`, `docs/`, `perf/`. Before starting a stage, `git pull` on `main` and branch from it. A change that spans both repositories gets one branch and PR in each.
+- One branch per stage, prefixed: `chore/`, `ci/`, `feat/`, `fix/`, `docs/`, `perf/`. Before starting a stage, `git pull` on `main` and branch from it. A change that spans the site and the API goes in one branch and one PR.
 - Small, frequent commits in English using Conventional Commits (`feat:`, `fix:`, `chore:`, `ci:`, `docs:`, `perf:`, `refactor:`).
 - Branch, file and folder names in English.
 - PR description in English: what changed, why, how to test, and the definition-of-done checklist.
