@@ -11,7 +11,7 @@ A static portfolio is fast, but it can't take a message, count a visit or let me
 
 **Portfolio API** is the Spring Boot backend that adds those features to **[joaoabreu.dev](https://joaoabreu.dev)** while the [Astro site](../) stays static: a private admin to edit content without touching code, a contact inbox, a visit counter, an AI assistant that answers questions about me, and the live card on my [GitHub profile](https://github.com/jg-abreu).
 
-**In production since November 14, 2026** · 2 instances behind nginx and Cloudflare · 133 tests
+**In production since November 14, 2026** · 2 instances behind nginx and Cloudflare · 182 tests
 
 ## Contents
 
@@ -115,7 +115,7 @@ Optional features are switched on with environment variables; each one is docume
 ./mvnw test
 ```
 
-**133 tests** covering security, sessions and CSRF, HTTP limits, concurrent counter updates, stale draft versions, publication, image handling, the email outbox, scheduled cleanup and the profile card cache. Database tests run against real PostgreSQL containers with Testcontainers; external services (SMTP, Gemini, Google Books, GitHub) are simulated. GitHub Actions runs the full suite on every push and pull request to `main` that touches `api/`.
+**182 tests** covering security, sessions and CSRF, HTTP limits, concurrent counter updates, stale draft versions, publication, image handling, the email outbox, scheduled cleanup and the profile card cache. Database tests run against real PostgreSQL containers with Testcontainers; external services (SMTP, Gemini, Google Books, GitHub) are simulated. GitHub Actions runs the full suite on every push and pull request to `main` that touches `api/`.
 
 ## Deployment
 
