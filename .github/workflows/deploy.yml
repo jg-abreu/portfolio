@@ -1,10 +1,14 @@
 # Builds the site and copies dist/ to the server (see deploy/README.md).
-# Runs on every push to main, once a day to refresh the GitHub snapshot, and on demand.
+# Runs on every push to main that touches the site (API-only changes in api/ skip it),
+# once a day to refresh the GitHub snapshot, and on demand (the admin's publication dispatch).
 name: Deploy
 
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - api/**
+      - .github/workflows/api-ci.yml
   schedule:
     - cron: "0 9 * * *" # 06:00 in Rio de Janeiro
   workflow_dispatch:
