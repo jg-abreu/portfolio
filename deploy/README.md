@@ -126,7 +126,7 @@ The main-domain server block proxies `/api/`, `/oauth2/`, `/login/oauth2/` and `
 
 ## HSTS rollout
 
-The HTTPS server sends `Strict-Transport-Security: max-age=86400` (one day), including redirects and error responses. The first five-minute policy was verified after the V2 launch on 2026-11-14. Apply the config using step 9; deploying the static site alone does not update nginx.
+The HTTPS server sends `Strict-Transport-Security: max-age=31536000` (one year), including redirects and error responses. The rollout went from five minutes (verified after the V2 launch on 2026-11-14) to one day, then to one year on 2026-11-22. Apply the config using step 9; deploying the static site alone does not update nginx.
 
 Check the public responses after applying:
 
@@ -139,7 +139,7 @@ curl -sI https://joaoabreu.dev/hsts-check-not-found
 
 Expect the header once on each response, with status 301, 200, 200 and 404 respectively. If Cloudflare serves an older cached response, purge the affected URL and repeat. Keep HSTS managed at the origin rather than enabling a second policy in Cloudflare.
 
-After a few stable days, increase `max-age` to one year (`31536000`) in a follow-up change. This policy does not request `includeSubDomains` or `preload`. The `.dev` top-level domain is already preloaded by browsers; the short header does not undo that existing HTTPS requirement.
+This policy does not request `includeSubDomains` or `preload`, so subdomains such as `tutoring.joaoabreu.dev` keep their own policies. The `.dev` top-level domain is already preloaded by browsers, which already requires HTTPS on every subdomain.
 
 To withdraw the origin policy, serve `max-age=0` over HTTPS and apply the config again. Removing the header alone leaves previously received policies active until they expire; withdrawing this policy does not remove the `.dev` preload requirement.
 
