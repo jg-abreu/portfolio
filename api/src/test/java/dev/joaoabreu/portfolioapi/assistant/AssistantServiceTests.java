@@ -23,7 +23,7 @@ class AssistantServiceTests {
         var response = service.answer("  What is his focus?  ", "en");
         assertThat(response.status()).isEqualTo("answered");
         assertThat(response.locale()).isEqualTo("en");
-        assertThat(response.knowledgeVersion()).isEqualTo("2026-11-12.1");
+        assertThat(response.knowledgeVersion()).isEqualTo(resources.requireAvailable().version());
         assertThat(response.sources()).containsExactly(resources.requireAvailable().sources().get("profile"),
                 resources.requireAvailable().sources().get("technical-knowledge"));
         var json = AssistantJson.MAPPER.readTree(AssistantJson.MAPPER.writeValueAsString(response));

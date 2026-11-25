@@ -4,20 +4,22 @@
 
 The assistant is live on https://joaoabreu.dev since the V2 cutover on 2026-11-14 (API PR jg-abreu/portfolio-api#16, site PR jg-abreu/portfolio#35). The Gemini key is configured privately in the production `.env` by João. The API lives in `api/` of the same repository (it was the separate `portfolio-api` repository until 2026-11-22).
 
+The career knowledge snapshot `2026-11-25.1` covers the tutoring v2.0 demo, current volunteer work on inHub, the pre-launch Hallo Pflege project and manual algorithm practice. It distinguishes completed DataCamp training from GitHub certification.
+
 ## Change rules
 
-- `main` is live in both repositories. Assistant changes follow the normal workflow: a prefixed branch from `main`, a PR to `main`, and João reviews and merges.
+- `main` is the release branch for the site and `api/`. Assistant changes follow the normal workflow: a prefixed branch from `main`, a PR to `main`, and João reviews and merges.
 - Real Gemini calls (outside the live site's own visitors) happen only when João asks for them; automated tests always simulate the provider.
 - Never print, commit or paste the Gemini key. It lives only in environment variables and the VM's private `.env`.
-- A change to the contract, limits, knowledge base or System Prompt updates this file in both repositories in the same change.
+- A change to the contract, limits, knowledge base or System Prompt updates this document in the same pull request.
 - One authorization does not cover another: a request to push does not authorize merging, and merging does not authorize a server change.
 
 ## Responsibilities
 
-| Repository | Assistant scope |
+| Directory | Assistant scope |
 | --- | --- |
-| `portfolio` | Bilingual Astro interface (`Assistant.astro`, `scripts/assistant.ts`), v1 contract types and validation (`lib/assistant.ts`), browser error handling, tests and the local development proxy. |
-| `portfolio-api` | Gemini configuration, authorized knowledge base and System Prompt, resource validation, model adapter, response assembly, public v1 endpoint, request limits and simulated tests. |
+| Repository root | Bilingual Astro interface (`Assistant.astro`, `scripts/assistant.ts`), v1 contract types and validation (`lib/assistant.ts`), browser error handling, tests and the local development proxy. |
+| `api/` | Gemini configuration, authorized knowledge base and System Prompt, resource validation, model adapter, response assembly, public v1 endpoint, request limits and simulated tests. |
 
 The public contract is `POST /api/assistant/messages` v1: independent questions, `pt`/`en` locales, and `answered`/`insufficient_knowledge` responses. The backend owns public source metadata, `knowledgeVersion`, and the exact insufficient-knowledge wording.
 

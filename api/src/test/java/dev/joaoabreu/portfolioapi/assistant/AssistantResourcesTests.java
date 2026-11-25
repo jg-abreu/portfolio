@@ -22,8 +22,8 @@ class AssistantResourcesTests {
     @Test
     void loadsPackagedUtf8ResourcesWithStableIdsVersionAndExactFallbacks() {
         var snapshot = resources().requireAvailable();
-        assertThat(snapshot.version()).isEqualTo("2026-11-12.1");
-        assertThat(snapshot.sources()).hasSize(13).containsKeys("project-inhub", "education", "availability");
+        assertThat(snapshot.version()).isEqualTo("2026-11-25.1");
+        assertThat(snapshot.sources()).hasSize(15).containsKeys("experience-hallo-pflege", "project-inhub", "education", "availability", "training");
         assertThat(snapshot.fallbackAnswers().get("pt")).isEqualTo(
                 "Não tenho essa informação específica na minha base, mas você pode perguntar diretamente ao João pelo LinkedIn disponível no portfólio.");
         assertThat(snapshot.fallbackAnswers().get("en")).isEqualTo(
