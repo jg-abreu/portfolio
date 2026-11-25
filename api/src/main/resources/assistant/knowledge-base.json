@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "knowledgeVersion": "2026-11-12.1",
+  "knowledgeVersion": "2026-11-25.1",
   "language": "en",
   "provenance": "Facts explicitly authorized by João Abreu in the development conversation. Source URLs are approved navigation links, not evidence that each fact appears on the linked page.",
   "fallbackAnswers": {
@@ -16,7 +16,8 @@
         "João Abreu is his public name.",
         "He is located in Rio de Janeiro, RJ, Brazil.",
         "He is seeking his first internship in Software Engineering or Back-end Development.",
-        "His main focus is Java and Spring Boot."
+        "His main focus is Java and Spring Boot.",
+        "He is a native Portuguese speaker. He describes his English as basic to intermediate (Duolingo Score 80)."
       ]
     },
     {
@@ -26,7 +27,6 @@
       "informationProvidedOn": "2026-11-12",
       "facts": [
         "His reported availability is in the morning and afternoon.",
-        "His reported class hours are 18:40 to 22:22.",
         "He is open to remote, hybrid or on-site opportunities in Rio de Janeiro."
       ],
       "limitations": [
@@ -40,8 +40,21 @@
       "url": null,
       "facts": [
         "He is currently pursuing a Bachelor's degree in Computer Science at Universidade Veiga de Almeida (UVA).",
-        "He started the degree in January 2026.",
-        "His expected graduation is at the end of 2029."
+        "He started the degree in February 2026 and attends evening classes.",
+        "He expects to graduate in December 2029."
+      ]
+    },
+    {
+      "id": "training",
+      "title": "Courses and training",
+      "url": null,
+      "informationProvidedOn": "2026-11-25",
+      "facts": [
+        "He has 13 Alura course certificates in Java and Spring.",
+        "He completed the GitHub Foundations learning track on DataCamp. At the time of this update, his GH-900 exam is scheduled for December 7, 2026."
+      ],
+      "limitations": [
+        "Course completion and a scheduled exam do not establish a GitHub Foundations certification. No exam result has been provided."
       ]
     },
     {
@@ -61,32 +74,40 @@
       "title": "Technical knowledge",
       "url": null,
       "facts": [
-        "Languages: Java and Python.",
-        "Frameworks and libraries: Spring Boot, JPA/Hibernate and React fundamentals.",
-        "Database knowledge: PostgreSQL and relational modeling.",
-        "Tools: Git, GitHub, LeetHub and Cloudflare.",
-        "Concepts and practices: REST APIs and documented manual testing."
+        "His main backend stack is Java 21, Spring Boot, REST APIs, Spring Data JPA/Hibernate and PostgreSQL.",
+        "He uses JUnit 5 and Mockito for testing, along with Git, Docker and GitHub Actions in his projects.",
+        "He also uses Python. His front-end skills include basic HTML, CSS, JavaScript, React and TypeScript."
       ],
       "limitations": [
-        "No proficiency level is authorized for any technology except React, which is described as fundamentals.",
         "A project's technology does not by itself establish a proficiency level."
       ]
     },
     {
       "id": "project-tutoring-management-system",
       "title": "Tutoring Management System / Sistema de Monitoria",
-      "url": null,
+      "url": "https://tutoring.joaoabreu.dev",
       "facts": [
-        "It is an academic tutoring management system.",
-        "Its REST API uses Java and Spring Boot.",
-        "Its front-end uses React.",
-        "Its database is PostgreSQL.",
-        "It focuses on relational modeling."
+        "Version 2.0 is complete. Its public demo is at https://tutoring.joaoabreu.dev.",
+        "The Java 21 and Spring Boot REST API and React client share one repository. The database is PostgreSQL.",
+        "The API authenticates users with JWTs, checks permissions for administrative actions and returns HTTP 409 for invalid state transitions.",
+        "When a confirmed student cancels, the next student on the waitlist gets the seat and the queue is updated in the same transaction.",
+        "The v2.0 backend suite contains 182 automated tests, including service and HTTP tests. It runs in GitHub Actions."
       ],
       "limitations": [
-        "Academic tutoring describes the problem domain, not the category of the project.",
-        "Do not classify this project as personal, academic coursework or paid professional work.",
-        "Development stage, completed features beyond the stated facts, measured results and technology versions were not supplied."
+        "The test count describes the v2.0 backend suite. It is not a coverage percentage."
+      ]
+    },
+    {
+      "id": "experience-hallo-pflege",
+      "title": "Hallo Pflege",
+      "url": null,
+      "facts": [
+        "Since November 2026, João has been the sole developer responsible for Hallo Pflege, a pre-launch platform for nursing materials. He reports directly to the CEO.",
+        "He built the site in Portuguese, German and English with Next.js and TypeScript and configured Payload CMS so the CEO can publish materials herself.",
+        "He developed a design system with WCAG AA as an accessibility target and configured continuous integration with GitHub Actions."
+      ],
+      "limitations": [
+        "Describe his role as Software Developer and use the listed responsibilities and deliverables."
       ]
     },
     {
@@ -94,8 +115,8 @@
       "title": "inHub",
       "url": null,
       "facts": [
-        "inHub is a project for the Papo de Dev RJ community.",
-        "João participates as a back-end developer in technical collaboration."
+        "João has volunteered as a backend developer on inHub, a team project of the Papo de Dev RJ community, since October 2026.",
+        "The community selected him for the project after he shared his technical background and experience."
       ],
       "limitations": [
         "This is a distinct project; do not transfer another project's technologies, features or results to it.",
@@ -108,20 +129,19 @@
       "title": "Personal portfolio",
       "url": "https://joaoabreu.dev",
       "facts": [
-        "His personal portfolio is at https://joaoabreu.dev.",
-        "It presents his profile and projects.",
-        "Its front-end uses Astro and TypeScript.",
-        "The virtual assistant is in development and must not be presented as an already published feature."
+        "His bilingual portfolio uses Astro and TypeScript with a Spring Boot API in the same repository.",
+        "Visitors can ask the live AI assistant about his work. GitHub sign-in protects the admin area.",
+        "The portfolio runs on an Ubuntu VM on AWS Lightsail. nginx sits behind Cloudflare and routes API requests to two Spring Boot instances. GitHub Actions deploys the site.",
+        "CodeQL and Dependabot are configured in the monorepo."
       ]
     },
     {
       "id": "study-and-content",
       "title": "Study and technical content",
-      "url": null,
+      "url": "https://github.com/jg-abreu/algorithms-and-data-structures",
       "facts": [
-        "He solves LeetCode exercises daily in Java.",
-        "He versions his solutions on GitHub using LeetHub.",
-        "He creates bilingual technical content on LinkedIn and dev.to."
+        "He practices LeetCode and NeetCode problems in Java and Python and maintains his GitHub solutions manually.",
+        "He writes bilingual technical content. His dev.to articles cover a CORS 403 issue behind nginx in Docker and automatic waitlist promotion in Spring Boot."
       ],
       "limitations": [
         "Bilingual content creation does not establish a spoken-language proficiency level.",
@@ -149,15 +169,17 @@
     {
       "id": "link-linkedin",
       "title": "LinkedIn",
-      "url": "https://www.linkedin.com/in/joão-abreuuu/",
-      "facts": ["This is his authorized public LinkedIn contact link."]
+      "url": "https://www.linkedin.com/in/joao-abreuuu/",
+      "facts": [
+        "This is his authorized public LinkedIn contact link."
+      ]
     }
   ],
   "informationNotProvided": [
     "Salary expectations.",
     "Available start date.",
     "Paid professional experience.",
-    "Technology proficiency levels beyond the explicitly stated React fundamentals.",
+    "Technology proficiency levels beyond the stated front-end fundamentals.",
     "An authorized email address."
   ],
   "missingInformationPolicy": "Missing information is unknown, not evidence that a qualification, experience or fact does not exist. Do not infer negative claims from omissions."

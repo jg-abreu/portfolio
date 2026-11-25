@@ -6,9 +6,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-A recruiter spends a few seconds on a portfolio, and most portfolios are a template with a list of links that goes stale the week after it ships.
-
-**joaoabreu.dev** is my bilingual (EN/PT) portfolio: a static Astro site that shows real, current GitHub activity, publishes my DEV articles as its own pages, lets visitors ask an AI assistant about me and runs on a server I set up myself. The interactive parts come from my Spring Boot API in [`api/`](api/).
+Explore my Java backend projects, read their case studies and download my résumé in English or Portuguese at [joaoabreu.dev](https://joaoabreu.dev). The Astro site uses a Spring Boot API for its AI assistant and admin tools. Both run on AWS Lightsail.
 
 **Live at [joaoabreu.dev](https://joaoabreu.dev)** · [Português](https://joaoabreu.dev/pt/) · Lighthouse 97–98 Performance and 100 Accessibility, Best Practices and SEO on the audited pages
 
@@ -20,6 +18,7 @@ A recruiter spends a few seconds on a portfolio, and most portfolios are a templ
 - [How it is deployed](#how-it-is-deployed)
 - [Tech stack](#tech-stack)
 - [Running locally](#running-locally)
+- [Backend API, endpoints and tests](api/README.md)
 - [Project structure](#project-structure)
 
 ## Features
